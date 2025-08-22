@@ -1,0 +1,15 @@
+pip
+
+flask
+flask[async]
+hypercorn
+
+aiohttp
+asyncio
+requests
+
+diff-match-patch
+
+pillow
+
+pymysql
