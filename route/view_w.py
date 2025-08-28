@@ -4,7 +4,7 @@ from .go_api_w_raw import api_w_raw
 from .go_api_w_render import api_w_render
 from .go_api_w_page_view import api_w_page_view
 
-async def view_w(name = 'Test', do_type = ''):
+async def view_w(name = '대문', do_type = ''):
     with get_db_connect() as conn:
         curs = conn.cursor()
 

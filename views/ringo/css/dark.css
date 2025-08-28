@@ -13,11 +13,11 @@ aside {
 }
 
 header#main {
-    background: #26373f;
+    background: #343077;
 }
 
 header#main a, header#main a:hover {
-    background: #26373f;
+    background: #343077;
     color: white;
 }
 
@@ -55,7 +55,7 @@ footer {
 }
 
 header#main a:hover {
-    background: #405d6a;
+    background: #534db8;
 }
 
 button:hover, aside .side_button:hover, .menu_item_link:hover, #main_data button:hover, #topic_color:hover {
@@ -72,4 +72,9 @@ button.search_button#search:hover {
 
 #opennamu_save_button {
     background: #325a56;
+}
+
+footer .not_mobile {
+    text-align : center;
+    align-items : center;
 }

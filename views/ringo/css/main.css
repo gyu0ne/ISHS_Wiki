@@ -41,7 +41,7 @@ header#main {
     padding-left: 20px;
     padding-right: 20px;
     
-    background-color: #99ddff;
+    background-color: #a3cd5b;
 }
 
 header#main a {
@@ -74,7 +74,7 @@ header a#logo {
 }
 
 header a#logo:hover {
-    background-color: #95c3df;
+    background-color: #c3ed7b;
 }
 
 .top_cel {
@@ -91,13 +91,13 @@ header a#logo:hover {
 }
 
 .top_cel a:hover {
-    background-color: #95c3df;
+    background-color: #c3ed7b;
 }
 
 .top_cel_in {
     position: absolute;
     
-    background: #efd8f7;
+    background: #a3cd5b;
     
     line-height: initial;
 
@@ -116,12 +116,10 @@ header a#logo:hover {
 }
 
 .top_cel_in a:hover {
-    background-color: #e3baf1;
+    background-color: #c3ed7b;
 }
 
 div#menu {
-    margin-top: 10px;
-
     margin-left: 6px;
 }
 
@@ -277,9 +275,14 @@ article.main#main_data {
     min-height: 400px;
 }
 
+article.main#title {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
 article.main#title h1 {
     margin: 0;
-
     font-size: 32px;
 }
 
@@ -428,4 +431,19 @@ a {
 
 a:hover {
     color: #105292;
+}
+
+.main#footer {
+    text-align: center;
+    align-items: center;
+}
+
+footer#footer.only_mobile {
+    text-align: center;
+    align-items: center;
+}
+
+footer#footer.not_mobile {
+    text-align : center;
+    align-items : center;
 }

@@ -5,9 +5,9 @@ async def main_func_error_404(e = ''):
         curs = conn.cursor()
 
         if flask.request.path == '/':
-            curs.execute(db_change('select data from other where name = "frontpage"'))
+            curs.execute(db_change('select data from other where name = "인곽위키:대문"'))
             db_data = curs.fetchall()
-            db_data = db_data[0][0] if db_data and db_data[0][0] != '' else 'FrontPage'
+            db_data = db_data[0][0] if db_data and db_data[0][0] != '' else '인곽위키:대문'
             
             return redirect(conn, '/w/' + url_pas(db_data))
         else:
