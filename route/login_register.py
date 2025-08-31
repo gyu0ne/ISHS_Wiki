@@ -53,7 +53,7 @@ async def login_register():
     with get_db_connect() as conn:
         curs = conn.cursor()
 
-        if 'riro_verified' in flask.session or not flask.session.get['riro_verfied']:
+        if not flask.session.get('riro_verified'):
             return redirect(conn, '/riro_login')
         
         if (await ban_check(None, 'register'))[0] == 1:
@@ -248,7 +248,6 @@ async def login_register():
                         {'''''' if verified_name else ''}
                         <input placeholder="이름" name="real_name" type="text" value="{html.escape(verified_name)}" {'readonly' if verified_name else ''} required>
                         <hr class="main_hr">
-                        ))
 
                         <label>생년월일</label>
                         <div style="display:flex; gap:8px; align-items:center;">
@@ -290,6 +289,8 @@ async def login_register():
 
                         <button type="submit">{get_lang(conn, 'save')}</button>
                         {http_warning(conn)}
+                        <span>기수, 성별 등이 실제와 다를 경우 향후 이용에 불이익이 있을 수 있습니다. 부적절한 아이디는 제제될 수 있습니다.</span>
+                        <span>로그인은 아이디로 이루어집니다.</span>
                     </form>
                 """,
                 menu=[['user', get_lang(conn, 'return')]]

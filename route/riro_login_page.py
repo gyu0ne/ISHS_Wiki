@@ -21,7 +21,7 @@ async def riro_login_page():
             result = await loop.run_in_executor(None, riro_login_check, riro_id, riro_pw)
 
             if result['status'] == 'success':
-                pending_user_id = flask.session.get('pending_riro_verfication_for_user', None)
+                pending_user_id = flask.session.get('pending_riro_verification_for_user', None)
                 if pending_user_id:
                     curs.execute(db_change("update user_set set data = ? where id = ? and name = 'student_id'"), [result['hakbun'], pending_user_id])
                     curs.execute(db_change("update user_set set data = ? where id = ? and name = 'real_name'"), [result['name'], pending_user_id])
@@ -36,7 +36,7 @@ async def riro_login_page():
                     return redirect(conn, '/register')
             else:
                 # 인증 실패 시, 자바스크립트 alert로 에러 메시지 표시
-                escaped_message = result['message'].replace("'", "\'").replace('"', '\"').replace('\n', '\\n')
+                escaped_message = result['message'].replace("'", "\'" ).replace('"', '\"').replace('\n', '\\n')
                 return f'''
                     <script>
                         alert(\'{escaped_message}\');

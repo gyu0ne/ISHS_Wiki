@@ -49,7 +49,7 @@ async def login_login():
             curs.execute(db_change("select data from user_set where id = ? and name = 'student_id'"), [student_id])
             student_id_data = curs.fetchall()
             if not student_id_data or not student_id_data[0][0]:
-                flask.session['pending_riro_verfication_for_user'] = student_id
+                flask.session['pending_riro_verification_for_user'] = student_id
                 return redirect(conn, '/riro_login')
 
             if pw_check(conn, user_pw, db_user_pw, db_user_encode, student_id) != 1:
