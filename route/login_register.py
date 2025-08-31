@@ -24,10 +24,13 @@ def _valid_student_id(s: str) -> bool:
     if s == '졸업생':
         return True
     if len(s) != 4 or not s.isdigit():
+        print(f"DEBUG: Invalid student ID length or non-digit: {s}")
         return False
     a = int(s[0])
     b = int(s[1])
     cd = int(s[2:4])
+    print(f"DEBUG: Validating student ID: a={a}, b={b}, cd={cd}")
+    print(f"DEBUG: Validation result: {(1 <= a <= 3) and (1 <= b <= 4) and (1 <= cd <= 22)}")
     return (1 <= a <= 3) and (1 <= b <= 4) and (1 <= cd <= 22)
 
 def _save_profile_extra(conn, user_id, student_id, real_name, birth_y, birth_m, birth_d, gender, user_name, gen):
@@ -48,6 +51,42 @@ def _save_profile_extra(conn, user_id, student_id, real_name, birth_y, birth_m, 
     upsert('user_name', user_name)
     upsert('generation', gen)
 
+def add_user(conn, user_id, user_pw):
+    curs = conn.cursor()
+
+    curs.execute(db_change('select data from other where name = "encode"'))
+    db_data = curs.fetchall()
+    encode_method = db_data[0][0] if db_data and db_data[0][0] != '' else 'sha3'
+
+    hashed_pw = pw_encode(conn, user_pw, encode_method)
+
+    curs.execute(db_change("insert into user_set (id, name, data) values (?, ?, ?)"), [user_id, 'pw', hashed_pw])
+    curs.execute(db_change("insert into user_set (id, name, data) values (?, ?, ?)"), [user_id, 'encode', encode_method])
+
+    print(f"DEBUG: add_user called for user_id: {user_id}")
+    curs = conn.cursor()
+
+    print("DEBUG: Querying encode method...")
+    curs.execute(db_change('select data from other where name = "encode"'))
+    db_data = curs.fetchall()
+    encode_method = db_data[0][0] if db_data and db_data[0][0] != '' else 'sha3'
+    print(f"DEBUG: Encode method: {encode_method}")
+
+    print("DEBUG: Hashing password...")
+    hashed_pw = pw_encode(conn, user_pw, encode_method)
+    print("DEBUG: Password hashed.")
+
+    print("DEBUG: Inserting pw...")
+    curs.execute(db_change("insert into user_set (id, name, data) values (?, ?, ?)"), [user_id, 'pw', hashed_pw])
+    print("DEBUG: Inserting encode...")
+    curs.execute(db_change("insert into user_set (id, name, data) values (?, ?, ?)"), [user_id, 'encode', encode_method])
+    print("DEBUG: Inserting acl...")
+    curs.execute(db_change("insert into user_set (id, name, data) values (?, ?, ?)"), [user_id, 'acl', 'user'])
+    print("DEBUG: Inserting date...")
+    curs.execute(db_change("insert into user_set (id, name, data) values (?, ?, ?)"), [user_id, 'date', get_time()])
+    print("DEBUG: All add_user inserts completed.")
+    curs.execute(db_change("insert into user_set (id, name, data) values (?, ?, ?)"), [user_id, 'date', get_time()])
+
 # ===== 회원가입 =====
 async def login_register():
     with get_db_connect() as conn:
@@ -57,7 +96,7 @@ async def login_register():
             return redirect(conn, '/riro_login')
         
         if (await ban_check(None, 'register'))[0] == 1:
-            return await re_error(conn, 0)
+            return "<h1>DEBUG: Error Code: 0 (Ban check failed)</h1>"
 
         ip = ip_check()
         admin = await acl_check(tool='owner_auth')
@@ -70,13 +109,17 @@ async def login_register():
             curs.execute(db_change('select data from other where name = "reg"'))
             set_d = curs.fetchall()
             if set_d and set_d[0][0] == 'on':
-                return await re_error(conn, 0)
+                return "<h1>DEBUG: Error Code: 0 (Registration disabled)</h1>"
 
         if flask.request.method == 'POST':
+            print("DEBUG: Before captcha_post call.")
             # 캡차 확인
-            if await captcha_post(conn, flask.request.form.get('g-recaptcha-response',
-                flask.request.form.get('g-recaptcha', ''))) == 1:
-                return await re_error(conn, 13)
+            captcha_result = await captcha_post(conn, flask.request.form.get('g-recaptcha-response',
+                flask.request.form.get('g-recaptcha', '')))
+            print(f"DEBUG: captcha_post returned: {captcha_result}")
+            if captcha_result == 1:
+                print("DEBUG: Captcha failed, returning error 13.")
+                return "<h1>DEBUG: Error Code: 13 (Captcha failed)</h1>"
 
             # 입력값 수집 & 정규화
             student_id = _norm(flask.request.form.get('student_id', ''))
@@ -91,50 +134,57 @@ async def login_register():
             user_pw     = flask.request.form.get('pw', '')
             user_repeat = flask.request.form.get('pw2', '')
 
+            print(f"DEBUG: Agreement value received: {flask.request.form.get('agreement', '')}")
+            # 약관 동의 확인
+            if flask.request.form.get('agreement', '') != 'agree':
+                return "<h1>DEBUG: Error Code: 999 (Agreement not checked)</h1>"
+
             # 필수항목 체크(학번 제외: 졸업생 공란 허용)
             if not user_name or not real_name or not birth_y or not birth_m or not birth_d or not gender:
-                return await re_error(conn, 27)
+                return "<h1>DEBUG: Error Code: 27 (Missing required fields)</h1>"
             
             # 학번 공란 처리 → '졸업생' 치환
             if student_id == '':
                 student_id = '졸업생'
 
+            _valid_student_id(student_id)
+
             # 학번 규칙 검사
             if not _valid_student_id(student_id):
-                return await re_error(conn, "유효하지 않은 학번입니다.")
+                return "<h1>DEBUG: Error Code: 998 (Invalid student ID)</h1>"
 
             # 성별 검사
             if gender not in ['male', 'female']:
-                return await re_error(conn, 27)
+                return "<h1>DEBUG: Error Code: 27 (Invalid gender)</h1>"
 
             # 생년월일 숫자 및 유효 날짜 검사
             if not (birth_y.isdigit() and birth_m.isdigit() and birth_d.isdigit()):
-                return await re_error(conn, 27)
+                return "<h1>DEBUG: Error Code: 27 (Invalid birth date format)</h1>"
             if not _valid_date(int(birth_y), int(birth_m), int(birth_d)):
-                return await re_error(conn, 27)
+                return "<h1>DEBUG: Error Code: 27 (Invalid birth date)</h1>"
 
             # 비밀번호 검사
             if user_pw == '' or user_repeat == '':
-                return await re_error(conn, 27)
+                return "<h1>DEBUG: Error Code: 27 (Password empty)</h1>"
             if user_pw != user_repeat:
-                return await re_error(conn, 20)
+                return "<h1>DEBUG: Error Code: 20 (Password mismatch)</h1>"
 
             # 로그인 ID 는 user_name 사용 (학번 공란 허용 정책과 충돌 방지)
             user_id = user_name
 
             if user_id == user_pw:
-                return await re_error(conn, 49)
+                return "<h1>DEBUG: Error Code: 49 (ID and password are same)</h1>"
 
             curs.execute(db_change("select data from other where name = 'password_min_length'"))
             db_data = curs.fetchall()
             if db_data and db_data[0][0] != '':
                 password_min_length = int(number_check(db_data[0][0]))
                 if password_min_length > len(user_pw):
-                    return await re_error(conn, 40)
+                    return "<h1>DEBUG: Error Code: 40 (Password too short)</h1>"
 
             # 중복 ID 체크
             if do_user_name_check(conn, user_id) == 1:
-                return await re_error(conn, 8)
+                return "<h1>DEBUG: Error Code: 8 (Duplicate ID)</h1>"
 
             # 사용자 생성 + 추가 프로필 저장
             add_user(conn, user_id, user_pw)
@@ -158,7 +208,7 @@ async def login_register():
                             <hr class="main_hr">
                             <input placeholder="학번" name="student_id" type="text" inputmode="numeric" value="{html.escape(student_id)}" readonly>
                             <small style="display:block; margin-top:4px; color:#888; text-align:left;">
-                            학번은 4자리로 입력하세요.(ex. 1307) 졸업생인 경우, 공란으로 비워두세요.
+                            학번은 4자리로 입력하세요.(ex. 1307)
                             </small>
                         </div>
                         <hr class="main_hr">
@@ -219,6 +269,8 @@ async def login_register():
 
             verified_name = flask.session.get('riro_name', '')
             verified_hakbun = flask.session.get('riro_hakbun', '')
+            verified_hakbun = f'{verified_hakbun[0]}{verified_hakbun[2:5]}'
+            print(verified_hakbun)
 
             return easy_minify(conn, flask.render_template(
                 skin_check(conn),
@@ -285,6 +337,10 @@ async def login_register():
                         <input placeholder="{get_lang(conn, 'password_confirm')}" name="pw2" type="password" autocomplete="new-password" required>
                         <hr class="main_hr">
 
+                        <hr class="main_hr">
+                        <label><input type="checkbox" name="agreement" value="agree">인곽위키 사용 중 발생하는 모든 불이익에 대하여 운영진 측은 책임지지 않으며, 모든 이용약관을 이해하였고 이에 동의합니다.</label>
+                        <hr class="main_hr">
+                        
                         {await captcha_get(conn)}
 
                         <button type="submit">{get_lang(conn, 'save')}</button>

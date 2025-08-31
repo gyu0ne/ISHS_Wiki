@@ -4,6 +4,10 @@
     color: white;
 }
 
+#last_edit_time {
+    padding-left: 10px;
+}
+
 .opennamu_main textarea, 
 .opennamu_main input, 
 .opennamu_main button, 
