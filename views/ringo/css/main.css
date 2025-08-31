@@ -21,11 +21,6 @@ h1, h2, h3, h4, h5, h6 {
     display: none;
 }
 
-#last_edit_time {
-    padding-left: 10px;
-}
-
-
 select {
     font-family: 'SUIT', sans-serif;
     font-feature-settings: "ss18";
@@ -300,6 +295,26 @@ article.main#title h1 {
 }
 
 @media screen and (max-width: 1000px) {    
+    #menu {
+        margin-top: 7px;
+    }
+
+    article.main#title {
+        display: block;
+    }
+
+    div#menu {
+        float: right;
+    }
+
+    header#section {
+        padding-bottom: 50px;
+    }
+
+    #title > h1 {
+        margin-bottom: 2px;
+    }
+
     aside {        
         float: none;
         
@@ -455,4 +470,17 @@ footer#footer.only_mobile {
 footer#footer.not_mobile {
     text-align : center;
     align-items : center;
+}
+
+div#edited_time {
+    max-width: 1000px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin: auto;
+}
+
+#last_edit_time {
+    padding-left: 10px;
+    border: none;
 }

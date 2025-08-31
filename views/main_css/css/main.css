@@ -13,10 +13,6 @@
     max-width: 100%;
 }
 
-#last_edit_time {
-    padding-left: 10px;
-}
-
 .opennamu_main {
     word-break: break-all;
     overflow: auto;
@@ -285,6 +281,28 @@
     font-weight: initial;
 }
 
+@media(max-widhth: 1000px) {
+    #menu {
+        margin-top: 7px;
+    }
+
+        article.main#title {
+        display: block;
+    }
+
+    div#menu {
+        float: right;
+    }
+
+    header#section {
+        padding-bottom: 50px;
+    }
+
+    #title > h1 {
+        margin-bottom: 2px;
+    }
+}
+
 @media(max-width: 768px) {
     .opennamu_main .opennamu_popup_footnote {
         max-width: 100%;
@@ -508,4 +526,17 @@
 
     background-size: 100% 100%;
     background-origin: content-box;
+}
+
+div#edited_time {
+    max-width: 1000px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin: auto;
+}
+
+#last_edit_time {
+    padding-left: 10px;
+    border: none;
 }

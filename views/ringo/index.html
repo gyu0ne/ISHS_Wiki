@@ -195,11 +195,6 @@
                             <sub>{{imp[3][0]}}</sub> <!-- 문서 부제목 표시 -->
                         {% endif %}
                     </h1>
-                    {% if imp[3][1] != 0 %} <!-- 문서 작성자 정보가 존재할 경우 -->
-                        {% if imp[3][7] != 0 %} <!-- 문서 조회수가 존재할 경우 -->
-                            {{'page_view'|load_lang}} : {{imp[3][7]}} <!-- 페이지 조회수 표시 -->
-                        {% endif %}
-                    {% endif %}
                     {% if menu != 0 %} <!-- 메뉴가 존재할 경우 -->
                         <div id="menu">
                             {% for menu_data in menu %}
@@ -228,9 +223,15 @@
                 {{data|safe}}
                 {{imp[1][7][2]|safe}}
             </article>
+            <div id="edited_time">
+                    {% if imp[3][1] != 0 %} <!-- 문서 작성자 정보가 존재할 경우 -->
+                        {% if imp[3][7] != 0 %} <!-- 문서 조회수가 존재할 경우 -->
+                            <h4 id="last_edit_time">{{'last_edit_time'|load_lang}} : {{imp[3][1]}} | {{'page_view'|load_lang}} : {{imp[3][7]}}</h4> <!-- 마지막 수정 시간/조회수 표시 -->
+                        {% endif %}
+                    {% endif %}
             {% if imp[3][1] != 0 %}
-                <h4 id="last_edit_time">{{'last_edit_time'|load_lang}} : {{imp[3][1]}}</h4> <!-- 마지막 수정 시간 표시 -->
             {% endif %}
+            </div>
             <footer class="not_mobile">
                 <article class="main" id="footer">
                     {{imp[1][1]|safe}}

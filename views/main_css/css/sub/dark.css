@@ -4,10 +4,6 @@
     color: white;
 }
 
-#last_edit_time {
-    padding-left: 10px;
-}
-
 .opennamu_main textarea, 
 .opennamu_main input, 
 .opennamu_main button, 
@@ -104,4 +100,16 @@
 
 .opennamu_main a:hover {
     color: #7e97c1;
+}
+
+#edited_time {
+    max-width: 1000px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin: auto;
+}
+
+#last_edit_time {
+    padding-left: 10px;
 }

@@ -3,10 +3,6 @@ html {
     color: white;
 }
 
-#last_edit_time {
-    padding-left: 10px;
-}
-
 section {
     background: black;
     color: white;
@@ -81,4 +77,16 @@ button.search_button#search:hover {
 footer .not_mobile {
     text-align : center;
     align-items : center;
+}
+
+#edited_time {
+    max-width: 1000px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin: auto;
+}
+
+#last_edit_time {
+    padding-left: 10px;
 }
