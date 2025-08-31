@@ -17,6 +17,12 @@ h1, h2, h3, h4, h5, h6 {
     padding-bottom: 10px;
 }
 
+#menu > a:nth-child(7) {
+    display: none;
+}
+
+
+
 select {
     font-family: 'SUIT', sans-serif;
     font-feature-settings: "ss18";

@@ -196,7 +196,6 @@
                         {% endif %}
                     </h1>
                     {% if imp[3][1] != 0 %} <!-- 문서 작성자 정보가 존재할 경우 -->
-                        {{'last_edit_time'|load_lang}} : {{imp[3][1]}} <!-- 마지막 수정 시간 표시 -->
                         {% if imp[3][7] != 0 %} <!-- 문서 조회수가 존재할 경우 -->
                             | {{'page_view'|load_lang}} : {{imp[3][7]}} <!-- 페이지 조회수 표시 -->
                         {% endif %}
@@ -229,6 +228,8 @@
                 {{data|safe}}
                 {{imp[1][7][2]|safe}}
             </article>
+            <h4>{{'last_edit_time'|load_lang}} : {{imp[3][1]}}</h4> <!-- 마지막 수정 시간 표시 -->
+
             <footer class="not_mobile">
                 <article class="main" id="footer">
                     {{imp[1][1]|safe}}
