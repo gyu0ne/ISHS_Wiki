@@ -102,12 +102,37 @@ async def user_setting():
                 db_data = curs.fetchall()
                 sub_user_name = db_data[0][0] if db_data else ''
 
+                # ===== 추가: extra 정보 불러오기 =====
+                def get_extra(name):
+                    curs.execute(db_change("select data from user_set where name = ? and id = ?"), [name, ip])
+                    row = curs.fetchone()
+                    return row[0] if row else '-'
+
+                student_id = get_extra("student_id")
+                real_name  = get_extra("real_name")
+                birth_y    = get_extra("birth_year")
+                birth_m    = get_extra("birth_month")
+                birth_d    = get_extra("birth_day")
+                gender     = get_extra("gender")
+                generation = get_extra("generation")
+
                 return easy_minify(conn, flask.render_template(skin_check(conn),
                     imp = [get_lang(conn, 'user_setting'), await wiki_set(), await wiki_custom(conn), wiki_css([0, 0])],
                     data = '''
                         <form method="post">
-                            <div id="opennamu_get_user_info">''' + html.escape(ip) + '''</div>
+                            <div id="opennamu_get_user_info">''' + html.escape(user_name) + '''</div>
                             <hr class="main_hr">
+
+                            <h2>사용자 정보</h2>
+                            <table class="user-info">
+                                <tr><td>학번</td><td>''' + html.escape(student_id) + '''</td></tr>
+                                <tr><td>이름</td><td>''' + html.escape(real_name) + '''</td></tr>
+                                <tr><td>생년월일</td><td>''' + html.escape(birth_y + '-' + birth_m + '-' + birth_d) + '''</td></tr>
+                                <tr><td>성별</td><td>''' + ('남성' if gender == 'male' else '여성') + '''</td></tr>
+                                <tr><td>기수</td><td>''' + html.escape(generation) + '''</td></tr>
+                            </table>
+                            <hr class="main_hr">
+
                             <a href="/change/pw">(''' + get_lang(conn, 'password_change') + ''')</a>
                             <hr class="main_hr">
                             <span>''' + get_lang(conn, 'email') + ''' : ''' + email + '''</span> <a href="/change/email">(''' + get_lang(conn, 'email_change') + ''')</a> <a href="/change/email/delete">(''' + get_lang(conn, 'email_delete') + ''')</a>
@@ -147,50 +172,4 @@ async def user_setting():
                     menu = [['user', get_lang(conn, 'return')]]
                 ))
         else:
-            if flask.request.method == 'POST':
-                flask.session['skin'] = flask.request.form.get('skin', '')
-                flask.session['lang'] = flask.request.form.get('lang', '')
-
-                return redirect(conn, '/change')
-            else:
-                div2 = load_skin(conn, 
-                    ('' if not 'skin' in flask.session else flask.session['skin']), 
-                    0, 
-                    1
-                )
-
-                data = [['default']] if not 'lang' in flask.session else [[flask.session['lang']]]
-                div3 = ''
-                for lang_data in support_language:
-                    see_data = lang_data if lang_data != 'default' else get_lang(conn, 'default')
-
-                    if data and data[0][0] == lang_data:
-                        div3 = '<option value="' + lang_data + '">' + see_data + '</option>' + div3
-                    else:
-                        div3 += '<option value="' + lang_data + '">' + see_data + '</option>'
-
-                return easy_minify(conn, flask.render_template(skin_check(conn),
-                    imp = [get_lang(conn, 'user_setting'), await wiki_set(), await wiki_custom(conn), wiki_css([0, 0])],
-                    data = '''
-                        <form method="post">
-                            <div id="opennamu_get_user_info">''' + html.escape(ip) + '''</div>
-                            <hr class="main_hr">
-                            <h2>''' + get_lang(conn, 'main') + '''</h2>
-                            <span>''' + get_lang(conn, 'skin') + '''</span>
-                            <hr class="main_hr">
-                            <select name="skin">''' + div2 + '''</select>
-                            <hr class="main_hr">
-                            <a href="/change/skin_set">(''' + get_lang(conn, 'skin_set') + ''')</a> <a href="/change/skin_set/main">(''' + get_lang(conn, 'main_skin_set') + ''')</a>
-                            <hr class="main_hr">
-                            <span>''' + get_lang(conn, 'language') + '''</span>
-                            <hr class="main_hr">
-                            <select name="lang">''' + div3 + '''</select>
-                            <hr class="main_hr">
-                            <button type="submit">''' + get_lang(conn, 'save') + '''</button>
-                            ''' + http_warning(conn) + '''
-                            <hr class="main_hr">
-                            <span>''' + get_lang(conn, 'user_head_warning') + '''</span>
-                        </form>
-                    ''',
-                    menu = [['user', get_lang(conn, 'return')]]
-                ))
+            return redirect(conn, '/login')

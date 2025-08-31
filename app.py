@@ -6,7 +6,7 @@ import logging
 
 from route.tool.func import *
 from route import *
-
+from route.riro_login_page import riro_login_page
 from hypercorn.asyncio import serve
 from hypercorn.config import Config
 
@@ -935,6 +935,8 @@ app.route('/setting/404_page', methods = ['POST', 'GET'])(setting_404_page)
 app.route('/setting/email_test', methods = ['POST', 'GET'])(main_setting_email_test)
 
 app.route('/easter_egg')(main_func_easter_egg)
+
+app.route('/riro_login', methods=['GET', 'POST'])(riro_login_page) # riroschool login
 
 # views -> view
 app.route('/view/<path:name>')(main_view)

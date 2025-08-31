@@ -13,3 +13,6 @@ diff-match-patch
 pillow
 
 pymysql
+
+selenium
+webdriver-manager

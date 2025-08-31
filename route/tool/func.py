@@ -106,6 +106,13 @@ flask.render_template = custom_render_template
 global_lang_data = {}
 global_some_set = {}
 
+
+def get_display_name(conn, uid: str) -> str:
+    curs = conn.cursor()
+    curs.execute(db_change("select data from user_set where id = ? and name = 'user_name'"), [uid])
+    row = curs.fetchone()
+    return row[0] if row and row[0] else uid
+
 def do_db_set(db_set):
     for for_a in db_set:
         global_func_some_set_do('db_' + for_a, db_set[for_a])
@@ -1300,7 +1307,7 @@ async def wiki_custom(conn):
 
     if ip_or_user(ip) == 0:
         user_icon = 1
-        user_name = ip
+        user_name = get_display_name(conn, ip)
 
         if 'head' in flask.session:
             user_head = flask.session['head']
