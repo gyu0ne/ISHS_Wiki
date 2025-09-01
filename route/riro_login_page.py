@@ -23,9 +23,17 @@ async def riro_login_page():
             if result['status'] == 'success':
                 pending_user_id = flask.session.get('pending_riro_verification_for_user', None)
                 if pending_user_id:
-                    curs.execute(db_change("update user_set set data = ? where id = ? and name = 'student_id'"), [result['hakbun'], pending_user_id])
-                    curs.execute(db_change("update user_set set data = ? where id = ? and name = 'real_name'"), [result['name'], pending_user_id])
-                    flask.session.pop('pending_riro_verfication_for_user', None)
+                    def upsert(name, data):
+                        curs.execute(db_change("select data from user_set where id = ? and name = ?"), [pending_user_id, name])
+                        if curs.fetchall():
+                            curs.execute(db_change("update user_set set data = ? where id = ? and name = ?"), [data, pending_user_id, name])
+                        else:
+                            curs.execute(db_change("insert into user_set (id, name, data) values (?, ?, ?)"), [pending_user_id, name, data])
+
+                    upsert('student_id', result['hakbun'])
+                    upsert('real_name', result['name'])
+                    
+                    flask.session.pop('pending_riro_verification_for_user', None)
                     flask.session['id'] = pending_user_id
                     return redirect(conn, '/user')
                 # 인증 성공 시, 세션에 인증 정보 저장 후 회원가입 페이지로 이동
