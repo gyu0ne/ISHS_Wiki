@@ -484,3 +484,7 @@ div#edited_time {
     padding-left: 10px;
     border: none;
 }
+
+#user_cel_in > a:nth-child(4) {
+    display: none;
+}
