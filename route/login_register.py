@@ -190,6 +190,38 @@ async def login_register():
             add_user(conn, user_id, user_pw)
             _save_profile_extra(conn, user_id, student_id, real_name,
                                 birth_y, birth_m, birth_d, gender, user_name, gen)
+
+            # 사용자 문서 자동 생성
+            try:
+                doc_title = f"{real_name}({gen}기)"
+                doc_content = f"[include(틀:인곽위키/인물)] \n {html.escape(real_name)}님의 사용자 문서입니다."
+                today = get_time()
+                
+                curs.execute(db_change("select title from data where title = ?"), [doc_title])
+                if not curs.fetchall():
+                    leng = '+' + str(len(doc_content))
+                    
+                    curs.execute(db_change("insert into data (title, data) values (?, ?)"), [doc_title, doc_content])
+                    
+                    history_plus(
+                        conn,
+                        doc_title,
+                        doc_content,
+                        today,
+                        user_id,
+                        '회원가입',
+                        leng,
+                        mode='r1'
+                    )
+                    
+                    render_set(
+                        conn,
+                        doc_name = doc_title,
+                        doc_data = doc_content,
+                        data_type = 'backlink'
+                    )
+            except Exception as e:
+                print(f"Error creating user document for {user_id}: {e}")
             
             flask.session.pop('riro_verified', None)
             flask.session.pop('riro_name', None)

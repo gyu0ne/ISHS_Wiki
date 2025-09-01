@@ -21,6 +21,12 @@ async def view_w(name = '대문', do_type = ''):
 
         now_time = get_time()
         ip = ip_check()
+
+        # 특정 틀 포함 시 비로그인 사용자 접근 제한
+        doc_data_raw = await api_w_raw(name)
+        if doc_data_raw["response"] == "ok" and '[include(틀:인곽위키/인물)]' in doc_data_raw["data"]:
+            if ip_or_user(ip) == 1:
+                return await re_error(conn, 1)
             
         uppage = re.sub(r"/([^/]+)$", '', name)
         uppage = 0 if uppage == name else uppage
