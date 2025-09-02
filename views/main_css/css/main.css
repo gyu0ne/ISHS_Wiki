@@ -540,3 +540,7 @@ div#edited_time {
     padding-left: 10px;
     border: none;
 }
+
+#menu > a:nth-child(6) {
+    display: none;
+}
