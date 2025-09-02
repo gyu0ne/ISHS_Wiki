@@ -16,6 +16,7 @@
         <script defer src="/views/ringo/js/main.js.cache_v3"></script>
         <script defer src="/views/ringo/js/sidebar.js.cache_v7"></script>
         <script defer src="/views/ringo/js/skin_set.js.cache_v9"></script>
+        <script defer src="/views/main_css/js/func/autocomplete.js"></script>
         <link rel="stylesheet" href="/views/ringo/css/main.css.cache_v13">
         <meta property="og:image" content="https://i.namu.wiki/i/UX1a0RmaJfABnbuJcd-2PfCO6qfqFMXaVBkNYV0Hwjm007_uH2Cc0fJmv6M9g9BTfzXjUk3jwJpDa09YdZnf79GO_NiDd9uGp7dudqFfQVBz69OaFzGfhSmMbOGezsME4LUzp6meYGFLDHZ32cTifVistPL4rVyv_OyU1WOADOM.webp">
         <meta property="og:description" content="인천과학고 위키에 오신 것을 환영합니다!">
@@ -185,7 +186,10 @@
                     </div>
                 {% endif %}
                 <form class="not_mobile" method="post" action="/search" role="search" id="search">
-                    <input class="not_mobile search" name="search" placeholder="{{'search'|load_lang}}" autocomplete="off" type="search">
+                    <div style="position: relative; display: inline-block;">
+                        <input id="search_input_not_mobile" class="not_mobile search" name="search" placeholder="{{'search'|load_lang}}" autocomplete="off" type="search">
+                        <div id="autocomplete_results_not_mobile" class="autocomplete-items"></div>
+                    </div>
                     <button type="submit" id="goto" formaction="/goto" class="search_button">
                         <span class="iconify" data-icon="ic:round-find-in-page" data-inline="true"></span>
                     </button>
@@ -195,7 +199,10 @@
                 </form>
             </span>
             <form class="only_mobile" method="post" action="/search" role="search">
-                <input class="only_mobile search" name="search" placeholder="{{'search'|load_lang}}" autocomplete="off" type="search">
+                <div style="position: relative;">
+                    <input id="search_input_mobile" class="only_mobile search" name="search" placeholder="{{'search'|load_lang}}" autocomplete="off" type="search">
+                    <div id="autocomplete_results_mobile" class="autocomplete-items"></div>
+                </div>
                 <button type="submit" id="goto" formaction="/goto" class="search_button">
                     <span class="iconify" data-icon="ic:round-find-in-page" data-inline="true"></span>
                 </button>

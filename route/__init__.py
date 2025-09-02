@@ -3,6 +3,7 @@ from route.api_image_view import api_image_view
 from route.api_skin_info import api_skin_info
 from route.api_user_info import api_user_info
 from route.api_version import api_version
+from route.api_search_title import api_search_title
 
 from route.bbs_w_edit import bbs_w_edit
 from route.bbs_make import bbs_make

@@ -96,7 +96,7 @@ with get_db_connect(init_mode = True) as conn:
 
                 if db_pass == 0:
                     try:
-                        curs.execute(db_change('create table ' + create_table + '(test ' + field_text + ' default (""))'))
+                        curs.execute(db_change('create table ' + create_table + '(test ' + field_text + ' default (" "))'))
                         db_pass = 1
                     except Exception as e:
                         # print(e)
@@ -169,7 +169,7 @@ with get_db_connect(init_mode = True) as conn:
             self.regex = r'.*?'
 
         def to_python(self, value):
-            return re.sub(r'^\\\.', '.', value)
+            return re.sub(r'^\\.', '.', value)
 
     class RegexConverter(werkzeug.routing.BaseConverter):
         def __init__(self, url_map, *items):
@@ -180,6 +180,7 @@ with get_db_connect(init_mode = True) as conn:
 
     app.config['JSON_AS_ASCII'] = False
     app.config['JSONIFY_PRETTYPRINT_REGULAR'] = False
+    app.config['MAX_CONTENT_LENGTH'] = 16 * 1000 * 1000
     app.config['SEND_FILE_MAX_AGE_DEFAULT'] = 3600
     if run_mode == 'dev':
         app.config['TEMPLATES_AUTO_RELOAD'] = True
@@ -323,9 +324,9 @@ def back_up(data_db_set):
                     file_dir = '.' if file_dir == '' else file_dir
                     
                     file_name = os.path.split(back_up_where)[1]
-                    file_name = re.sub(r'\.db$', '_[0-9]{14}.db', file_name)
+                    file_name = re.sub(r"\.db, '_[0-9]{14}.db", file_name)
 
-                    backup_file = [for_a for for_a in os.listdir(file_dir) if re.search('^' + file_name + '$', for_a)]
+                    backup_file = [for_a for for_a in os.listdir(file_dir) if re.search("^' + file_name + ", for_a)]
                     backup_file = sorted(backup_file)
                     
                     if len(backup_file) >= back_up_count:
@@ -334,7 +335,7 @@ def back_up(data_db_set):
                         print('Back up : Remove (' + remove_dir + ')')
 
                 now_time = datetime.datetime.now().strftime('%Y%m%d%H%M%S')
-                new_file_name = re.sub(r'\.db$', '_' + now_time + '.db', back_up_where)
+                new_file_name = re.sub(r"\.db, '_' + now_time + '.db", back_up_where)
                 shutil.copyfile(
                     data_db_set['name'] + '.db', 
                     new_file_name
@@ -853,6 +854,7 @@ app.route('/api/sha224/<everything:data>')(api_func_sha224)
 app.route('/api/ip/<everything:data>')(api_func_ip)
 
 app.route('/api/image/<everything:name>')(api_image_view)
+app.route('/api/search_title/<everything:name>')(api_search_title)
 
 ## v2 API
 app.route('/api/v2/recent_edit_request/<set_type>/<int:num>', defaults = { 'limit' : 50 })(api_list_recent_edit_request)
@@ -940,10 +942,6 @@ app.route('/riro_login', methods=['GET', 'POST'])(riro_login_page) # riroschool 
 
 app.route('/bob')(bob)
 app.route('/bob/<date>')(bob)
-
-app.route('/siganpyo')(siganpyo)
-app.route('/siganpyo/<grade>/<class_nm>')(siganpyo)
-app.route('/siganpyo/<grade>/<class_nm>/<ymd>')(siganpyo)
 
 # views -> view
 app.route('/view/<path:name>')(main_view)

@@ -113,3 +113,19 @@
 #last_edit_time {
     padding-left: 10px;
 }
+
+/* Autocomplete */
+.autocomplete-items {
+    background-color: #1f2023;
+    border-color: #444;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+}
+
+.autocomplete-items li a {
+    border-bottom-color: #444;
+    color: #f1f1f1;
+}
+
+.autocomplete-items li a:hover {
+    background-color: #333333;
+}

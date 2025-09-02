@@ -23,7 +23,7 @@ async def edit_upload():
             if file_size_all == None:
                 file_size_all = 0
 
-            if (file_max * 1000 * 1000 * file_len) < file_size_all or file_size_all == 0:
+            if (file_max * 1000 * 1000 * file_len) < file_size_all:
                 return await re_error(conn, 17)
 
             if file_len == 1:
