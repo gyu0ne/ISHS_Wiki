@@ -938,6 +938,13 @@ app.route('/easter_egg')(main_func_easter_egg)
 
 app.route('/riro_login', methods=['GET', 'POST'])(riro_login_page) # riroschool login
 
+app.route('/bob')(bob)
+app.route('/bob/<date>')(bob)
+
+app.route('/siganpyo')(siganpyo)
+app.route('/siganpyo/<grade>/<class_nm>')(siganpyo)
+app.route('/siganpyo/<grade>/<class_nm>/<ymd>')(siganpyo)
+
 # views -> view
 app.route('/view/<path:name>')(main_view)
 app.route('/views/<path:name>')(main_view)

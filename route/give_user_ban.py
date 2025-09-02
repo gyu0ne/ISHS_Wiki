@@ -49,49 +49,67 @@ async def give_user_ban(name = None, ban_type = ''):
                 release = '1'
 
             if ban_type == 'multiple':
-                all_user = re.findall(r'([^\n]+)\n', flask.request.form.get('name', 'test').replace('\r', '') + '\n')
+                initial_user_list = re.findall(r'([^\n]+)\n', flask.request.form.get('name', 'test').replace('\r', '') + '\n')
             else:
                 if name:
-                    all_user = [name]
+                    initial_user_list = [name]
                 else:
-                    all_user = [flask.request.form.get('name', 'test')]
+                    initial_user_list = [flask.request.form.get('name', 'test')]
 
-            for name in all_user:
-                if regex_get == 'regex':
-                    type_d = 'regex'
+            final_ban_list = set()
 
-                    try:
-                        re.compile(name)
-                    except:
-                        return await re_error(conn, 23)
-                elif regex_get == 'cidr':
-                    type_d = 'cidr'
-
-                    try:
-                        ipaddress.IPv4Network(name, False)
-                    except:
-                        try:
-                            ipaddress.IPv6Network(name, False)
+            if regex_get in ['regex', 'cidr']:
+                type_d = regex_get
+                for item in initial_user_list:
+                    if type_d == 'regex':
+                        try: re.compile(item)
+                        except: return await re_error(conn, 23)
+                    else:
+                        try: ipaddress.IPv4Network(item, False)
                         except:
-                            return await re_error(conn, 45)
-                elif regex_get == 'private':
-                    type_d = 'private'
+                            try: ipaddress.IPv6Network(item, False)
+                            except: return await re_error(conn, 45)
+                    
+                    final_ban_list.add(item)
+            else:
+                type_d = None
+                student_ids_to_ban = set()
 
-                    if await acl_check(tool = 'owner_auth', ip = ip) == 1:
-                        return await re_error(conn, 0)
-                else:
-                    type_d = None
+                for item in initial_user_list:
+                    if ip_or_user(item) == 1:
+                        final_ban_list.add(item)
+                    else:
+                        curs.execute(db_change("select data from user_set where id = ? and name = 'student_id'"), [item])
+                        student_id_row = curs.fetchone()
+                        if student_id_row and student_id_row[0]:
+                            student_ids_to_ban.add(student_id_row[0])
 
+                        curs.execute(db_change("select id from user_set where name = 'real_name' and data = ?"), [item])
+                        users_with_real_name = curs.fetchall()
+                        for user in users_with_real_name:
+                            curs.execute(db_change("select data from user_set where id = ? and name = 'student_id'"), [user[0]])
+                            student_id_row = curs.fetchone()
+                            if student_id_row and student_id_row[0]:
+                                student_ids_to_ban.add(student_id_row[0])
+                
+                for student_id in student_ids_to_ban:
+                    if student_id == '졸업생': continue
+                    curs.execute(db_change("select id from user_set where name = 'student_id' and data = ?"), [student_id])
+                    associated_users = curs.fetchall()
+                    for user in associated_users:
+                        final_ban_list.add(user[0])
+
+            for name_to_ban in final_ban_list:
                 if regex_get != 'private':
-                    if name == ip:
-                        if await acl_check(tool = 'all_admin_auth', memo = 'ban (' + name + ')') == 1:
+                    if name_to_ban == ip:
+                        if await acl_check(tool = 'all_admin_auth', memo = 'ban (' + name_to_ban + ')') == 1:
                             return await re_error(conn, 3)
                     else:
-                        if await acl_check(tool = 'ban_auth', memo = 'ban (' + name + ')') == 1:
+                        if await acl_check(tool = 'ban_auth', memo = 'ban (' + name_to_ban + ')') == 1:
                             return await re_error(conn, 3)
 
                 ban_insert(conn, 
-                    name,
+                    name_to_ban,
                     end,
                     why,
                     login,
@@ -178,6 +196,6 @@ async def give_user_ban(name = None, ban_type = ''):
         
                         <button type="submit">''' + get_lang(conn, 'save') + '''</button>
                     </form>
-                ''',
+                ''', 
                 menu = [['manager', get_lang(conn, 'return')]]
-            ))   
+            ))
