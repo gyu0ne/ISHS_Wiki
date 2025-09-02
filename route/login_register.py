@@ -194,7 +194,7 @@ async def login_register():
             # 사용자 문서 자동 생성
             try:
                 doc_title = f"{real_name}({gen}기)"
-                doc_content = f"[[분류:재학생]][[분류:{gen}기]] \n [include(틀:인곽위키/인물)] \n ==개요== \n {html.escape(real_name)}님의 사용자 문서입니다."
+                doc_content = f"[[분류:재학생]][[분류:{gen}기]]\n[include(틀:인곽위키/인물)]\n==개요==\n{html.escape(real_name)}님의 사용자 문서입니다."
                 today = get_time()
                 
                 curs.execute(db_change("select title from data where title = ?"), [doc_title])
