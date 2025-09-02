@@ -123,6 +123,8 @@ async def edit(name = 'Test', section = 0, do_type = ''):
         curs = conn.cursor()
     
         ip = ip_check()
+        if ip_or_user(ip) == 1:
+            return redirect(conn, '/login')
 
         edit_req_mode = 0
         if await acl_check(name, 'document_edit') == 1:
