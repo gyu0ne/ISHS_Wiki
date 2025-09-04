@@ -52,8 +52,8 @@ async def vote_select(num = 1):
 
             return redirect(conn, '/vote/end/' + num)
         else:
-            data = '<h2>' + data_list[0][0] + '</h2>'
-            data += '<b>' + data_list[0][1] + '</b><hr class="main_hr">' if data_list[0][1] != '' else ''
+            data = '<h2>' + html.escape(data_list[0][0]) + '</h2>'
+            data += '<b>' + html.escape(data_list[0][1]) + '</b><hr class="main_hr">' if data_list[0][1] != '' else ''
             data += '<span>~ ' + time_limit + '</span><hr class="main_hr">' if time_limit != '' else ''
 
             select_data = '<select name="vote_data">'

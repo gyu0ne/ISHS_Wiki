@@ -2,7 +2,11 @@ from .tool.func import *
 
 async def main_view_file(data = ''):
     with get_db_connect() as conn:
+        if '..' in data or data.startswith(('/', '\\')):
+            return await re_error(conn, 0)
+
         if data == 'robots.txt':
+
             curs = conn.cursor()
 
             curs.execute(db_change("select data from other where name = 'robot_default'"))

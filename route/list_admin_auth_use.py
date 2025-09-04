@@ -32,7 +32,7 @@ async def list_admin_auth_use(arg_num = 1, arg_search = 'normal'):
                         do_data = do_data.split(' ')
                         do_data = do_data[0] if do_data[0] in ['ban'] else data[1]
 
-                list_data += '<li>' + await ip_pas(data[0]) + ' | ' + html.escape(do_data) + ' | ' + data[2] + '</li>'
+                list_data += '<li>' + html.escape(await ip_pas(data[0])) + ' | ' + html.escape(do_data) + ' | ' + html.escape(data[2]) + '</li>'
 
             list_data += '</ul>'
             list_data += get_next_page_bottom(conn, '/list/admin/auth_use_page/{}/' + url_pas(arg_search), arg_num, get_list)

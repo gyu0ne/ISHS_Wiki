@@ -122,15 +122,22 @@ async def login_register():
                 return "<h1>DEBUG: Error Code: 13 (Captcha failed)</h1>"
 
             # 입력값 수집 & 정규화
-            student_id = _norm(flask.request.form.get('student_id', ''))
-            user_name  = _norm(flask.request.form.get('user_name', ''))
-            real_name  = _norm(flask.request.form.get('real_name', ''))
+            if flask.session.get('riro_verified'):
+                real_name = flask.session.get('riro_name', '')
+                verified_hakbun = flask.session.get('riro_hakbun', '')
+                if verified_hakbun:
+                    student_id = f'{verified_hakbun[0]}{verified_hakbun[2:5]}'
+                else:
+                    student_id = '졸업생'
+            else:
+                real_name = _norm(flask.request.form.get('real_name', ''))
+                student_id = _norm(flask.request.form.get('student_id', ''))
             birth_y    = _norm(flask.request.form.get('birth_year', ''))
             birth_m    = _norm(flask.request.form.get('birth_month', ''))
             birth_d    = _norm(flask.request.form.get('birth_day', ''))
             gender     = _norm(flask.request.form.get('gender', ''))
             gen        = _norm(flask.request.form.get('generation', ''))
-
+            user_name  = _norm(flask.request.form.get('user_name', ''))
             user_pw     = flask.request.form.get('pw', '')
             user_repeat = flask.request.form.get('pw2', '')
 
@@ -193,8 +200,8 @@ async def login_register():
 
             # 사용자 문서 자동 생성
             try:
-                doc_title = f"{real_name}({gen}기)"
-                doc_content = f"[[분류:재학생]][[분류:{gen}기]]\n[include(틀:인곽위키/인물)]\n==개요==\n{html.escape(real_name)}님의 사용자 문서입니다."
+                doc_title = f"{html.escape(real_name)}({html.escape(gen)}기)"
+                doc_content = f"[[분류:재학생]][[분류:{html.escape(gen)}기]]\n[include(틀:인곽위키/인물)]\n==개요==\n{html.escape(real_name)}님의 사용자 문서입니다."
                 today = get_time()
                 
                 curs.execute(db_change("select title from data where title = ?"), [doc_title])
@@ -228,55 +235,15 @@ async def login_register():
             flask.session.pop('riro_hakbun', None)
 
             # 성공 화면
-            now = datetime.datetime.now()
             return easy_minify(conn, flask.render_template(
                 skin_check(conn),
                 imp=[get_lang(conn, 'register'), await wiki_set(),
                      await wiki_custom(conn), wiki_css([0, 0])],
-                data=f"""
-                    <form method="post">
-                        <div style="padding:8px 0;">
-                            <input placeholder="아이디" name="user_name" type="text" value="{html.escape(user_name)}" readonly>
-                            <hr class="main_hr">
-                            <input placeholder="학번" name="student_id" type="text" inputmode="numeric" value="{html.escape(student_id)}" readonly>
-                            <small style="display:block; margin-top:4px; color:#888; text-align:left;">
-                            학번은 4자리로 입력하세요.(ex. 1307)
-                            </small>
-                        </div>
-                        <hr class="main_hr">
-
-                        <div style="padding:8px 0;">
-                            <input placeholder="이름" name="real_name" type="text" value="{html.escape(real_name)}" readonly>
-                        </div>
-                        <hr class="main_hr">
-
-                        <label>생년월일</label>
-                        <div style="display:flex; gap:8px; align-items:center;">
-                            <input name="birth_year" type="number" value="{html.escape(birth_y)}" style="width:6em;" readonly>
-                            <span>년</span>
-                            <input name="birth_month" type="number" value="{html.escape(birth_m)}" style="width:4em;" readonly>
-                            <span>월</span>
-                            <input name="birth_day" type="number" value="{html.escape(birth_d)}" style="width:4em;" readonly>
-                            <span>일</span>
-
-                            <input name="generation" type="number"
-                                   value="{html.escape(gen or str(now.year - 1993))}"
-                                   style="width:4em;" readonly>
-                            <span>기</span>
-                        </div>
-                        <hr class="main_hr">
-
-
-
-                        <label for="gender">성별</label>
-                        <input type="text" value="{'남성' if gender=='male' else '여성'}" readonly>
-                        <hr class="main_hr">
-
-                        <div style="margin-top:12px; padding:10px; border:1px solid #c7e7c7; background:#eaffe6; color:#126b12; border-radius:6px;">
-                            회원가입에 성공하였습니다. <a href="/login">로그인 하러 가기</a>
-                        </div>
-                    </form>
-                """,
+                data=f'''
+                    <div style="margin-top:12px; padding:10px; border:1px solid #c7e7c7; background:#eaffe6; color:#126b12; border-radius:6px;">
+                        회원가입에 성공하였습니다. <a href="/login">로그인 하러 가기</a>
+                    </div>
+                ''',
                 menu=[['user', get_lang(conn, 'return')]]
             ))
 
@@ -284,10 +251,7 @@ async def login_register():
             # GET: 빈 폼
             curs.execute(db_change("select data from other where name = 'password_min_length'"))
             db_data = curs.fetchall()
-            if db_data and db_data[0][0] != '':
-                password_min_length = ' (' + get_lang(conn, 'password_min_length') + ' : ' + db_data[0][0] + ')'
-            else:
-                password_min_length = ''
+            password_min_length = f" ({get_lang(conn, 'password_min_length')} : {db_data[0][0]})" if db_data and db_data[0][0] != '' else ''
 
             now = datetime.datetime.now()
             default_y = str(now.year - 16)
@@ -299,34 +263,43 @@ async def login_register():
             verified_hakbun = flask.session.get('riro_hakbun', '')
             if verified_hakbun:
                 verified_hakbun = f'{verified_hakbun[0]}{verified_hakbun[2:5]}'
-            print(verified_hakbun)
+
+            if verified_hakbun:
+                student_id_html = f'''
+                    <div style="padding:8px 0;">
+                        <b>학번</b>: {html.escape(verified_hakbun)}
+                        <small style="display:block; margin-top:4px; color:#888; text-align:left;">
+                        학생 인증 정보가 자동으로 입력됩니다.
+                        </small>
+                    </div>
+                '''
+            else:
+                student_id_html = '''
+                    <input placeholder="학번" name="student_id" type="text">
+                    <small style="display:block; margin-top:4px; color:#888; text-align:left;">
+                    학번은 4자리로 입력하세요.(ex. 1307) 졸업생인 경우, 공란으로 비워두세요.
+                    </small>
+                '''
+
+            if verified_name:
+                real_name_html = f'''
+                    <div style="padding:8px 0;">
+                        <b>이름</b>: {html.escape(verified_name)}
+                    </div>
+                '''
+            else:
+                real_name_html = '<input placeholder="이름" name="real_name" type="text" required>'
 
             return easy_minify(conn, flask.render_template(
                 skin_check(conn),
-                imp=[
-                    get_lang(conn, 'register'),
-                    await wiki_set(),
-                    await wiki_custom(conn),
-                    wiki_css([0, 0])
-                ],
-                data=f"""
+                imp=[get_lang(conn, 'register'), await wiki_set(), await wiki_custom(conn), wiki_css([0, 0])],
+                data=f'''
                     <form method="post">
-
                         <input placeholder="아이디" name="user_name" type="text" required>
                         <hr class="main_hr">
-
-                        {'''''' if verified_hakbun else ''}
-                        <input placeholder="학번"
-                            name="student_id"
-                            type="text"
-                            value="{html.escape(verified_hakbun)}" {'readonly' if verified_hakbun else ''}>
-                        <small style="display:block; margin-top:4px; color:#888; text-align:left;">
-                        { '학생 인증 정보가 자동으로 입력됩니다.' if verified_hakbun else '학번은 4자리로 입력하세요.(ex. 1307) 졸업생인 경우, 공란으로 비워두세요.'}
-                        </small>
+                        {student_id_html}
                         <hr class="main_hr">
-
-                        {'''''' if verified_name else ''}
-                        <input placeholder="이름" name="real_name" type="text" value="{html.escape(verified_name)}" {'readonly' if verified_name else ''} required>
+                        {real_name_html}
                         <hr class="main_hr">
 
                         <label>생년월일</label>
@@ -337,19 +310,10 @@ async def login_register():
                             <span>월</span>
                             <input name="birth_day" type="number" min="1" max="31" value="{default_d}" style="width:4em;" required>
                             <span>일</span>
-                            
-                            <input name="generation"
-                                type="number"
-                                inputmode="numeric"
-                                min="1"
-                                step="1"
-                                value="{default_g}"
-                                style="width:4em;"
-                                required>
+                            <input name="generation" type="number" inputmode="numeric" min="1" step="1" value="{default_g}" style="width:4em;" required>
                             <span>기</span>
                         </div>
                         <hr class="main_hr">
-
 
                         <label for="gender">성별</label>
                         <select name="gender" id="gender" required>
@@ -361,51 +325,48 @@ async def login_register():
 
                         <input placeholder="{get_lang(conn, 'password')}{password_min_length}" name="pw" type="password" autocomplete="new-password" required>
                         <hr class="main_hr">
-
                         <input placeholder="{get_lang(conn, 'password_confirm')}" name="pw2" type="password" autocomplete="new-password" required>
                         <hr class="main_hr">
 
-                        <hr class="main_hr">
                         <label>
-                          <div style="max-height:200px; overflow-y:auto; border:1px solid #ccc; padding:10px; background:#f9f9f9; white-space:pre-wrap; text-align:left; font-size:14px;">
-제1조 (목적)
-본 약관은 인곽위키(이하 “위키”)의 이용 조건, 권리와 의무, 책임 사항 등을 규정함을 목적으로 한다.
+                            <div style="max-height:200px; overflow-y:auto; border:1px solid #ccc; padding:10px; background:#f9f9f9; white-space:pre-wrap; text-align:left; font-size:14px;">
+            제1조 (목적)
+            본 약관은 인곽위키(이하 “위키”)의 이용 조건, 권리와 의무, 책임 사항 등을 규정함을 목적으로 한다.
 
-제2조 (회원의 의무)
-회원은 관련 법령, 본 약관, 위키 내 규정을 준수하여야 한다.
-회원은 타인의 권리를 침해하거나 불법적인 콘텐츠를 게재해서는 안 된다.
-계정의 관리 책임은 회원 본인에게 있으며, 타인에게 양도·대여할 수 없다.
+            제2조 (회원의 의무)
+            회원은 관련 법령, 본 약관, 위키 내 규정을 준수하여야 한다.
+            회원은 타인의 권리를 침해하거나 불법적인 콘텐츠를 게재해서는 안 된다.
+            계정의 관리 책임은 회원 본인에게 있으며, 타인에게 양도·대여할 수 없다.
 
-제3조 (콘텐츠의 저작권 및 사용)
-회원이 위키에 기여한 모든 문서 및 자료는 CC-BY-SA 라이선스에 따라 공개된다.
-회원은 기여한 콘텐츠에 대한 저작권을 보유하되, 위키 운영을 위해 무상·영구적으로 이용 허락한 것으로 간주한다.
+            제3조 (콘텐츠의 저작권 및 사용)
+            회원이 위키에 기여한 모든 문서 및 자료는 CC-BY-SA 라이선스에 따라 공개된다.
+            회원은 기여한 콘텐츠에 대한 저작권을 보유하되, 위키 운영을 위해 무상·영구적으로 이용 허락한 것으로 간주한다.
 
-제4조 (개인정보 보호)
-위키는 회원가입 및 운영에 필요한 최소한의 개인정보만을 수집·관리한다.
-위키는 회원의 동의 없이 개인정보를 제3자에게 제공하지 않는다. 단, 법령에 따른 요청이 있는 경우 예외로 한다.
+            제4조 (개인정보 보호)
+            위키는 회원가입 및 운영에 필요한 최소한의 개인정보만을 수집·관리한다.
+            위키는 회원의 동의 없이 개인정보를 제3자에게 제공하지 않는다. 단, 법령에 따른 요청이 있는 경우 예외로 한다.
 
-제5조 (운영자의 권한)
-운영자는 위키의 원활한 운영을 위하여 필요 시 회원의 접근을 제한하거나 게시물을 삭제할 수 있다.
-운영자는 기술적, 정책적 사유에 따라 위키를 변경·중단할 수 있으며, 이에 대한 책임을 지지 않는다.
+            제5조 (운영자의 권한)
+            운영자는 위키의 원활한 운영을 위하여 필요 시 회원의 접근을 제한하거나 게시물을 삭제할 수 있다.
+            운영자는 기술적, 정책적 사유에 따라 위키를 변경·중단할 수 있으며, 이에 대한 책임을 지지 않는다.
 
-제6조 (면책 조항)
-위키는 회원이 작성한 콘텐츠의 정확성, 신뢰성에 대해 책임을 지지 않는다. 모든 콘텐츠는 작성자 본인의 책임 하에 게시된다.
+            제6조 (면책 조항)
+            위키는 회원이 작성한 콘텐츠의 정확성, 신뢰성에 대해 책임을 지지 않는다. 모든 콘텐츠는 작성자 본인의 책임 하에 게시된다.
 
-제7조 (약관의 변경)
-본 약관은 필요 시 개정될 수 있으며, 변경 사항은 위키 내 공지를 통해 회원에게 알린다. 변경된 약관에 동의하지 않을 경우 회원 탈퇴를 요청할 수 있다.
+            제7조 (약관의 변경)
+            본 약관은 필요 시 개정될 수 있으며, 변경 사항은 위키 내 공지를 통해 회원에게 알린다. 변경된 약관에 동의하지 않을 경우 회원 탈퇴를 요청할 수 있다.
 
-제8조 (회원가입)
-1. 회원은 소정의 절차를 거쳐 본 약관에 동의함으로써 가입된다.
-2. 회원은 가입 시 정확한 학번, 성명, 성별, 기수 등을 기재하여야 한다.
-3. 회원가입과 동시에, 해당 학번·성명·성별·기수 정보를 기반으로 위키 내 인물 문서가 자동 생성됨에 동의한 것으로 간주한다.
-4. 회원이 허위 정보를 기재할 경우, 위키 이용이 제한되거나 계정이 삭제될 수 있다.
-                          </div>
-                          <br>
-                          <input type="checkbox" name="agreement" value="agree" required> 위 약관에 동의합니다.
+            제8조 (회원가입)
+            1. 회원은 소정의 절차를 거쳐 본 약관에 동의함으로써 가입된다.
+            2. 회원은 가입 시 정확한 학번, 성명, 성별, 기수 등을 기재하여야 한다.
+            3. 회원가입과 동시에, 해당 학번·성명·성별·기수 정보를 기반으로 위키 내 인물 문서가 자동 생성됨에 동의한 것으로 간주한다.
+            4. 회원이 허위 정보를 기재할 경우, 위키 이용이 제한되거나 계정이 삭제될 수 있다.
+                            </div>
+                            <br>
+                            <input type="checkbox" name="agreement" value="agree" required> 위 약관에 동의합니다.
                         </label>
                         <hr class="main_hr">
 
-                        
                         {await captcha_get(conn)}
 
                         <button type="submit">{get_lang(conn, 'save')}</button>
@@ -413,6 +374,6 @@ async def login_register():
                         <span>기수, 성별 등이 실제와 다를 경우 향후 이용에 불이익이 있을 수 있습니다. 부적절한 아이디는 제제될 수 있습니다.</span>
                         <span>로그인은 아이디로 이루어집니다.</span>
                     </form>
-                """,
+                ''',
                 menu=[['user', get_lang(conn, 'return')]]
             ))

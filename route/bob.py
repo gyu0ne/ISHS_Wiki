@@ -46,7 +46,8 @@ async def bob(date = ''):
                 result = [f"{date[0:4]}년 {date[4:6]}월 {date[6:8]}일 급식 정보:"]
                 for meal in meals:
                     meal_type = meal_names.get(meal['MMEAL_SC_CODE'], '기타')
-                    menu = meal['DDISH_NM'].replace('<br/>', '\n')
+                    menu = html.escape(meal['DDISH_NM']).replace('&lt;br/&gt;', '\n')
+
                     result.append(f"\n[{meal_type}]\n{menu}")
                 content = "\n".join(result)
 

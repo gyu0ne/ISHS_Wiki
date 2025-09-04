@@ -2,6 +2,9 @@ from .tool.func import *
 
 async def main_view_image(name = ''):
     with get_db_connect() as conn:
+        if '..' in name or name.startswith(('/', '\\')):
+            return await re_error(conn, 0)
+
         if await acl_check('', 'render') != 1:
             name = re.sub(r'\.cache_v(?:[0-9]+)$', '', name)
             mime_type = re.search(r'([^.]+)$', name)

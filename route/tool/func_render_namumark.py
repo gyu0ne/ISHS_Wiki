@@ -65,7 +65,9 @@ class class_do_render_namumark:
         if self.do_type == 'exter':
             self.render_data = html.escape(self.render_data)
 
-        self.render_data = '<back_br>\n' + self.render_data + '\n<front_br>'
+        self.render_data = '''<back_br>
+' + self.render_data + '
+<front_br>'''
         self.render_data_js = ''
 
         self.curs.execute(db_change('select data from other where name = "link_case_insensitive"'))
@@ -79,9 +81,9 @@ class class_do_render_namumark:
             return name + ' (RENDER LANG)'
 
     def get_tool_js_safe(self, data):
-        data = data.replace('\n', '\\\\n')
+        data = data.replace('\n', '\\n')
         data = data.replace('\\', '\\\\')
-        data = data.replace("'", "\\'")
+        data = data.replace("‘", "\\‘")
         data = data.replace('"', '\\"')
 
         return data
@@ -607,6 +609,7 @@ class class_do_render_namumark:
                 else:
                     video_code = 'https://player.vimeo.com/video/' + video_code
 
+                video_code = html.escape(video_code)
                 video_width = self.get_tool_css_safe(video_width)
                 video_height = self.get_tool_css_safe(video_height)
 
@@ -884,7 +887,7 @@ class class_do_render_namumark:
                     'katex.render("' + data + '", document.getElementById(\"' + name_ob + '\"));\n' + \
                 '} catch {\n' + \
                     'if(document.getElementById(\"' + name_ob + '\")) {\n' + \
-                        'document.getElementById(\"' + name_ob + '\").innerHTML = "<span style=\'color: red;\'>' + data_html + '</span>";\n' + \
+                        'document.getElementById(\"' + name_ob + '\").innerHTML = "<span style=\"color: red;\">' + data_html + '</span>";\n' + \
                     '}\n' + \
                 '}\n' + \
             ''
@@ -1450,7 +1453,7 @@ class class_do_render_namumark:
         footnote_number_set = get_main_skin_set(self.conn, self.flask_session, 'main_css_footnote_number', self.ip)
         footnote_number_view_set = get_main_skin_set(self.conn, self.flask_session, 'main_css_view_real_footnote_num', self.ip)
 
-        footnote_regex = re.compile(r'(?:\[\*((?:(?!\[\*|\]| ).)+)?(?: ((?:(?!\[\*|\]).)+))?\]|\[(각주|footnote)\])', re.I)
+        footnote_regex = re.compile(r'(?:\\\[\*((?:(?!\[\*|\]| ).)+)?(?: ((?:(?!\[\*|\]).)+))?\]|\[(각주|footnote)\])', re.I)
         footnote_count_all = len(re.findall(footnote_regex, self.render_data)) * 4
         while 1:
             footnote_num += 1
@@ -1746,7 +1749,7 @@ class class_do_render_namumark:
                         table_parameter_all['rowspan'] = re.sub(r'[^0-9]+', '', table_parameter)
                     elif table_parameter in ('(', ':', ')'):
                         table_align_auto = 0
-                        if table_parameter == '(':
+                        if table_parameter == '(': 
                             table_parameter_all['td'] += 'text-align: left !important;'
                         elif table_parameter == ':':
                             table_parameter_all['td'] += 'text-align: center !important;'
@@ -1952,7 +1955,7 @@ class class_do_render_namumark:
                             middle_data_pass = ""
                         
                         data_name = self.get_tool_data_storage('', '', middle_data_org)
-                    elif middle_name == '#!wiki':
+                    elif middle_name == "#!wiki":
                         if middle_slash:
                             middle_data_org = re.sub(r'<(\/?(?:slash)_(?:[0-9]+)(?:[^<>]+))>', '<temp_' + middle_slash + '>', middle_data_org)
                             self.render_data = re.sub(middle_regex, lambda x : middle_data_org, self.render_data, 1)
@@ -2004,7 +2007,7 @@ class class_do_render_namumark:
                                 break
 
                         wiki_data = self.get_tool_data_revert(wiki_data)
-                        wiki_data = re.sub('(^\n|\n$)', '', wiki_data)
+                        wiki_data = re.sub(r'(^\n|\n$)', '', wiki_data)
 
                         inter_data["inter_data_" + str(inter_count)] = wiki_data
                         middle_data_pass = '<inter_data_' + str(inter_count) + '>'
@@ -2048,7 +2051,7 @@ class class_do_render_namumark:
                             wiki_data_folding = 'test'
 
                         wiki_data = self.get_tool_data_revert(wiki_data)
-                        wiki_data = re.sub('(^\n|\n$)', '', wiki_data)
+                        wiki_data = re.sub(r'(^\n|\n$)', '', wiki_data)
 
                         inter_data["inter_data_" + str(inter_count)] = wiki_data
                         wiki_data_end = '<inter_data_' + str(inter_count) + '>'
@@ -2084,9 +2087,9 @@ class class_do_render_namumark:
                             self.render_data_js += 'hljs.highlightAll();\n'
                             
                         if wiki_data.count('\n') > 10:
-                            self.render_data_js += 'hljs.lineNumbersBlock(document.getElementById("opennamu_syntax_' + str(syntax_count) + '"));\n'
+                            self.render_data_js += 'hljs.lineNumbersBlock(document.getElementById("opennamu_syntax_" + str(syntax_count) + ""));\n'
 
-                        data_name = self.get_tool_data_storage('<pre id="syntax"><code class="' + wiki_data_syntax + '" id="opennamu_syntax_' + str(syntax_count) + '">' + wiki_data, '</code></pre>', middle_data_org)
+                        data_name = self.get_tool_data_storage('<pre id="syntax"><code class="' + wiki_data_syntax + '" id="opennamu_syntax_" + str(syntax_count) + ">' + wiki_data, '</code></pre>', middle_data_org)
                         
                         syntax_count += 1
                     elif middle_name in ('#!dark', '#!white'):

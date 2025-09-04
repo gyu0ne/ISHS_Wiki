@@ -29,7 +29,7 @@ async def vote_end(num = 1):
 
         vote_data = re.findall(r'([^\n]+)', data_list[0][2].replace('\r', ''))
         for i in range(0, len(vote_data)):
-            data += '<h2>' + vote_data[i] + '</h2>'
+            data += '<h2>' + html.escape(vote_data[i]) + '</h2>'
             data += '<ul>'
 
             curs.execute(db_change('select user from vote where id = ? and user != "" and data = ?'), [num, str(i)])
@@ -43,7 +43,7 @@ async def vote_end(num = 1):
             data += '</ul>'
 
         return easy_minify(conn, flask.render_template(skin_check(conn),
-            imp = [get_lang(conn, 'result_vote'), await wiki_set(), await wiki_custom(conn), wiki_css(['(' + num + ')', 0])],
-            data = data,
-            menu = [['vote', get_lang(conn, 'return')]]
+            imp=[get_lang(conn, 'result_vote'), await wiki_set(), await wiki_custom(conn), wiki_css(['(' + num + ')', 0])],
+            data=data,
+            menu=[['vote', get_lang(conn, 'return')]]
         ))

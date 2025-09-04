@@ -2,6 +2,9 @@ from .tool.func import *
 
 async def main_view(name = ''):
     with get_db_connect() as conn:
+        if '..' in name:
+            return await re_error(conn, 0)
+
         file_name = re.search(r'([^/]+)$', name)
         if not file_name:
             return ''

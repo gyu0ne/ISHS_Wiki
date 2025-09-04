@@ -4,6 +4,61 @@ from .go_api_w_raw import api_w_raw
 from .go_api_w_render import api_w_render
 from .go_api_w_page_view import api_w_page_view
 
+def _get_user_profile_table_html(conn, user_id: str) -> str:
+    """
+    user_set 테이블에서 user_id의 프로필을 읽어 안전한 HTML 표로 반환.
+    값 없으면 '-' 처리. DB 조회에는 raw user_id를 사용한다.
+    """
+    c = conn.cursor()
+
+    def _get(name: str) -> str:
+        c.execute(db_change("select data from user_set where id = ? and name = ?"), [user_id, name])
+        row = c.fetchone()
+        return (row[0] or '').strip() if row and row[0] is not None else ''
+
+    student_id = _get('student_id') or '졸업생'
+    real_name  = _get('real_name')
+    by = _get('birth_year')
+    bm = _get('birth_month')
+    bd = _get('birth_day')
+    gender     = _get('gender')
+    generation = _get('generation')
+    acl_val    = (_get('acl') or 'user').lower()
+
+    # 생년월일 조합
+    if (by or '').isdigit() and (bm or '').isdigit() and (bd or '').isdigit():
+        birth_str = f"{by}-{bm.zfill(2)}-{bd.zfill(2)}"
+    else:
+        birth_str = '-'
+
+    # 성별/권한 표기
+    gender_kr = '남성' if gender == 'male' else ('여성' if gender == 'female' else '-')
+    acl_kr_map = {'owner': '운영자', 'admin': '관리자', 'user': '일반'}
+    acl_kr = acl_kr_map.get(acl_val, acl_val)
+
+    # 이스케이프
+    sid = html.escape(student_id or '-')
+    rnm = html.escape(real_name  or '-')
+    bth = html.escape(birth_str)
+    gen = html.escape(generation or '-')
+    aclh = html.escape(acl_kr or '-')
+
+    return f"""
+    <div class="opennamu-user-profile">
+      <h2>사용자 정보</h2>
+      <table class="user-info" style="width:100%; max-width:720px;">
+        <tr><th style="text-align:left; width:120px;">학번</th><td>{sid}</td></tr>
+        <tr><th style="text-align:left;">이름</th><td>{rnm}</td></tr>
+        <tr><th style="text-align:left;">생년월일</th><td>{bth}</td></tr>
+        <tr><th style="text-align:left;">성별</th><td>{gender_kr}</td></tr>
+        <tr><th style="text-align:left;">기수</th><td>{gen}</td></tr>
+        <tr><th style="text-align:left;">권한</th><td>{aclh}</td></tr>
+      </table>
+      <hr class="main_hr">
+    </div>
+    """
+
+
 async def view_w(name = '대문', do_type = ''):
     with get_db_connect() as conn:
         curs = conn.cursor()
@@ -27,6 +82,12 @@ async def view_w(name = '대문', do_type = ''):
         if doc_data_raw["response"] == "ok" and '[include(틀:인곽위키/인물)]' in doc_data_raw["data"]:
             if ip_or_user(ip) == 1:
                 return await re_error(conn, 1)
+            
+        # ★ user: 문서도 비로그인 접근 제한 (프로필 표 포함 페이지)
+        if re.search(r"^user:([^/]*)", name):
+            if ip_or_user(ip) == 1:
+                return await re_error(conn, 1)
+            
             
         uppage = re.sub(r"/([^/]+)$", '', name)
         uppage = 0 if uppage == name else uppage
@@ -96,12 +157,23 @@ async def view_w(name = '대문', do_type = ''):
             name_view = name
             doc_type = 'user'
             user_name = ''
+            raw_user_name = ''   # DB 조회용
+            esc_user_name = ''   # 출력용
 
             match = re.search(r"^user:([^/]*)", name)
             if match:
-                user_name = html.escape(match.group(1))
+                raw_user_name = match.group(1).strip()
+                esc_user_name = html.escape(raw_user_name)
+                user_name = esc_user_name   # 나머지 기존 로직과 호환을 위해 유지
             
             user_doc = ''
+
+            # ★ 프로필 표: 본문 맨 위에 주입
+            try:
+                if raw_user_name:
+                    user_doc += _get_user_profile_table_html(conn, raw_user_name)
+            except Exception as e:
+                print(f"USER PROFILE RENDER ERROR for {raw_user_name}: {e}")
 
             # S admin or owner 특수 틀 추가
             if await acl_check(tool = 'all_admin_auth', ip = user_name) != 1:
@@ -121,13 +193,13 @@ async def view_w(name = '대문', do_type = ''):
                     if db_data and db_data[0][0] != '':
                         user_doc += db_data[0][0] + '<br>'
             # E
-            
-            user_doc += '''
-                <div id="opennamu_get_user_info">''' + html.escape(user_name) + '''</div>
-                <hr class="main_hr">
-            '''
-            if name == 'user:' + user_name:
-                menu += [['w/' + url_pas(name) + '/' + url_pas(now_time.split()[0]), get_lang(conn, 'today_doc')]]
+
+            # (중요) 기존의 작은 "사용자 이름/권한/상태/레벨" 박스를 띄우던 블록을 제거했습니다.
+            # user_doc += '''
+            #     <div id="opennamu_get_user_info">''' + esc_user_name + '''</div>
+            #     <hr class="main_hr">
+            # '''
+
         elif re.search(r"^file:", name):
             curs.execute(db_change('select id from history where title = ? order by date desc limit 1'), [name])
             db_data = curs.fetchall()

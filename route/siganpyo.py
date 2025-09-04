@@ -82,7 +82,8 @@ async def siganpyo(grade = '', class_nm = '', ymd = ''):
 
                     for class_info in timetable:
                         period = class_info.get('PERIO', '교시 정보 없음')
-                        subject = class_info.get('ITRT_CNTNT', '수업 없음')
+                        subject = html.escape(class_info.get('ITRT_CNTNT', '수업 없음'))
+
                         content += f"{period}교시: {subject}<br>"
                 except (KeyError, IndexError):
                     content = f"{ymd[0:4]}년 {ymd[4:6]}월 {ymd[6:8]}일에는 시간표 정보가 없습니다."
