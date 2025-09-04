@@ -7,6 +7,8 @@ import logging
 from route.tool.func import *
 from route import *
 from route.riro_login_page import riro_login_page
+from route.register_select_page import register_select_page
+from route.register_teacher_page import register_teacher_page
 from hypercorn.asyncio import serve
 from hypercorn.config import Config
 
@@ -761,7 +763,9 @@ app.route('/change/email/check', methods = ['POST', 'GET'])(user_setting_email_c
 
 app.route('/login', methods = ['POST', 'GET'])(login_login)
 app.route('/login/2fa', methods = ['POST', 'GET'])(login_login_2fa)
-app.route('/register', methods = ['POST', 'GET'])(login_register)
+app.route('/register', methods = ['POST', 'GET'])(register_select_page)
+app.route('/register_form', methods = ['POST', 'GET'])(login_register)
+app.route('/register_teacher', methods = ['POST', 'GET'])(register_teacher_page)
 app.route('/register/email', methods = ['POST', 'GET'])(login_register_email)
 app.route('/register/email/check', methods = ['POST', 'GET'])(login_register_email_check)
 app.route('/register/submit', methods = ['POST', 'GET'])(login_register_submit)
