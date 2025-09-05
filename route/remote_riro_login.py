@@ -125,7 +125,7 @@ def riro_login_check(riro_id, riro_pw):
 
 # 예시 사용법
 if __name__ == "__main__":
-    riro_id = "25-10307"
-    riro_pw = "Gyuwoni0316!"
+    riro_id = "id"
+    riro_pw = "pw"
     result = riro_login_check(riro_id, riro_pw)
     print(result)

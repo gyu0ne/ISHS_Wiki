@@ -11,7 +11,7 @@ from selenium.webdriver.support import expected_conditions as EC
 # 하지만 웹 요청마다 브라우저를 띄우는 것은 매우 비효율적이므로,
 # 이 함수는 반드시 백그라운드에서 비동기적으로 실행되어야 합니다.
 
-def riro_login_check_teacher(riro_id, riro_pw):
+def riro_login_check(riro_id, riro_pw):
     """
     성공 시: {'status': 'success', 'name': '이름'}
     실패 시: {'status': 'error', 'message': '에러 메시지'}
@@ -30,17 +30,25 @@ def riro_login_check_teacher(riro_id, riro_pw):
         login_button = WebDriverWait(driver, 10).until(
             EC.presence_of_element_located((By.XPATH, '//*[@id="container"]/div/div/div[5]/div/p[2]/a'))
         )
+        print('DEBUG: finding login button')
         login_button.click()
+        print('DEBUG: login button clicked')
 
         # ID/PW 입력 및 로그인 시도
         id_box = WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.ID, 'id')))
+        print('DEBUG: finding id box')
         pw_box = WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.ID, 'pw')))
+        print('DEBUG: finding pw box')
 
         id_box.send_keys(riro_id)
+        print('DEBUG: sended id')
         pw_box.send_keys(riro_pw)
+        print('DEBUG: sended pw')
 
         send_button = driver.find_element(By.XPATH, '//*[@id="container"]/div/section/div[2]/div[2]/form/button')
+        print('DEBUG: finding send button')
         send_button.click()
+        print('DEBUG: clicked send button')
 
         # 로그인 실패 알림 확인
         try:
@@ -53,22 +61,44 @@ def riro_login_check_teacher(riro_id, riro_pw):
             pass # 알림이 없으면 성공
 
         # 개인정보 페이지로 이동
-        info_button = WebDriverWait(driver, 10).until(
-            EC.presence_of_element_located((By.XPATH, '//*[@id="container"]/div/div/div[5]/div[1]/div[2]/div/div/a[1]'))
-        )
-        info_button.click()
-
-        # 개인정보 확인을 위한 비밀번호 재입력
-        pw_box_info = WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.ID, 'pw')))
+        if len(riro_id) == 8:
+            info_button = WebDriverWait(driver, 10).until(
+                EC.presence_of_element_located((By.XPATH, '//*[@id="container"]/div/div/div[5]/div[1]/div[2]/div/div/a[1]'))
+            )
+            print('DEBUG: finging info button')
+            info_button.click()
+            print('DEBUG: clicked info button')
+        else:
+            info_button = WebDriverWait(driver, 10).until(
+                EC.presence_of_element_located((By.XPATH, '//*[@id="container"]/div/div[1]/div[5]/div[1]/div[2]/div/div[2]/a[1]'))
+            )
+            print('DEBUG: finding info button for email login')        
+            info_button.click()
+            print('DEBUG: clicked info button for email login')
+ 
+        pw_box_info = WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.XPATH, '//*[@id="pw"]')))
+        print('DEBUG: finding pw box for info')
         pw_box_info.send_keys(riro_pw)
+        print('DEBUG: sended pw for info')
 
         send_button_info = driver.find_element(By.XPATH, '//*[@id="container"]/div/form/div/button[2]')
+        print('DEBUG: finding send button for info')
         send_button_info.click()
+        print('DEBUG: clicked send button for info')
 
-        # 정보 추출 (XPath는 교사 정보에 맞게 수정 필요)
-        name = WebDriverWait(driver, 10).until(
-            EC.presence_of_element_located((By.XPATH, '//*[@id="container"]/div/form/div[2]/table/tbody/tr[1]/td[2]/div/div'))
-        ).text
+        # 정보 추출
+        if not len(riro_id) == 8:
+            name = WebDriverWait(driver, 10).until(
+                    EC.presence_of_element_located((By.XPATH, '//*[@id="container"]/div/form/div[2]/table/tbody/tr[2]/td[4]/div/div'
+        ))
+                ).text
+            print(f'DEBUG: extracted name: {name}')
+        else:
+            name = WebDriverWait(driver, 10).until(
+                    EC.presence_of_element_located((By.XPATH, '//*[@id="container"]/div/form/div[2]/table/tbody/tr[1]/td[4]/div/div'
+        ))
+                ).text
+            print(f'DEBUG: extracted name: {name}')
 
         return {'status': 'success', 'name': name}
 
@@ -84,5 +114,7 @@ def riro_login_check_teacher(riro_id, riro_pw):
 
 # 예시 사용법
 if __name__ == "__main__":
-    # 이 파일은 직접 실행되지 않도록 pass 처리합니다.
-    pass
+    riro_id = "id"
+    riro_pw = "pw"
+    result = riro_login_check(riro_id, riro_pw)
+    print(result)
