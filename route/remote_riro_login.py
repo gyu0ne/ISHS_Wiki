@@ -31,17 +31,25 @@ def riro_login_check(riro_id, riro_pw):
         login_button = WebDriverWait(driver, 10).until(
             EC.presence_of_element_located((By.XPATH, '//*[@id="container"]/div/div/div[5]/div/p[2]/a'))
         )
+        print('DEBUG: finding login button')
         login_button.click()
+        print('DEBUG: login button clicked')
 
         # ID/PW 입력 및 로그인 시도
         id_box = WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.ID, 'id')))
+        print('DEBUG: finding id box')
         pw_box = WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.ID, 'pw')))
+        print('DEBUG: finding pw box')
 
         id_box.send_keys(riro_id)
+        print('DEBUG: sended id')
         pw_box.send_keys(riro_pw)
+        print('DEBUG: sended pw')
 
         send_button = driver.find_element(By.XPATH, '//*[@id="container"]/div/section/div[2]/div[2]/form/button')
+        print('DEBUG: finding send button')
         send_button.click()
+        print('DEBUG: clicked send button')
 
         # 로그인 실패 알림 확인
         try:
@@ -54,27 +62,54 @@ def riro_login_check(riro_id, riro_pw):
             pass # 알림이 없으면 성공
 
         # 개인정보 페이지로 이동
-        info_button = WebDriverWait(driver, 10).until(
-            EC.presence_of_element_located((By.XPATH, '//*[@id="container"]/div/div/div[5]/div[1]/div[2]/div/div/a[1]'))
-        )
-        info_button.click()
-
-        # 개인정보 확인을 위한 비밀번호 재입력
-        pw_box_info = WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.ID, 'pw')))
+        if len(riro_id) == 8:
+            info_button = WebDriverWait(driver, 10).until(
+                EC.presence_of_element_located((By.XPATH, '//*[@id="container"]/div/div/div[5]/div[1]/div[2]/div/div/a[1]'))
+            )
+            print('DEBUG: finging info button')
+            info_button.click()
+            print('DEBUG: clicked info button')
+        else:
+            info_button = WebDriverWait(driver, 10).until(
+                EC.presence_of_element_located((By.XPATH, '//*[@id="container"]/div/div[1]/div[5]/div[1]/div[2]/div/div[2]/a[1]'))
+            )
+            print('DEBUG: finding info button for email login')        
+            info_button.click()
+            print('DEBUG: clicked info button for email login')
+ 
+        pw_box_info = WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.XPATH, '//*[@id="pw"]')))
+        print('DEBUG: finding pw box for info')
         pw_box_info.send_keys(riro_pw)
+        print('DEBUG: sended pw for info')
 
         send_button_info = driver.find_element(By.XPATH, '//*[@id="container"]/div/form/div/button[2]')
+        print('DEBUG: finding send button for info')
         send_button_info.click()
+        print('DEBUG: clicked send button for info')
 
         # 정보 추출
-        name = WebDriverWait(driver, 10).until(
-            EC.presence_of_element_located((By.XPATH, '//*[@id="container"]/div/form/div[2]/table/tbody/tr[1]/td[4]/div/div'
-   ))
-        ).text
-        hakbun = WebDriverWait(driver, 10).until(
-            EC.presence_of_element_located((By.XPATH, '//*[@id="container"]/div/form/div[2]/table/tbody/tr[2]/td[4]/div/div'
-   ))
-        ).text
+        if not len(riro_id) == 8:
+            name = WebDriverWait(driver, 10).until(
+                    EC.presence_of_element_located((By.XPATH, '//*[@id="container"]/div/form/div[2]/table/tbody/tr[2]/td[4]/div/div'
+        ))
+                ).text
+            print(f'DEBUG: extracted name: {name}')
+            hakbun = WebDriverWait(driver, 10).until(
+                    EC.presence_of_element_located((By.XPATH, '//*[@id="container"]/div/form/div[2]/table/tbody/tr[3]/td[4]/div/div'
+        ))
+                ).text
+            print(f'DEBUG: extracted hakbun: {hakbun}')
+        else:
+            name = WebDriverWait(driver, 10).until(
+                    EC.presence_of_element_located((By.XPATH, '//*[@id="container"]/div/form/div[2]/table/tbody/tr[1]/td[4]/div/div'
+        ))
+                ).text
+            print(f'DEBUG: extracted name: {name}')
+            hakbun = WebDriverWait(driver, 10).until(
+                    EC.presence_of_element_located((By.XPATH, '//*[@id="container"]/div/form/div[2]/table/tbody/tr[2]/td[4]/div/div'
+        ))
+                ).text
+            print(f'DEBUG: extracted hakbun: {hakbun}')
 
         return {'status': 'success', 'name': name, 'hakbun': hakbun}
 
