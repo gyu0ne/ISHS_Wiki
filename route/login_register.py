@@ -112,14 +112,6 @@ async def login_register():
                 return "<h1>DEBUG: Error Code: 0 (Registration disabled)</h1>"
 
         if flask.request.method == 'POST':
-            # print("DEBUG: Before captcha_post call.")
-            # # 캡차 확인
-            # captcha_result = await captcha_post(conn, flask.request.form.get('g-recaptcha-response',
-            #     flask.request.form.get('g-recaptcha', '')))
-            # print(f"DEBUG: captcha_post returned: {captcha_result}")
-            # if captcha_result == 1:
-            #     print("DEBUG: Captcha failed, returning error 13.")
-            #     return "<h1>DEBUG: Error Code: 13 (Captcha failed)</h1>"
 
             # 입력값 수집 & 정규화
             if flask.session.get('riro_verified'):
@@ -132,6 +124,7 @@ async def login_register():
             else:
                 real_name = _norm(flask.request.form.get('real_name', ''))
                 student_id = _norm(flask.request.form.get('student_id', ''))
+
             birth_y    = _norm(flask.request.form.get('birth_year', ''))
             birth_m    = _norm(flask.request.form.get('birth_month', ''))
             birth_d    = _norm(flask.request.form.get('birth_day', ''))
@@ -330,7 +323,7 @@ async def login_register():
                         <hr class="main_hr">
 
                         <label>
-                            <div style="max-height:200px; overflow-y:auto; border:1px solid #ccc; padding:10px; background:#f9f9f9; white-space:pre-wrap; text-align:left; font-size:14px;">
+                            <div id="yakgwan" style="max-height:200px; overflow-y:auto; border:1px solid #ccc; padding:10px; white-space:pre-wrap; text-align:left; font-size:14px;">
             제1조 (목적)
             본 약관은 인곽위키(이하 “위키”)의 이용 조건, 권리와 의무, 책임 사항 등을 규정함을 목적으로 한다.
 
@@ -367,8 +360,6 @@ async def login_register():
                             <input type="checkbox" name="agreement" value="agree" required> 위 약관에 동의합니다.
                         </label>
                         <hr class="main_hr">
-
-                        {{''}}
 
                         <button type="submit">{get_lang(conn, 'save')}</button>
                         {http_warning(conn)}
