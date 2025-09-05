@@ -112,14 +112,14 @@ async def login_register():
                 return "<h1>DEBUG: Error Code: 0 (Registration disabled)</h1>"
 
         if flask.request.method == 'POST':
-            print("DEBUG: Before captcha_post call.")
-            # 캡차 확인
-            captcha_result = await captcha_post(conn, flask.request.form.get('g-recaptcha-response',
-                flask.request.form.get('g-recaptcha', '')))
-            print(f"DEBUG: captcha_post returned: {captcha_result}")
-            if captcha_result == 1:
-                print("DEBUG: Captcha failed, returning error 13.")
-                return "<h1>DEBUG: Error Code: 13 (Captcha failed)</h1>"
+            # print("DEBUG: Before captcha_post call.")
+            # # 캡차 확인
+            # captcha_result = await captcha_post(conn, flask.request.form.get('g-recaptcha-response',
+            #     flask.request.form.get('g-recaptcha', '')))
+            # print(f"DEBUG: captcha_post returned: {captcha_result}")
+            # if captcha_result == 1:
+            #     print("DEBUG: Captcha failed, returning error 13.")
+            #     return "<h1>DEBUG: Error Code: 13 (Captcha failed)</h1>"
 
             # 입력값 수집 & 정규화
             if flask.session.get('riro_verified'):
@@ -261,13 +261,14 @@ async def login_register():
 
             verified_name = flask.session.get('riro_name', '')
             verified_hakbun = flask.session.get('riro_hakbun', '')
+            student_id = ''
             if verified_hakbun:
-                verified_hakbun = f'{verified_hakbun[0]}{verified_hakbun[2:5]}'
+                student_id = f'{verified_hakbun[0]}{verified_hakbun[2:5]}'
 
-            if verified_hakbun:
+            if student_id:
                 student_id_html = f'''
                     <div style="padding:8px 0;">
-                        <b>학번</b>: {html.escape(verified_hakbun)}
+                        <b>학번</b>: {html.escape(student_id)}
                         <small style="display:block; margin-top:4px; color:#888; text-align:left;">
                         학생 인증 정보가 자동으로 입력됩니다.
                         </small>
@@ -367,7 +368,7 @@ async def login_register():
                         </label>
                         <hr class="main_hr">
 
-                        {await captcha_get(conn)}
+                        {{''}}
 
                         <button type="submit">{get_lang(conn, 'save')}</button>
                         {http_warning(conn)}

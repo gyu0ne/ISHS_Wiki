@@ -13,8 +13,7 @@ from selenium.webdriver.support import expected_conditions as EC
 
 def riro_login_check_teacher(riro_id, riro_pw):
     """
-    리로스쿨 로그인을 시도하고 교사 정보(이름, 교번 등)를 반환합니다.
-    성공 시: {'status': 'success', 'name': '이름', 'teacher_id': '교번'}
+    성공 시: {'status': 'success', 'name': '이름'}
     실패 시: {'status': 'error', 'message': '에러 메시지'}
     """
     options = webdriver.ChromeOptions()
