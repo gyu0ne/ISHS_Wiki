@@ -948,7 +948,7 @@ app.route('/bob')(bob)
 app.route('/bob/<date>')(bob)
 
 app.route('/siganpyo')(siganpyo)
-app.route('/siganpyo/<grade>/<class>/<ymd>')(siganpyo)
+app.route('/siganpyo/<grade>/<class_>/<ymd>')(siganpyo)
 
 # views -> view
 app.route('/view/<path:name>')(main_view)

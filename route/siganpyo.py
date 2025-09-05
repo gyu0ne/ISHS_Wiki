@@ -2,12 +2,12 @@ from .tool.func import *
 import requests
 import datetime
 
-async def siganpyo(grade = '', class_nm = '', ymd = ''):
+async def siganpyo(grade = '', class_ = '', ymd = ''):
     with get_db_connect() as conn:
         curs = conn.cursor()
         ip = ip_check()
 
-        if grade == '' and class_nm == '':
+        if grade == '' and class_ == '':
             if ip_or_user(ip) == 0:
                 curs.execute(db_change("select data from user_set where id = ? and name = 'student_id'"), [ip])
                 student_id_row = curs.fetchone()
@@ -16,22 +16,22 @@ async def siganpyo(grade = '', class_nm = '', ymd = ''):
                     try:
                         if len(student_id) >= 2 and student_id.isdigit():
                             grade = student_id[0]
-                            class_nm = student_id[1]
-                            if not (1 <= int(grade) <= 3 and 1 <= int(class_nm) <= 7):
+                            class_ = student_id[1]
+                            if not (1 <= int(grade) <= 3 and 1 <= int(class_) <= 7):
                                 grade = '1'
-                                class_nm = '1'
+                                class_ = '1'
                         else:
                             grade = '1'
-                            class_nm = '1'
+                            class_ = '1'
                     except (ValueError, IndexError):
                         grade = '1'
-                        class_nm = '1'
+                        class_ = '1'
                 else:
                     grade = '1'
-                    class_nm = '1'
+                    class_ = '1'
             else:
                 grade = '1'
-                class_nm = '1'
+                class_ = '1'
 
         if ymd == '':
             ymd = (datetime.datetime.now()).strftime('%Y%m%d')
@@ -57,7 +57,7 @@ async def siganpyo(grade = '', class_nm = '', ymd = ''):
             ay = str(current_year - 1)
 
         content = ''
-        if grade != '' and class_nm != '':
+        if grade != '' and class_ != '':
             url = (
                 "https://open.neis.go.kr/hub/hisTimetable"
                 "?KEY=75f40bb14ddd41d1b5ecda3389258cb1"
@@ -67,7 +67,7 @@ async def siganpyo(grade = '', class_nm = '', ymd = ''):
                 f"&AY={ay}"
                 f"&SEM={sem}"
                 f"&GRADE={grade}"
-                f"&CLASS_NM={class_nm}"
+                f"&CLASS_NM={class_}"
                 f"&TI_FROM_YMD={ymd}"
                 f"&TI_TO_YMD={ymd}"
             )
@@ -78,7 +78,7 @@ async def siganpyo(grade = '', class_nm = '', ymd = ''):
 
                 try:
                     timetable = data['hisTimetable'][1]['row']
-                    content = f"{ymd[0:4]}년 {ymd[4:6]}월 {ymd[6:8]}일 {grade}학년 {class_nm}반 시간표<br><br>"
+                    content = f"{ymd[0:4]}년 {ymd[4:6]}월 {ymd[6:8]}일 {grade}학년 {class_}반 시간표<br><br>"
 
                     for class_info in timetable:
                         period = class_info.get('PERIO', '교시 정보 없음')
@@ -98,7 +98,7 @@ async def siganpyo(grade = '', class_nm = '', ymd = ''):
                     <option value="3" {"selected" if grade == '3' else ""}>3학년</option>
                 </select>
                 <select id="class_nm" name="class_nm">
-                    {"".join([f'<option value="{i}" {"selected" if class_nm == str(i) else ""}>{i}반</option>' for i in range(1, 8)])}
+                    {"".join([f'<option value="{i}" {"selected" if class_ == str(i) else ""}>{i}반</option>' for i in range(1, 8)])}
                 </select>
                 <input type="date" id="date_picker" name="date" value="{date_for_input}">
                 <button type="submit">조회</button>
