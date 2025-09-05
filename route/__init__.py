@@ -60,9 +60,7 @@ from route.login_login_2fa import login_login_2fa
 from route.login_login_2fa_email import login_login_2fa_email
 from route.login_logout import login_logout
 
-from route.login_register import login_register
-from route.login_register_email import login_register_email
-from route.login_register_email_check import login_register_email_check
+from route.login_register import login_register_student, login_register_teacher
 from route.login_register_submit import login_register_submit
 
 from route.main_func_error_404 import main_func_error_404
