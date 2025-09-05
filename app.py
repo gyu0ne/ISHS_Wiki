@@ -3,6 +3,8 @@ import os
 import signal
 import atexit
 import logging
+import hmac
+import hashlib
 
 from route.tool.func import *
 from route import *
@@ -67,7 +69,21 @@ with get_db_connect(init_mode = True) as conn:
 
                 print('Complete Download')
 
+        # login_token table check
+    try:
+        curs.execute(db_change("select user_id from login_token limit 1"))
+    except:
+        try:
+            print('INFO: Creating login_token table.')
+            if data_db_set['type'] == 'mysql':
+                curs.execute(db_change("create table login_token (user_id text(255), token text(255), expires text(255))"))
+            else:
+                curs.execute(db_change("create table login_token (user_id text, token text, expires text)"))
+        except:
+            print('Error: login_token table creation failed.')
+
     if data_db_set['type'] == 'mysql':
+
         try:
             curs.execute(db_change('create database ' + data_db_set['name'] + ' default character set utf8mb4'))
         except:
@@ -445,6 +461,27 @@ def auto_do_something(data_db_set):
 auto_do_something(data_db_set)
 
 print('Now running... http://localhost:' + server_set['port'])
+
+@app.before_request
+async def check_auto_login():
+    if 'id' not in flask.session:
+        token_cookie = flask.request.cookies.get('auto_login')
+        if token_cookie:
+            user_id, token = token_cookie.split(':', 1)
+            with get_db_connect() as conn:
+                curs = conn.cursor()
+                curs.execute(db_change("SELECT token, expires FROM login_token WHERE user_id = ?"), [user_id])
+                db_token_data = curs.fetchone()
+                if db_token_data:
+                    db_token, db_expires = db_token_data
+                    if datetime.datetime.now() < datetime.datetime.strptime(db_expires, "%Y-%m-%d %H:%M:%S"):
+                        hashed_token = hashlib.sha256(token.encode('utf-8')).hexdigest()
+                        if hmac.compare_digest(hashed_token, db_token):
+                            flask.session['id'] = user_id
+                            curs.execute(db_change("select data from user_set where id = ? and name = 'user_name'"), [user_id])
+                            user_name_row = curs.fetchone()
+                            if user_name_row:
+                                flask.session['user_name'] = user_name_row[0]
 
 @app.before_request
 def before_request_func():

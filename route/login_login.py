@@ -1,4 +1,6 @@
 from .tool.func import *
+import hashlib
+import hmac
 
 async def login_login():
     with get_db_connect() as conn:
@@ -18,6 +20,7 @@ async def login_login():
             user_agent = flask.request.headers.get('User-Agent', '')
             user_name = flask.request.form.get('id', '')
             user_pw = flask.request.form.get('pw', '')
+            auto_login = flask.request.form.get('auto_login', '')
 
             # user_name으로 student_id 찾기
             curs.execute(db_change("select id from user_set where name = 'user_name' and data = ?"), [user_name])
@@ -76,7 +79,18 @@ async def login_login():
 
                 ua_plus(conn, student_id, ip, user_agent, get_time())
 
-                return redirect(conn, '/user')
+                resp = flask.make_response(redirect(conn, '/user'))
+                if auto_login:
+                    token = os.urandom(24).hex()
+                    hashed_token = hashlib.sha256(token.encode('utf-8')).hexdigest()
+                    expires = datetime.datetime.now() + datetime.timedelta(days=30)
+                    
+                    curs.execute(db_change("DELETE FROM login_token WHERE user_id = ?"), [student_id])
+                    curs.execute(db_change("INSERT INTO login_token (user_id, token, expires) VALUES (?, ?, ?)"), [student_id, hashed_token, expires.strftime("%Y-%m-%d %H:%M:%S")])
+
+                    resp.set_cookie('auto_login', f'{student_id}:{token}', expires=expires, httponly=True, samesite='Lax')
+
+                return resp
 
         else:
             return easy_minify(conn, flask.render_template(skin_check(conn),
@@ -87,8 +101,8 @@ async def login_login():
                             <hr class="main_hr">
                             <input placeholder="''' + get_lang(conn, 'password') + '''" name="pw" type="password">
                             <hr class="main_hr">
-                            <!-- <label><input type="checkbox" name="auto_login"> ''' + get_lang(conn, 'auto_login') + ''' (''' + get_lang(conn, 'not_working') + ''')</label>
-                            <hr class="main_hr"> -->
+                            <label><input type="checkbox" name="auto_login" value="on"> ''' + get_lang(conn, 'auto_login') + '''</label>
+                            <hr class="main_hr">
                             ''' + await captcha_get(conn) + '''
                             <button type="submit">''' + get_lang(conn, 'login') + '''</button>
                             ''' + http_warning(conn) + '''

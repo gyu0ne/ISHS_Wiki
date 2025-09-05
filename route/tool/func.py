@@ -50,12 +50,12 @@ if data_up_date == 1:
         
         for exe_name in run_list:
             try:
-                subprocess.check_call([exe_name, "-m", "pip", "install", "--upgrade", "--user", "-r", "requirements-optional.txt"])
+                subprocess.check_call([exe_name, '-m', 'pip', 'install', '--upgrade', '--user', '-r', 'requirements-optional.txt'])
             except:
                 pass
 
             try:
-                subprocess.check_call([exe_name, "-m", "pip", "install", "--upgrade", "--user", "-r", "requirements.txt"])
+                subprocess.check_call([exe_name, '-m', 'pip', 'install', '--upgrade', '--user', '-r', 'requirements.txt'])
                 subprocess.Popen([exe_name] + sys.argv)
                 os._exit(0)
             except:
@@ -120,7 +120,7 @@ def do_db_set(db_set):
 
 class flask_data_or_variable:
     def __init__(self, flask_data, var_dict):
-        if var_dict == {}:
+        if var_dict == {{}}:
             self.data = flask_data
             self.selected_flask = True
         else:
@@ -147,7 +147,7 @@ def global_some_set_do(set_name, data = None):
     else:
         return None
 
-async def python_to_golang(func_name, other_set = {}):    
+async def python_to_golang(func_name, other_set = set()):
     other_set = {
         "url" : func_name,
         "data" : json_dumps(other_set)
@@ -319,8 +319,8 @@ class class_check_json:
 
                 all_src = []
                 if set_data['db_type'] == 'sqlite':
-                    for i_data in os.listdir("."):
-                        f_src = re.search(r"(.+)\.db$", i_data)
+                    for i_data in os.listdir('.'):
+                        f_src = re.search(r'(.+)\.db', i_data)
                         if f_src:
                             all_src += [f_src.group(1)]
 
@@ -450,6 +450,7 @@ def get_db_table_list():
 
     create_data['bbs_set'] = ['set_name', 'set_code', 'set_id', 'set_data']
     create_data['bbs_data'] = ['set_name', 'set_code', 'set_id', 'set_data']
+    create_data['login_token'] = ['user_id', 'token', 'expires']
     
     return create_data
 
@@ -530,7 +531,7 @@ async def update(conn, ver_num, set_data):
     if ver_num < 3203400:
         curs.execute(db_change("select user, css from custom"))
         for i in curs.fetchall():
-            curs.execute(db_change("insert into user_set (name, id, data) values ('custom_css', ?, ?)"), [re.sub(r' \(head\)$', '', i[0]), i[1]])
+            curs.execute(db_change("insert into user_set (name, id, data) values ('custom_css', ?, ?)"), [re.sub(r' \(head\), ', i[0]), i[1]])
 
     if ver_num < 3205500:
         curs.execute(db_change("select title, decu, dis, view, why from acl"))
@@ -582,7 +583,7 @@ async def update(conn, ver_num, set_data):
         db_data = curs.fetchall()
         if db_data and db_data[0][0] != '':
             db_data = db_data[0][0]
-            db_data = re.match(r'[^/]+\/\/([^/]+)', db_data)
+            db_data = re.match(r'[^/]+//([^/]+)', db_data)
             if db_data:
                 db_data = db_data.group(1)
                 curs.execute(db_change("update other set data = ? where name = 'domain'"), [db_data])
@@ -610,11 +611,7 @@ async def update(conn, ver_num, set_data):
         if db_data:
             robot_default = '' + \
                 'User-agent: *\n' + \
-                'Disallow: /\n' + \
-                'Allow: /$\n' + \
-                'Allow: /image/\n' + \
-                'Allow: /views/\n' + \
-                'Allow: /w/' + \
+                'allow: *\n' + \
             ''
             if db_data[0][0] == robot_default:
                 curs.execute(db_change("insert into other (name, data, coverage) values ('robot_default', 'on', '')"))
@@ -678,7 +675,6 @@ async def update(conn, ver_num, set_data):
     if ver_num < 3500372:
         # ID 글자 확인 호환용
         curs.execute(db_change('insert into html_filter (html, kind, plus, plus_t) values (?, ?, ?, ?)'), [r'(?:[^A-Za-zㄱ-힣0-9])', 'name', '', ''])
-
     if ver_num < 3500373:
         select_data = {}
 
@@ -869,13 +865,7 @@ def get_default_admin_group():
 def get_default_robots_txt(conn):
     data = '' + \
         'User-agent: *\n' + \
-        'Disallow: /\n' + \
-        'Allow: /$\n' + \
-        'Allow: /w/\n' + \
-        'Allow: /bbs/w/\n' + \
-        'Allow: /sitemap.xml$\n' + \
-        'Allow: /sitemap_*.xml$' + \
-    ''
+        'allow: *\n'
 
     if os.path.exists('sitemap.xml'):
         data += '' + \
@@ -1036,10 +1026,10 @@ def load_domain(conn, data_type = 'normal'):
     return domain
 
 def get_tool_js_safe(data):
-    data = data.replace('\n', '\\\\n')
+    data = data.replace('\n', '\\n')
     data = data.replace('\\', '\\\\')
-    data = data.replace("'", "\\'")
-    data = data.replace('"', '\\"')
+    data = data.replace("'", "\'")
+    data = data.replace('"', '"')
 
     return data
 
@@ -1055,7 +1045,7 @@ def edit_button(conn):
 
     data = ''
     for insert_data in insert_list:
-        data += '<a href="javascript:do_insert_data(\'' + get_tool_js_safe(insert_data[0]) + '\');">(' + html.escape(insert_data[1]) + ')</a> '
+        data += '<a href="javascript:do_insert_data(\"' + get_tool_js_safe(insert_data[0]) + '\");">(' + html.escape(insert_data[1]) + ')</a> '
 
     data += (' ' if data != '' else '') + '<a href="/filter/edit_top">(' + get_lang(conn, 'add') + ')</a>'
     data += '<hr class="main_hr">'
@@ -1427,7 +1417,7 @@ def load_skin(conn, data = '', set_n = 0, default = 0):
         return skin_return_data
 
 # Func-markup
-def render_set(conn, doc_name = '', doc_data = '', data_type = 'view', markup = '', parameter = {}):
+def render_set(conn, doc_name = '', doc_data = '', data_type = 'view', markup = '', parameter = set()):
     curs = conn.cursor()
 
     # data_type in ['view', 'from', 'thread', 'api_view', 'api_thread', 'api_include', 'backlink']
@@ -1575,7 +1565,7 @@ def render_simple_set(conn, data):
             heading_stack[for_a] = 0
         
         heading_stack_str = ''.join([str(for_a) + '.' if for_a != 0 else '' for for_a in heading_stack])
-        heading_stack_str = re.sub(r'\.$', '', heading_stack_str)
+        heading_stack_str = re.sub(r'\., ', heading_stack_str)
     
         toc_data += '''
             <br>
@@ -1705,13 +1695,13 @@ async def captcha_get(conn):
                     '<script src="https://www.google.com/recaptcha/api.js?render=' + recaptcha[0][0] + '"></script>' + \
                     '<input type="hidden" id="g-recaptcha" name="g-recaptcha">' + \
                     '<script type="text/javascript">' + \
-                        'grecaptcha.ready(function() {' + \
-                            'grecaptcha.execute(\'' + recaptcha[0][0] + '\', {action: \'homepage\'}).then(function(token) {' + \
-                                'document.getElementById(\'g-recaptcha\').value = token;' + \
-                            '});' + \
+                    'grecaptcha.ready(function() {' + \
+                        'grecaptcha.execute("' + recaptcha[0][0] + '", {action:\'homepage\'}).then(function(token) {' + \
+                            'document.getElementById(\'g-recaptcha\').value = token;' + \
                         '});' + \
+                    '});' + \
                     '</script>' + \
-                ''
+                    ''
             elif rec_ver[0][0] == 'cf':
                 data += '' + \
                     '<script src="https://challenges.cloudflare.com/turnstile/v0/api.js?compat=recaptcha" async defer></script>' + \
@@ -2003,7 +1993,7 @@ async def do_edit_filter(conn, data):
                 curs.execute(db_change('delete from user_set where name = "edit_filter" and id = ?'), [ip])
                 curs.execute(db_change('insert into user_set (name, id, data) values ("edit_filter", ?, ?)'), [ip, data])
 
-                ban_insert(conn, 
+                ban_insert(conn,
                     ip,
                     r_time,
                     'edit filter',
