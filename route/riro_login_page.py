@@ -41,7 +41,10 @@ async def riro_login_page():
                     flask.session['riro_verified'] = True
                     flask.session['riro_name'] = result['name']
                     flask.session['riro_hakbun'] = result['hakbun']
-                    return redirect(conn, '/register_form')
+                    if result['hakbun'] == 0:
+                        return redirect(conn, '/register_form_teacher')
+                    else:
+                        return redirect(conn, '/register_form_student')
             else:
                 # 인증 실패 시, 자바스크립트 alert로 에러 메시지 표시
                 escaped_message = result['message'].replace("'", "\'" ).replace('"', '\"').replace('\n', '\\n')

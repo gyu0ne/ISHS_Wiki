@@ -225,5 +225,7 @@ from route.go_api_w_page_view import api_w_page_view
 
 from route.go_main_func_easter_egg import main_func_easter_egg
 
+from route.login_register import login_register_teacher, login_register_student
+
 from .bob import bob
 from .siganpyo import siganpyo
