@@ -69,6 +69,7 @@ def view_diff_do(first_raw_data, second_raw_data, first, second):
 async def view_diff(name = 'Test', num_a = 1, num_b = 1):
     with get_db_connect() as conn:
         curs = conn.cursor()
+        ip = ip_check()
 
         first = str(num_a)
         second = str(num_b)
@@ -76,7 +77,20 @@ async def view_diff(name = 'Test', num_a = 1, num_b = 1):
         if await acl_check(name, 'render') == 1:
             return await re_error(conn, 0)
 
+        curs.execute(db_change("select data from history where title = ? and id = ?"), [name, first])
+        data = curs.fetchall()
+        if data and '[include(틀:인곽위키/인물)]' in data[0][0]:
+            if ip_or_user(ip) == 1:
+                return await re_error(conn, 1)
+
+        curs.execute(db_change("select data from history where title = ? and id = ?"), [name, second])
+        data = curs.fetchall()
+        if data and '[include(틀:인곽위키/인물)]' in data[0][0]:
+            if ip_or_user(ip) == 1:
+                return await re_error(conn, 1)
+
         curs.execute(db_change("select title from history where title = ? and (id = ? or id = ?) and hide = 'O'"), [name, first, second])
+
         if curs.fetchall() and await acl_check(tool = 'hidel_auth') == 1:
             return await re_error(conn, 3)
 

@@ -3,6 +3,14 @@ from .tool.func import *
 async def edit_revert(name, num):
     with get_db_connect() as conn:
         curs = conn.cursor()
+        ip = ip_check()
+
+        curs.execute(db_change("select data from history where title = ? and id = ?"), [name, num])
+
+        history_data = curs.fetchall()
+        if history_data and '[include(틀:인곽위키/인물)]' in history_data[0][0]:
+            if ip_or_user(ip) == 1:
+                return await re_error(conn, 1)
 
         curs.execute(db_change("select title from history where title = ? and id = ? and hide = 'O'"), [name, str(num)])
         if curs.fetchall() and await acl_check(tool = 'hidel_auth') == 1:

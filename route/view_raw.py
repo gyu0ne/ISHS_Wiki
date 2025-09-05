@@ -6,6 +6,7 @@ from .go_api_bbs_w_comment_one import api_bbs_w_comment_one
 async def view_raw(name = '', topic_num = '', num = '', doc_acl = 0, bbs_num = '', post_num = '', comment_num = ''):
     with get_db_connect() as conn:
         curs = conn.cursor()
+        ip = ip_check()
         
         bbs_num_str = str(bbs_num)
         post_num_str = str(post_num)
@@ -44,6 +45,11 @@ async def view_raw(name = '', topic_num = '', num = '', doc_acl = 0, bbs_num = '
 
             curs.execute(db_change("select data from history where title = ? and id = ?"), [name, num])
 
+            history_data = curs.fetchall()
+            if history_data and '[include(틀:인곽위키/인물)]' in history_data[0][0]:
+                if ip_or_user(ip) == 1:
+                    return await re_error(conn, 1)
+                
             sub += ' (r' + num + ')'
 
             menu = [['history_tool/' + url_pas(num) + '/' + url_pas(name), get_lang(conn, 'return')]]

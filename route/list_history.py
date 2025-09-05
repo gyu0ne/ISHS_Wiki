@@ -15,6 +15,15 @@ async def option_lang(lang_in, lang):
 
 async def list_history(tool = 'history', num = 1, set_type = 'normal', doc_name = 'Test'):
     with get_db_connect() as conn:
+        curs = conn.cursor()
+        ip = ip_check()
+
+        curs.execute(db_change("select data from history where title = ? and id = ?"), [doc_name, num])
+        history_data = curs.fetchall()
+        if history_data and '[include(틀:인곽위키/인물)]' in history_data[0][0]:
+            if ip_or_user(ip) == 1:
+                return await re_error(conn, 1)
+
         if flask.request.method == 'POST':
             a = flask.request.form.get('a')
             b = flask.request.form.get('b')

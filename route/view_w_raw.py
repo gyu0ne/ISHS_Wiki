@@ -5,6 +5,7 @@ from .go_api_w_raw import api_w_raw
 async def view_w_raw(name = '', rev = '', doc_acl = ''):
     with get_db_connect() as conn:
         rev_str = str(rev)
+        ip = ip_check()
 
         sub = '(' + get_lang(conn, 'raw') + ')'
         sub += ' (' + rev_str + ')' if rev != '' else ''
@@ -19,6 +20,10 @@ async def view_w_raw(name = '', rev = '', doc_acl = ''):
             data_in = data["data"]
         else:
             data_in = ''
+
+        if data_in and '[include(틀:인곽위키/인물)]' in data_in:
+            if ip_or_user(ip) == 1:
+                return await re_error(conn, 1)
 
         p_data = ''
         p_data += '''

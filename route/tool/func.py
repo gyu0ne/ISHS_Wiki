@@ -120,7 +120,7 @@ def do_db_set(db_set):
 
 class flask_data_or_variable:
     def __init__(self, flask_data, var_dict):
-        if var_dict == {{}}:
+        if var_dict == set():
             self.data = flask_data
             self.selected_flask = True
         else:

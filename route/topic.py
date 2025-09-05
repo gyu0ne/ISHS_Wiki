@@ -7,7 +7,11 @@ from .edit import edit_editor
 async def topic(topic_num = 0, do_type = '', doc_name = 'Test'):
     with get_db_connect() as conn:
         curs = conn.cursor()
+        ip = ip_check()
         topic_num = str(topic_num)
+
+        if ip_or_user(ip) == 1:
+            return await re_error(conn, 1)
 
         if topic_num == '0':
             name = get_lang(conn, 'make_new_topic')
