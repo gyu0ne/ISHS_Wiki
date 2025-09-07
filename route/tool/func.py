@@ -671,7 +671,7 @@ async def update(conn, ver_num, set_data):
 
     if ver_num < 3500372:
         # ID 글자 확인 호환용
-        curs.execute(db_change('insert into html_filter (html, kind, plus, plus_t) values (?, ?, ?, ?)'), [r'(?:[^A-Za-zㄱ-힣0-9])', 'name', '', ''])
+        curs.execute(db_change('insert into html_filter (html, kind, plus, plus_t) values (?, ?, ?, ?)'), [r'(?:[^A-Za-zㄱ-힣0-9_])', 'name', '', ''])
     if ver_num < 3500373:
         select_data = {}
 
@@ -852,7 +852,7 @@ def set_init(conn):
         for i in [['smtp_server', 'smtp.gmail.com'], ['smtp_port', '587'], ['smtp_security', 'starttls']]:
             curs.execute(db_change("insert into other (name, data, coverage) values (?, ?, '')"), [i[0], i[1]])
 
-    curs.execute(db_change('insert into html_filter (html, kind, plus, plus_t) values (?, ?, ?, ?)'), [r'(?:[^A-Za-zㄱ-힣0-9])', 'name', '', ''])
+    curs.execute(db_change('insert into html_filter (html, kind, plus, plus_t) values (?, ?, ?, ?)'), [r'(?:[^A-Za-zㄱ-힣0-9_])', 'name', '', ''])
 
 # Func-simple
 ## Func-simple-without_DB
@@ -1024,7 +1024,7 @@ def get_tool_js_safe(data):
     data = data.replace('\n', '\\\\n')
     data = data.replace('\\', '\\\\')
     data = data.replace("'", "\\'")
-    data = data.replace('"', '\\')
+    data = data.replace('"', '\\"')
 
     return data
 
@@ -1040,7 +1040,9 @@ def edit_button(conn):
 
     data = ''
     for insert_data in insert_list:
-        data += '<a href="javascript:do_insert_data(\"' + get_tool_js_safe(insert_data[0]) + '\");">(' + html.escape(insert_data[1]) + ')</a> '
+        data += '<a href="javascript:do_insert_data(\"'
+        data += get_tool_js_safe(insert_data[0])
+        data += '\");">(' + html.escape(insert_data[1]) + ')</a> '
 
     data += (' ' if data != '' else '') + '<a href="/filter/edit_top">(' + get_lang(conn, 'add') + ')</a>'
     data += '<hr class="main_hr">'
@@ -1560,7 +1562,7 @@ def render_simple_set(conn, data):
             heading_stack[for_a] = 0
         
         heading_stack_str = ''.join([str(for_a) + '.' if for_a != 0 else '' for for_a in heading_stack])
-        heading_stack_str = re.sub(r'\.$', '', heading_stack_str)
+        heading_stack_str = re.sub(r'\.,', heading_stack_str)
     
         toc_data += '''
             <br>
@@ -2212,7 +2214,7 @@ async def re_error(conn, data):
         else:
             end = '<ul><li>' + get_lang(conn, 'authority_error') + '</li></ul>'
 
-        return easy_minify(conn, flask.render_template(skin_check(conn),
+        return easy_minify(conn, flask.render_template(skin_check(conn), 
             imp = [get_lang(conn, 'error'), await wiki_set(), await wiki_custom(conn), wiki_css([0, 0])],
             data = '<h2>' + get_lang(conn, 'error') + '</h2>' + end,
             menu = 0
@@ -2352,7 +2354,7 @@ async def re_error(conn, data):
             if flask.request.path != '/skin_set':
                 data += '<br>' + get_lang(conn, 'error_skin_set_old') + ' <a href="/skin_set">(' + get_lang(conn, 'go') + ')</a>'
 
-            return easy_minify(conn, flask.render_template(skin_check(conn),
+            return easy_minify(conn, flask.render_template(skin_check(conn), 
                 imp = [get_lang(conn, 'skin_set'), await wiki_set(), await wiki_custom(conn), wiki_css([0, 0])],
                 data = '' + \
                     '<div id="main_skin_set">' + \
@@ -2365,7 +2367,7 @@ async def re_error(conn, data):
                 menu = [['change', get_lang(conn, 'user_setting')], ['change/skin_set/main', get_lang(conn, 'main_skin_set')]]
             ))
         else:
-            return easy_minify(conn, flask.render_template(skin_check(conn),
+            return easy_minify(conn, flask.render_template(skin_check(conn), 
                 imp = [title, await wiki_set(), await wiki_custom(conn), wiki_css([0, 0])],
                 data = '' + \
                     '<h2>' + sub_title + '</h2>' + \

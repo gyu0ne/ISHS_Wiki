@@ -116,9 +116,9 @@ async def login_register_student():
             # 입력값 수집 & 정규화
             if flask.session.get('riro_verified'):
                 real_name = flask.session.get('riro_name', '')
-                verified_hakbun = flask.session.get('riro_hakbun', '')
-                if verified_hakbun:
-                    student_id = f'{verified_hakbun[0]}{verified_hakbun[2:5]}'
+                verified_student_number = flask.session.get('riro_student_number', '')
+                if verified_student_number:
+                    student_id = verified_student_number
                 else:
                     student_id = '졸업생'
             else:
@@ -129,7 +129,11 @@ async def login_register_student():
             birth_m    = _norm(flask.request.form.get('birth_month', ''))
             birth_d    = _norm(flask.request.form.get('birth_day', ''))
             gender     = _norm(flask.request.form.get('gender', ''))
-            gen        = _norm(flask.request.form.get('generation', ''))
+            verified_gen = flask.session.get('riro_generation', '')
+            if verified_gen:
+                gen = verified_gen
+            else:
+                gen        = _norm(flask.request.form.get('generation', ''))
             user_name  = _norm(flask.request.form.get('user_name', ''))
             user_pw     = flask.request.form.get('pw', '')
             user_repeat = flask.request.form.get('pw2', '')
@@ -189,8 +193,8 @@ async def login_register_student():
 
             # 사용자 문서 자동 생성
             try:
-                doc_title = f"{html.escape(real_name)}({html.escape(gen)}기)"
-                doc_content = f"[[분류:재학생]][[분류:{html.escape(gen)}기]]\n[include(틀:인곽위키/인물)]\n==개요==\n{html.escape(real_name)}님의 사용자 문서입니다."
+                doc_title = f"{html.escape(real_name)}({gen}기)"
+                doc_content = f"[[분류:재학생]][[분류:{gen}기]]\n[include(틀:인곽위키/인물)]\n==개요==\n{html.escape(real_name)}님의 사용자 문서입니다."
                 today = get_time()
                 
                 curs.execute(db_change("select title from data where title = ?"), [doc_title])
@@ -221,7 +225,7 @@ async def login_register_student():
             
             flask.session.pop('riro_verified', None)
             flask.session.pop('riro_name', None)
-            flask.session.pop('riro_hakbun', None)
+            flask.session.pop('riro_student_number', None)
 
             # 성공 화면
             return easy_minify(conn, flask.render_template(
@@ -249,10 +253,11 @@ async def login_register_student():
             default_g = str(now.year - 1993)
 
             verified_name = flask.session.get('riro_name', '')
-            verified_hakbun = flask.session.get('riro_hakbun', '')
+            verified_student_number = flask.session.get('riro_student_number', '')
+            verified_generation = flask.session.get('riro_generation', '')
             student_id = ''
-            if verified_hakbun:
-                student_id = f'{verified_hakbun[0]}{verified_hakbun[2:5]}'
+            if verified_student_number:
+                student_id = verified_student_number
 
             if student_id:
                 student_id_html = f'''
@@ -272,13 +277,25 @@ async def login_register_student():
                 real_name_html = f'''
                     <div style="padding:0px 0;">
                         <b>이름</b>: {html.escape(verified_name)}
-                        <small style="display:block; margin-top:4px; color:#888; text-align:left;">
-                        학생 인증 정보가 자동으로 입력됩니다.
-                        </small>
                     </div>
                 '''
             else:
                 real_name_html = '<input placeholder="이름" name="real_name" type="text" required>'
+            
+            if verified_generation:
+                generation_html = f'''
+                    <div style="padding:8px 0;">
+                        {verified_generation}기
+                    </div>
+                    <small style="display:block; margin-top:4px; color:#888; text-align:left;">
+                        학생 인증 정보가 자동으로 입력됩니다.
+                    </small>
+                '''
+            else:
+                generation_html = f'''
+                    <input placeholder="기수" name="generation" type="number" min="1" value="{default_g}" required>
+                    <span>기</span>
+                '''
 
             return easy_minify(conn, flask.render_template(
                 skin_check(conn),
@@ -286,10 +303,13 @@ async def login_register_student():
                 data=f'''
                     <form method="post">
                         <input placeholder="아이디" name="user_name" type="text" required>
+                        <small style="display:block; margin-top:4px; color:#888; text-align:left;">아이디는 영문, 한글, 숫자만 사용 가능합니다.</small>
                         <hr class="main_hr">
                         {student_id_html}
                         <hr class="main_hr">
                         {real_name_html}
+                        <hr class="main_hr">
+                        {generation_html}
                         <hr class="main_hr">
 
                         <label>생년월일</label>
@@ -300,8 +320,6 @@ async def login_register_student():
                             <span>월</span>
                             <input name="birth_day" type="number" min="1" max="31" value="{default_d}" style="width:4em;" required>
                             <span>일</span>
-                            <input name="generation" type="number" inputmode="numeric" min="1" step="1" value="{default_g}" style="width:4em;" required>
-                            <span>기</span>
                         </div>
                         <hr class="main_hr">
 
@@ -320,7 +338,7 @@ async def login_register_student():
 
                         <label>
                             <div id="yakgwan" style="max-height:200px; overflow-y:auto; border:1px solid #ccc; padding:10px; white-space:pre-wrap; text-align:left; font-size:14px;">
-            제1조 (목적)
+제1조 (목적)
             본 약관은 인곽위키(이하 “위키”)의 이용 조건, 권리와 의무, 책임 사항 등을 규정함을 목적으로 한다.
 
             제2조 (회원의 의무)
@@ -497,7 +515,7 @@ async def login_register_teacher():
             
             flask.session.pop('riro_verified', None)
             flask.session.pop('riro_name', None)
-            flask.session.pop('riro_hakbun', None)
+            flask.session.pop('riro_student_number', None)
 
             # 성공 화면
             return easy_minify(conn, flask.render_template(
@@ -522,10 +540,9 @@ async def login_register_teacher():
             default_y = str(now.year - 16)
             default_m = "01"
             default_d = "01"
-            default_g = str(now.year - 1993)
 
             verified_name = flask.session.get('riro_name', '')
-            verified_hakbun = flask.session.get('riro_hakbun', '')
+            verified_hakbun = flask.session.get('riro_student_number', '')
             student_id = ''
             if verified_hakbun:
                 student_id = f'교사'
@@ -580,7 +597,7 @@ async def login_register_teacher():
 
                         <label>
                             <div id="yakgwan" style="max-height:200px; overflow-y:auto; border:1px solid #ccc; padding:10px; white-space:pre-wrap; text-align:left; font-size:14px;">
-            제1조 (목적)
+제1조 (목적)
             본 약관은 인곽위키(이하 “위키”)의 이용 조건, 권리와 의무, 책임 사항 등을 규정함을 목적으로 한다.
 
             제2조 (회원의 의무)

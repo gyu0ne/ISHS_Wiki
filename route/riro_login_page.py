@@ -1,5 +1,5 @@
 from .tool.func import *
-from .remote_riro_login import riro_login_check
+import requests
 import asyncio
 
 async def riro_login_page():
@@ -15,12 +15,17 @@ async def riro_login_page():
             riro_id = flask.request.form.get('riro_id', '')
             riro_pw = flask.request.form.get('riro_pw', '')
 
-            # 블로킹 함수를 비동기적으로 실행
-            # app.py가 asyncio 기반으로 동작하므로, to_thread를 사용해 블로킹 I/O를 별도 스레드에서 처리
-            loop = asyncio.get_running_loop()
-            result = await loop.run_in_executor(None, riro_login_check, riro_id, riro_pw)
+            try:
+                api_url = f"http://127.0.0.1:5000/api/riro_login?id={riro_id}&password={riro_pw}"
+                response = requests.get(api_url, timeout=30)
+                response.raise_for_status()
+                result = response.json()
+            except requests.exceptions.RequestException as e:
+                result = {'status': 'error', 'message': f'인증 서버에 연결할 수 없습니다: {e}'}
+            except ValueError:
+                result = {'status': 'error', 'message': '인증 서버에서 잘못된 응답을 받았습니다.'}
 
-            if result['status'] == 'success':
+            if result.get('status') == 'success':
                 pending_user_id = flask.session.get('pending_riro_verification_for_user', None)
                 if pending_user_id:
                     def upsert(name, data):
@@ -30,8 +35,9 @@ async def riro_login_page():
                         else:
                             curs.execute(db_change("insert into user_set (id, name, data) values (?, ?, ?)"), [pending_user_id, name, data])
 
-                    upsert('student_id', result['hakbun'])
-                    upsert('real_name', result['name'])
+                    upsert('student_id', result.get('student_number', ''))
+                    upsert('real_name', result.get('name', ''))
+                    upsert('generation', str(result.get('generation', '')))
                     
                     flask.session.pop('pending_riro_verification_for_user', None)
                     flask.session['id'] = pending_user_id
@@ -39,15 +45,18 @@ async def riro_login_page():
                 # 인증 성공 시, 세션에 인증 정보 저장 후 회원가입 페이지로 이동
                 else:
                     flask.session['riro_verified'] = True
-                    flask.session['riro_name'] = result['name']
-                    flask.session['riro_hakbun'] = result['hakbun']
-                    if result['hakbun'] == 0:
+                    flask.session['riro_name'] = result.get('name')
+                    # 'hakbun' 대신 'student_number' 사용
+                    flask.session['riro_student_number'] = result.get('student_number')
+                    flask.session['riro_generation'] = result.get('generation')
+                    
+                    if result.get('student_number') == '0':
                         return redirect(conn, '/register_form_teacher')
                     else:
                         return redirect(conn, '/register_form_student')
             else:
                 # 인증 실패 시, 자바스크립트 alert로 에러 메시지 표시
-                escaped_message = result['message'].replace("'", "\'" ).replace('"', '\"').replace('\n', '\\n')
+                escaped_message = result['message'].replace("'", "'" ).replace('"', '"').replace('\n', '\n')
                 return f'''
                     <script>
                         alert(\'{escaped_message}\');
