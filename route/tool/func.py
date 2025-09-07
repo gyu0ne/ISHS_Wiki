@@ -120,7 +120,7 @@ def do_db_set(db_set):
 
 class flask_data_or_variable:
     def __init__(self, flask_data, var_dict):
-        if var_dict == set():
+        if var_dict == {}:
             self.data = flask_data
             self.selected_flask = True
         else:
@@ -609,10 +609,7 @@ async def update(conn, ver_num, set_data):
         curs.execute(db_change("select data from other where name = 'robot'"))
         db_data = curs.fetchall()
         if db_data:
-            robot_default = '' + \
-                'User-agent: *\n' + \
-                'allow: *\n' + \
-            ''
+            robot_default = 'User-agent: *\n''Allow: *\n'
             if db_data[0][0] == robot_default:
                 curs.execute(db_change("insert into other (name, data, coverage) values ('robot_default', 'on', '')"))
 
@@ -863,9 +860,7 @@ def get_default_admin_group():
     return ['owner', 'user', 'ip', 'ban']
 
 def get_default_robots_txt(conn):
-    data = '' + \
-        'User-agent: *\n' + \
-        'allow: *\n'
+    data = 'User-agent: *\n''Allow: *\n'
 
     if os.path.exists('sitemap.xml'):
         data += '' + \
@@ -1026,10 +1021,10 @@ def load_domain(conn, data_type = 'normal'):
     return domain
 
 def get_tool_js_safe(data):
-    data = data.replace('\n', '\\n')
+    data = data.replace('\n', '\\\\n')
     data = data.replace('\\', '\\\\')
-    data = data.replace("'", "\'")
-    data = data.replace('"', '"')
+    data = data.replace("'", "\\'")
+    data = data.replace('"', '\\')
 
     return data
 
@@ -1417,7 +1412,7 @@ def load_skin(conn, data = '', set_n = 0, default = 0):
         return skin_return_data
 
 # Func-markup
-def render_set(conn, doc_name = '', doc_data = '', data_type = 'view', markup = '', parameter = set()):
+def render_set(conn, doc_name = '', doc_data = '', data_type = 'view', markup = '', parameter = {}):
     curs = conn.cursor()
 
     # data_type in ['view', 'from', 'thread', 'api_view', 'api_thread', 'api_include', 'backlink']
@@ -1565,7 +1560,7 @@ def render_simple_set(conn, data):
             heading_stack[for_a] = 0
         
         heading_stack_str = ''.join([str(for_a) + '.' if for_a != 0 else '' for for_a in heading_stack])
-        heading_stack_str = re.sub(r'\., ', heading_stack_str)
+        heading_stack_str = re.sub(r'\.$', '', heading_stack_str)
     
         toc_data += '''
             <br>
