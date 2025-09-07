@@ -797,6 +797,9 @@ app.route('/register_form_student', methods = ['POST', 'GET'])(login_register_st
 app.route('/register_form_teacher', methods = ['POST', 'GET'])(login_register_teacher)
 app.route('/register/submit', methods = ['POST', 'GET'])(login_register_submit)
 
+app.route('/admin/create_user', methods = ['POST', 'GET'])(admin_create_user)
+app.route('/admin/create_user_submit', methods = ['POST'])(admin_create_user_submit)
+
 app.route('/login/find')(login_find)
 app.route('/login/find/key', methods = ['POST', 'GET'])(login_find_key)
 app.route('/logout')(login_logout)

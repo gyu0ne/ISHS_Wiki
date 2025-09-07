@@ -1021,10 +1021,10 @@ def load_domain(conn, data_type = 'normal'):
     return domain
 
 def get_tool_js_safe(data):
-    data = data.replace('\n', '\\\\n')
+    data = data.replace('\n', '\\n')
     data = data.replace('\\', '\\\\')
-    data = data.replace("'", "\\'")
-    data = data.replace('"', '\\"')
+    data = data.replace("'", "\'")
+    data = data.replace('"', '\"')
 
     return data
 
@@ -1040,7 +1040,7 @@ def edit_button(conn):
 
     data = ''
     for insert_data in insert_list:
-        data += '<a href="javascript:do_insert_data(\"'
+        data += '<a href="javascript:do_insert_data(\"' 
         data += get_tool_js_safe(insert_data[0])
         data += '\");">(' + html.escape(insert_data[1]) + ')</a> '
 
@@ -1542,7 +1542,7 @@ def render_simple_set(conn, data):
     # without_DB
 
     toc_data = ''
-    toc_regex = r'<h([1-6])>([^<>]+)<\/h[1-6]>'
+    toc_regex = r'<h([1-6])>([^<>]+)</h[1-6]>'
     toc_search_data = re.findall(toc_regex,  data)
     heading_stack = [0, 0, 0, 0, 0, 0]
 
@@ -1562,7 +1562,7 @@ def render_simple_set(conn, data):
             heading_stack[for_a] = 0
         
         heading_stack_str = ''.join([str(for_a) + '.' if for_a != 0 else '' for for_a in heading_stack])
-        heading_stack_str = re.sub(r'\.,', heading_stack_str)
+        heading_stack_str = re.sub(r'\.', '', heading_stack_str)
     
         toc_data += '''
             <br>
@@ -1579,7 +1579,7 @@ def render_simple_set(conn, data):
         toc_data += '</div>'
         
     footnote_data = ''
-    footnote_regex = r'<sup>((?:(?!<sup>|<\/sup>).)+)<\/sup>'
+    footnote_regex = r'<sup>((?:(?!<sup>|</sup>).)+)</sup>'
     footnote_search_data = re.findall(footnote_regex, data)
     footnote_count = 1
     if footnote_search_data:
@@ -1591,8 +1591,8 @@ def render_simple_set(conn, data):
         if footnote_count != 1:
             footnote_data += '<br>'
     
-        footnote_data += '<a id="fn-' + footnote_count_str + '" href="#rfn-' + footnote_count_str + '">(' + footnote_count_str + ')</a> ' + footnote_search
-        data = re.sub(footnote_regex, '<sup id="rfn-' + footnote_count_str + '"><a href="#fn-' + footnote_count_str + '">(' + footnote_count_str + ')</a></sup>', data, 1)
+        footnote_data += '<a id="fn-' + footnote_count_str + '" href="#rfn-' + footnote_count_str + '">' + footnote_count_str + '</a> ' + footnote_search
+        data = re.sub(footnote_regex, '<sup id="rfn-' + footnote_count_str + '"><a href="#fn-' + footnote_count_str + '">' + footnote_count_str + '</a></sup>', data, 1)
         
         footnote_count += 1
         

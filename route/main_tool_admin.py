@@ -21,7 +21,7 @@ async def main_tool_admin():
                 <h2>''' + get_lang(conn, 'owner') + '''</h2>
                 <ul>
                     <li><a href="/auth/list">''' + get_lang(conn, 'admin_group_list') + '''</a></li>
-                    <li><a href="/register">''' + get_lang(conn, 'add_user') + '''</a></li>
+                    <li><a href="/admin/create_user">''' + get_lang(conn, 'add_user') + '''</a></li>
                     <li><a href="/setting">''' + get_lang(conn, 'setting') + '''</a></li>
                     <li><a href="/manager/18">''' + get_lang(conn, 'user_fix') + '''</a></li>
                 </ul>

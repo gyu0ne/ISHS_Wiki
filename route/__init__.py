@@ -62,6 +62,8 @@ from route.login_logout import login_logout
 
 from route.login_register import login_register_student, login_register_teacher
 from route.login_register_submit import login_register_submit
+from route.admin_create_user import admin_create_user
+from route.admin_create_user_submit import admin_create_user_submit
 
 from route.main_func_error_404 import main_func_error_404
 
