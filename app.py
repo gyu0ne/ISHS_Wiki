@@ -783,12 +783,6 @@ app.route('/star_doc', defaults = { 'tool' : 'star_doc' })(user_watch_list)
 app.route('/star_doc/<everything:name>', defaults = { 'tool' : 'star_doc' })(user_watch_list_name)
 app.route('/star_doc_from/<everything:name>', defaults = { 'tool' : 'star_doc_from' })(user_watch_list_name)
 
-# 개편 보류중 S
-app.route('/change/email', methods = ['POST', 'GET'])(user_setting_email)
-app.route('/change/email/delete')(user_setting_email_delete)
-app.route('/change/email/check', methods = ['POST', 'GET'])(user_setting_email_check)
-# 개편 보류중 E
-
 # Func-login
 # 개편 예정
 
@@ -805,8 +799,6 @@ app.route('/register/submit', methods = ['POST', 'GET'])(login_register_submit)
 
 app.route('/login/find')(login_find)
 app.route('/login/find/key', methods = ['POST', 'GET'])(login_find_key)
-app.route('/login/find/email', methods = ['POST', 'GET'], defaults = { 'tool' : 'pass_find' })(login_find_email)
-app.route('/login/find/email/check', methods = ['POST', 'GET'], defaults = { 'tool' : 'check_key' })(login_find_email_check)
 app.route('/logout')(login_logout)
 
 # Func-vote
