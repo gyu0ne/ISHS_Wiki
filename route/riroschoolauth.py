@@ -23,7 +23,7 @@ def riro_login(id: str = Form(...), password: str = Form(...)):
     while True:
         try:
             try:
-                s.post("https://iscience.riroschool.kr/user.php?action=user_logout", timeout=10)
+                s.get("https://iscience.riroschool.kr/user.php?action=user_logout", timeout=10)
             except requests.RequestException:
                 pass
 
@@ -101,4 +101,4 @@ def riro_login(id: str = Form(...), password: str = Form(...)):
 
 if __name__ == "__main__":
     import uvicorn
-    uvicorn.run(app, host="127.0.0.1", port=5000)
+    uvicorn.run(app, host="127.0.0.1", port=5001)

@@ -16,8 +16,9 @@ async def riro_login_page():
             riro_pw = flask.request.form.get('riro_pw', '')
 
             try:
-                api_url = f"http://127.0.0.1:5000/api/riro_login?id={riro_id}&password={riro_pw}"
-                response = requests.get(api_url, timeout=30)
+                api_url = "http://127.0.0.1:5001/api/riro_login"
+                post_data = {'id': riro_id, 'password': riro_pw}
+                response = requests.post(api_url, data=post_data, timeout=30)
                 response.raise_for_status()
                 result = response.json()
             except requests.exceptions.RequestException as e:
