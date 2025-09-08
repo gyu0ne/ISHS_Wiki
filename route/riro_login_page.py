@@ -74,7 +74,7 @@ async def riro_login_page():
                         <input placeholder="리로스쿨 PW" name="riro_pw" type="password">
                         <hr class="main_hr">
                         <button type="submit">인증하기</button>
-                        <span>리로스쿨 ID, PW는 서버 측에 저장되지 않습니다.\n서버 측에서 리로스쿨에 직접 로그인하는 방식이므로 1분 가량 시간이 걸릴 수 있습니다.</span>
+                        <span>리로스쿨 ID, PW는 서버 측에 저장되지 않습니다.</span>
                     </form>
                 ''',
                 menu = [['user', get_lang(conn, 'return')]]
