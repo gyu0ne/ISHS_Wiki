@@ -147,7 +147,7 @@ def global_some_set_do(set_name, data = None):
     else:
         return None
 
-async def python_to_golang(func_name, other_set = set()):
+async def python_to_golang(func_name, other_set = {}):
     other_set = {
         "url" : func_name,
         "data" : json_dumps(other_set)
