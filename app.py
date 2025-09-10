@@ -794,7 +794,6 @@ app.route('/login', methods = ['POST', 'GET'])(login_login)
 app.route('/login/2fa', methods = ['POST', 'GET'])(login_login_2fa)
 app.route('/register', methods = ['POST', 'GET'])(riro_login_page)
 app.route('/register_form_student', methods = ['POST', 'GET'])(login_register_student)
-app.route('/register_form_teacher', methods = ['POST', 'GET'])(login_register_teacher)
 app.route('/register/submit', methods = ['POST', 'GET'])(login_register_submit)
 
 app.route('/admin/create_user', methods = ['POST', 'GET'])(admin_create_user)
@@ -985,9 +984,9 @@ app.route('/image/<path:name>')(main_view_image)
 # 조정 계획 중
 app.route('/<regex("[^.]+\\.(?:txt|xml|ico)"):data>')(main_view_file)
 
-app.route('/shutdown', methods = ['POST', 'GET'])(main_sys_shutdown)
-app.route('/restart', defaults = { 'golang_process' : golang_process }, methods = ['POST', 'GET'])(main_sys_restart)
-app.route('/update', defaults = { 'golang_process' : golang_process }, methods = ['POST', 'GET'])(main_sys_update)
+#app.route('/shutdown', methods = ['POST', 'GET'])(main_sys_shutdown)
+#app.route('/restart', defaults = { 'golang_process' : golang_process }, methods = ['POST', 'GET'])(main_sys_restart)
+#app.route('/update', defaults = { 'golang_process' : golang_process }, methods = ['POST', 'GET'])(main_sys_update)
 
 app.errorhandler(404)(main_func_error_404)
 

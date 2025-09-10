@@ -102,7 +102,7 @@ def riro_login(id: str = Form(...), password: str = Form(...)):
             # print("Error:", e) # 콘솔 출력 제거
             time.sleep(SLEEP_SEC)
             
-    return {"status": "error", "message": f"인증 서버와 통신 중 오류가 발생했습니다: {last_exception}"}
+    return {"status": "error", "message": f"인증 서버와 통신 중 오류가 발생했습니다."}
 
 if __name__ == "__main__":
     import uvicorn
