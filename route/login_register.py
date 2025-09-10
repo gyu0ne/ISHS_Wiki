@@ -389,7 +389,7 @@ async def login_register_teacher():
     with get_db_connect() as conn:
         curs = conn.cursor()
 
-        if not flask.session.get('riro_verified'):
+        if not flask.session.get('riro_verified') or flask.session.get('riro_student_number') != '0':
             return redirect(conn, '/riro_login')
         
         if (await ban_check(None, 'register'))[0] == 1:
