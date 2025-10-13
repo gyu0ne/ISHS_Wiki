@@ -406,7 +406,7 @@ async def view_w(name = '대문', do_type = ''):
         </div>
         <hr class="main_hr">
         '''
-        div = file_data + user_doc + end_data + ad_banner + category_total
+        div = file_data + user_doc + ad_banner + end_data + category_total
          
         if doc_type == '':
             curs.execute(db_change('select data from other where name = "outdated_doc_warning_date"'))
