@@ -398,8 +398,16 @@ async def view_w(name = '대문', do_type = ''):
             view_count = curs.fetchall()
             view_count = view_count[0][0] if view_count else 0
 
-        div = file_data + user_doc + end_data + category_total
-        
+        ad_banner = '''
+        <div style="text-align:center; margin: 40px 0;">
+            <a href="https://forms.gle/5FmWoxERVCw9hEbo8" target="_blank" rel="noopener noreferrer">
+                <img src="/image/ad1.png" alt="ad1" style="max-width:90%; height:auto; border-radius:12px; box-shadow:0 4px 12px rgba(0,0,0,0.2); transition:transform 0.2s;">
+            </a>
+        </div>
+        <hr class="main_hr">
+        '''
+        div = file_data + user_doc + end_data + ad_banner + category_total
+         
         if doc_type == '':
             curs.execute(db_change('select data from other where name = "outdated_doc_warning_date"'))
             db_data = curs.fetchall()
@@ -410,6 +418,7 @@ async def view_w(name = '대문', do_type = ''):
                     curs.execute(db_change('select data from other where name = "outdated_doc_warning"'))
                     db_data = curs.fetchall()
                     div = (db_data[0][0] if db_data and db_data[0][0] != '' else get_lang(conn, 'old_page_warning')) + '<hr class="main_hr">' + div
+
 
         curs.execute(db_change("select data from other where name = 'body'"))
         body = curs.fetchall()
