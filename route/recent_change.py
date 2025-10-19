@@ -192,7 +192,7 @@ async def recent_change(name = '', tool = '', num = 1, set_type = 'normal'):
             if tool == 'history':
                 div = '' + \
                     ' '.join(['<a href="/history_page/1/' + for_a[0] + '/' + url_pas(name) + '">(' + for_a[1] + ')</a> ' for for_a in option_list]) + \
-                    '<hr class="main_hr">' + div + \
+                    div + \
                 ''
                 menu = [['w/' + url_pas(name), get_lang(conn, 'return')]]
 
@@ -202,8 +202,8 @@ async def recent_change(name = '', tool = '', num = 1, set_type = 'normal'):
                             <select name="a">''' + select + '''</select> <select name="b">''' + select + '''</select>
                             <button type="submit">''' + get_lang(conn, 'compare') + '''</button>
                         </form>
-                        <hr class="main_hr">
                     ''' + div
+
 
                 if admin == 1:
                     menu += [
@@ -241,8 +241,16 @@ async def recent_change(name = '', tool = '', num = 1, set_type = 'normal'):
             if sub == '':
                 sub = 0
 
-            return easy_minify(conn, flask.render_template(skin_check(conn),
-                imp = [title, await wiki_set(), await wiki_custom(conn), wiki_css([sub, 0])],
-                data = div,
-                menu = menu
-            ))
+            return easy_minify(conn, flask.render_template(
+                "ishs_base.html",
+                title=title,
+                data=div,
+                sidebar="""
+                h3>도움말</h3>
+                <p>최근 편집 기록을 확인할 수 있습니다.</p>
+                <ul>
+                    <li><a href="/Discussion">최근 토론</a></li>
+                    <li><a href="/Tools">도구</a></li>
+                </ul>
+                """
+            )), 200

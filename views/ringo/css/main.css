@@ -488,3 +488,19 @@ div#edited_time {
 #menu > a:nth-child(6) {
     display: none;
 }
+
+#menu a.star_button {
+    color: black;
+    background-color: #f5f5f5;
+    padding: 10px;
+    border-radius: 6px;
+    margin-left: 4px;
+    display: inline-block;
+    text-align: center;
+    font-weight: bold;
+}
+
+#menu a.star_button:hover {
+    background-color: #e0e0e0;
+}
+

@@ -1,8 +1,65 @@
 from .tool.func import *
+import html
+import re
 
 from .go_api_w_raw import api_w_raw
 from .go_api_w_render import api_w_render
 from .go_api_w_page_view import api_w_page_view
+
+def _recent_changes_sidebar_html(conn, limit=10):
+    c = conn.cursor()
+    # rc(최근변경 인덱스)에서 최신 id를 가져오고 history에서 상세를 합친다
+    c.execute(db_change('select title, id from rc where type = ? order by date desc limit ?'), ['normal', limit])
+    items = []
+    for title, hid in c.fetchall():
+        c.execute(db_change('select id, title, date, ip, send, leng, hide, type from history where title = ? and id = ?'), [title, hid])
+        row = c.fetchone()
+        if not row:
+            continue
+        _id, _title, _date, _ip, _msg, _len, _hide, _type = row
+        # (여기서 원래는 날짜·증감·r1 같은 텍스트를 합쳐서 items.append(...) 하던 로직이 있음)
+        # ...
+    return '<ul class="opennamu_recent_change">' + ''.join(items) + '</ul>'
+
+
+def _recent_changes_sidebar_simple_html(conn, limit=10):
+    """
+    최근 변경 '사이드바용' 확장 버전:
+    문서명 + r번호 + 글자수 증감(녹색/빨강)
+    """
+    c = conn.cursor()
+    c.execute(db_change('select title, id from rc where type = ? order by date desc limit ?'), ['normal', limit])
+    items = []
+    for title, hid in c.fetchall():
+        # history 정보 불러오기
+        c.execute(db_change('select id, title, date, ip, send, leng, hide, type from history where title = ? and id = ?'),
+                  [title, hid])
+        row = c.fetchone()
+        if not row:
+            continue
+        _id, _title, _date, _ip, _msg, _len, _hide, _type = row
+
+        # 글자수 증감 색상
+        if re.search(r'\+', _len):
+            len_html = f'<span style="color:green;">({_len})</span>'
+        elif re.search(r'-', _len):
+            len_html = f'<span style="color:red;">({_len})</span>'
+        else:
+            len_html = f'<span style="color:gray;">({_len})</span>'
+
+        # r번호 링크
+        if int(_id) < 2:
+            r_link = f'<a href="/history/{url_pas(_title)}">(r{_id})</a>'
+        else:
+            r_link = f'<a href="/diff/{int(_id)-1}/{_id}/{url_pas(_title)}">(r{_id})</a>'
+
+        safe_title = html.escape(_title)
+        items.append(f'<li><a href="/w/{url_pas(_title)}">{safe_title}</a> {r_link} {len_html}</li>')
+
+    return '<ul class="opennamu_recent_change">' + ''.join(items) + '</ul>'
+
+
+
 
 def _get_user_profile_table_html(conn, user_id: str) -> str:
     """
@@ -264,7 +321,15 @@ async def view_w(name = '대문', do_type = ''):
                 'name' : name,
                 'data' : doc_data["data"]
             })
-            end_data = render_data["data"] + '<script>document.addEventListener("DOMContentLoaded", function() {' + render_data["js_data"] + '});</script>'
+            # 글자크기
+            end_data = (
+                '<div class="article-scale" style="font-size: 1.16em;">'
+                + render_data["data"] +
+                '</div>'
+                + '<script>document.addEventListener("DOMContentLoaded", function() {'
+                + render_data["js_data"] +
+                '});</script>'
+            )
         else:
             end_data = ''
 
@@ -432,17 +497,57 @@ async def view_w(name = '대문', do_type = ''):
         body = curs.fetchall()
         div = (body[0][0] + div) if body else div
 
-        if ip_or_user(ip) == 0:
-            curs.execute(db_change("select data from user_set where id = ? and data = ?"), [ip, name])
-            watch_list = 2 if curs.fetchall() else 1
-            menu += [['star_doc_from/' + url_pas(name), ('☆' if watch_list == 1 else '★'), watch_list - 1]]
+        # ★ 편집 옆 별 버튼 (항상 표시 / 비로그인은 로그인으로, 로그인은 토글로)
+        logged_in = (ip_or_user(ip) == 0)
+
+        # 이 문서를 별표한 전체 사용자 수
+        curs.execute(db_change(
+            "select count(*) from user_set "
+            "where (name = 'star_doc' or name = 'star_doc_from') and data = ?"
+        ), [name])
+        row = curs.fetchone()
+        star_count = row[0] if row and row[0] else 0
+
+        # 내 별 여부 (로그인일 때만 확인)
+        if logged_in:
+            curs.execute(db_change("select 1 from user_set where id = ? and data = ? limit 1"), [ip, name])
+            is_starred = True if curs.fetchone() else False
+        else:
+            is_starred = False
+
+        star_symbol = '★' if is_starred else '☆'
+        star_label  = f"{star_symbol} {star_count}"
+        star_href   = ('star_doc_from/' + url_pas(name)) if logged_in else 'login'
+
+        menu.insert(0, [star_href, star_label, 1])
+
+
+
+
+
+        # 기존 주시 목록 관련 메뉴 제거 (아래 두 줄 삭제)
+        # menu += [['star_doc_from/' + url_pas(name), ('☆' if watch_list == 1 else '★'), watch_list - 1]]
+        # menu += [['doc_watch_list/1/' + url_pas(name), get_lang(conn, 'watchlist')]]
+
+        try:
+            recent_sidebar = _recent_changes_sidebar_simple_html(conn, limit = 10)
+        except Exception as e:
+            print(f"RECENT SIDEBAR ERROR: {e}")
+            recent_sidebar = ''  # ← 빈 문자열
+        # 로그인 O: 2(별표됨) / 1(별표안됨), 로그인 X: 0
+        if logged_in:
+            watch_list = 2 if is_starred else 1
         else:
             watch_list = 0
-
-        menu += [['doc_watch_list/1/' + url_pas(name), get_lang(conn, 'watchlist')]]
-
-        return easy_minify(conn, flask.render_template(skin_check(conn),
-            imp = [name_view, await wiki_set(), await wiki_custom(conn), wiki_css([sub, r_date, watch_list, description, view_count])],
+        return easy_minify(conn, flask.render_template(
+            skin_check(conn),
+            imp = [
+                name_view,
+                await wiki_set(),
+                await wiki_custom(conn),
+                wiki_css([sub, r_date, watch_list, description, view_count])
+            ],
             data = div,
-            menu = menu
+            menu = menu,
+            recent_sidebar = recent_sidebar
         )), response_data

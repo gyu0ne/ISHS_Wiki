@@ -11,8 +11,40 @@ from route import *
 from route.riro_login_page import riro_login_page
 from hypercorn.asyncio import serve
 from hypercorn.config import Config
-
+from flask import g
 from werkzeug.middleware.proxy_fix import ProxyFix
+from urllib.parse import urlparse, urljoin, unquote
+
+def _is_safe_redirect(target: str) -> bool:
+    if not target:
+        return False
+    base = flask.request.host_url
+    test = urljoin(base, target)
+    u_base, u_test = urlparse(base), urlparse(test)
+    return (u_test.scheme in ('http', 'https')) and (u_base.netloc == u_test.netloc)
+
+def _default_after_login_url() -> str:
+    # 1순위: 로그인 직전 referrer에서 뽑아놓은 정확한 문서
+    prev_title = flask.session.pop('__login_prev_title', None)
+    if isinstance(prev_title, str) and prev_title.strip():
+        try:
+            return '/w/' + url_pas(prev_title)
+        except:
+            pass
+
+    # 2순위: view_w가 쌓아둔 최근 문서 세션(문자열인 첫 항목만 사용)
+    docs = flask.session.get('lastest_document') or []
+    for item in docs:
+        if isinstance(item, str) and item.strip():
+            try:
+                return '/w/' + url_pas(item)
+            except:
+                continue
+
+    # 3순위: 기본값
+    return '/w/' + url_pas('인곽위키:대문')
+
+
 
 args = sys.argv
 run_mode = ''
@@ -193,6 +225,7 @@ with get_db_connect(init_mode = True) as conn:
             self.regex = items[0]
 
     app = flask.Flask(__name__, template_folder = './')
+
 
     app.config['JSON_AS_ASCII'] = False
     app.config['JSONIFY_PRETTYPRINT_REGULAR'] = False
@@ -461,6 +494,51 @@ def auto_do_something(data_db_set):
 auto_do_something(data_db_set)
 
 print('Now running... http://localhost:' + server_set['port'])
+
+@app.before_request
+def _capture_login_referer():
+    try:
+        if flask.request.path == '/login' and flask.request.method == 'GET':
+            ref = flask.request.referrer or ''
+            if ref:
+                u = urlparse(ref)
+                # /w/<제목> 형태만 허용해 정확한 문서만 저장
+                if u.path.startswith('/w/'):
+                    title = unquote(u.path[len('/w/'):])
+                    if title:
+                        flask.session['__login_prev_title'] = title
+    except Exception:
+        pass
+from route.view_w import _recent_changes_sidebar_simple_html
+
+@app.context_processor
+def inject_recent_sidebar():
+    try:
+        with get_db_connect() as conn:
+            html_data = _recent_changes_sidebar_simple_html(conn, limit=10)
+        return dict(recent_sidebar=html_data)
+    except Exception as e:
+        print(f"[WARN] recent_sidebar inject failed: {e}")
+        return dict(recent_sidebar='')
+
+@app.after_request
+def _redirect_login_to_last_doc(response):
+    try:
+        # 로그인 POST 성공 시 login_login.py가 /user 로 302 보내는 응답을 가로챈다
+        if flask.request.path == '/login' and response.status_code in (301, 302, 303, 307, 308):
+            loc = response.headers.get('Location', '')
+            # 절대/상대 URL 모두 대비
+            if loc:
+                parsed = urlparse(loc)
+                # /user 로 가려는 리다이렉트면 우리가 원하는 URL로 바꾼다
+                if parsed.path == '/user':
+                    target = _default_after_login_url()
+                    # 호스트/프로토콜은 그대로 두고 Location만 내부 경로로 교체
+                    response.headers['Location'] = target
+    except Exception:
+        pass
+    return response
+
 
 @app.before_request
 async def check_auto_login():
@@ -789,6 +867,12 @@ app.route('/star_doc_from/<everything:name>', defaults = { 'tool' : 'star_doc_fr
 # login -> login/2fa -> login/2fa/email with login_id
 # register -> register/email -> regiter/email/check with reg_id
 # pass_find -> pass_find/email with find_id
+
+# 테스트용 TEST MODE 절대 주석 푼 상태로 올리지 마시오올리지마시오올리지마시오
+#@app.route('/register', methods=['GET', 'POST'])
+#def riro_login_redirect():
+#    return flask.redirect('/register_form_student')
+
 
 app.route('/login', methods = ['POST', 'GET'])(login_login)
 app.route('/login/2fa', methods = ['POST', 'GET'])(login_login_2fa)

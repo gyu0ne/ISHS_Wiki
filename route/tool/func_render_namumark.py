@@ -169,9 +169,14 @@ class class_do_render_namumark:
 
         return data
 
-    def get_tool_footnote_make(self):    
+    def get_tool_footnote_make(self):
+        # 하단 각주 블록(footnote_category 이후)에 표시되는 블록도 만들고,
+        # 번호(rfn_*)에 마우스 오버하면 링크 우하단에 고정된 툴팁을 띄운다.
         data = ''
+        js_parts = []
+
         for for_a in self.data_footnote:
+            # (A) 하단 각주 블록 구성
             if data == '':
                 data += '<div class="opennamu_footnote">'
             else:
@@ -179,21 +184,94 @@ class class_do_render_namumark:
 
             if len(self.data_footnote[for_a]['list']) > 1:
                 data += '(' + for_a + ') '
-
                 for for_b in self.data_footnote[for_a]['list']:
                     data += '<sup><a id="' + self.doc_set['doc_include'] + 'fn_' + for_b + '" href="#' + self.doc_set['doc_include'] + 'rfn_' + for_b + '">(' + for_b + ')</a></sup> '
             else:
                 data += '<a id="' + self.doc_set['doc_include'] + 'fn_' + self.data_footnote[for_a]['list'][0] + '" href="#' + self.doc_set['doc_include'] + 'rfn_' + self.data_footnote[for_a]['list'][0] + '">(' + for_a + ') </a> '
 
-            data += '<footnote_title id="' + self.doc_set['doc_include'] + 'fn_' + self.data_footnote[for_a]['list'][0] + '_title">' + self.data_footnote[for_a]['data'] + '</footnote_title>'
+            # (B) 각주 본문을 렌더링 파이프라인에 한번 태운다
+            _raw_foot = self.data_footnote[for_a]['data']
+            _rendered_foot = self.do_inter_render(
+                _raw_foot,
+                self.doc_set['doc_include'] + 'opennamu_foot_' + str(self.data_temp_storage_count + 1)
+            )
+            _rendered_foot = self.get_tool_data_restore(_rendered_foot)
+            # 하단 블록에 실제 내용 출력
+            data += '<footnote_title id="' + self.doc_set['doc_include'] + 'fn_' + self.data_footnote[for_a]['list'][0] + '_title">' + _rendered_foot + '</footnote_title>'
+
+            # (C) 툴팁 내용은 JS 문자열로 안전하게
+            foot_text_js = self.get_tool_js_safe(_rendered_foot)
+
+            # (D) rfn_*에 hover하면 "우하단 고정"으로 툴팁 생성
+            for for_b in self.data_footnote[for_a]['list']:
+                rfn_id = self.doc_set['doc_include'] + 'rfn_' + for_b
+                tip_id = rfn_id + '_tip'
+                js_parts.append(f"""
+                    (function() {{
+                        var el = document.getElementById("{rfn_id}");
+                        if (!el) return;
+
+                        var over = function() {{
+                            var tip = document.createElement("div");
+                            tip.id = "{tip_id}";
+                            tip.className = "footnote_tooltip";
+                            tip.innerHTML = '{foot_text_js}';
+                            document.body.appendChild(tip);
+
+                            tip.style.position = "absolute";
+                            tip.style.pointerEvents = "auto";
+
+                            
+                            var cs = window.getComputedStyle(el);
+                            var basePx = parseFloat(cs.fontSize) || 14;
+                            tip.style.fontSize = 16 + "px";
+
+                            // (2) 가운데 위로 고정
+                            var rect = el.getBoundingClientRect();
+                            var tipWidth = tip.offsetWidth || 200;   // 초기 대략값
+                            var tipHeight = tip.offsetHeight || 40;  // 초기 대략값
+                            // 가운데 정렬 (요소 중앙 기준)
+                            tip.style.left = (window.scrollX + rect.left + (rect.width / 2) - (tipWidth / 2)) + "px";
+                            tip.style.top  = (window.scrollY + rect.top - tipHeight -1) + "px";
+                        }};
+
+                        var out = function(e) {{
+                            var tip = document.getElementById("{tip_id}");
+                            if (!tip) return;
+                            // 툴팁 영역 위에 있으면 닫지 않음
+                            var related = e.relatedTarget;
+                            if (related && tip.contains(related)) return;
+                            tip.remove();
+                        }};
+                        // 툴팁 위에서도 닫히지 않게, 툴팁 자체에도 이벤트 추가
+                        document.addEventListener("mouseover", function(ev) {{
+                            var tip = document.getElementById("{tip_id}");
+                            if (!tip) return;
+                            if (!tip.contains(ev.target)) return; // 내부면 무시
+                            tip.addEventListener("mouseleave", function() {{
+                                tip.remove();
+                            }});
+                        }});
+                        el.addEventListener("mouseenter", over);
+                        el.addEventListener("mouseleave", out);
+                    }})();
+                """)
+
 
         if data != '':
             data += '</div>'
 
+        # JS 누적
+        self.render_data_js += "\n".join(js_parts)
+
+        # 상태 머지
         self.data_footnote_all.update(self.data_footnote)
         self.data_footnote = {}
 
+        # 하단 각주 블록 HTML 반환 (do_redner_footnote에서 +=로 붙인다)
         return data
+
+
 
     def get_tool_px_add_check(self, data):
         if re.search(r'^[0-9]+$', data):
@@ -1027,7 +1105,12 @@ class class_do_render_namumark:
                     if file_rendering != '':
                         file_rendering = 'image-rendering:' + self.get_tool_css_safe(file_rendering) + ';'
 
+                    # width 지정이 없는 경우 자동으로 100%로 설정
+                    if 'width:' not in file_width:
+                        file_width = 'width:100%;'
+
                     file_style = file_width + file_height + file_align_style + file_bgcolor + file_radius + file_rendering
+
 
                     image_set = get_main_skin_set(self.conn, self.flask_session, 'main_css_image_set', self.ip)
                     if image_set == 'new_click' or image_set == 'click':
@@ -1520,10 +1603,24 @@ class class_do_render_namumark:
                         if footnote_number_view_set == 'on':
                             foot_v_name += footnote_name_add
 
+                    # 존재 여부에 따른 색상/클래스 결정:
+                    #  - 정의가 이미 있거나(과거 포함) 이번 토큰이 본문을 동반하면 → 파란색(기본)
+                    #  - 그 외(정의가 전혀 없음) → 빨간색
+                    foot_defined = False
+                    if footnote_name in self.data_footnote and self.data_footnote[footnote_name].get('data', '') != '':
+                        foot_defined = True
+                    elif footnote_name in self.data_footnote_all and self.data_footnote_all[footnote_name].get('data', '') != '':
+                        foot_defined = True
+                    elif footnote_text_data != '':
+                        foot_defined = True
+
+                    color_style = (' style="color:#2c6be6;"' if foot_defined else ' style="color:#d33;"')
+                    exist_class = ('' if foot_defined else ' class="opennamu_not_exist_link"')
+
                     if footnote_set == 'spread':
                         data_name = self.get_tool_data_storage(
                             '<sup>' + \
-                                '<a fn_target="' + fn + '" id="' + rfn + '" href="javascript:void(0);">(' + foot_v_name + ')</a>' + \
+                                '<a fn_target="' + fn + '" id="' + rfn + '" href="javascript:void(0);"' + color_style + exist_class + '>(' + foot_v_name + ')</a>' + \
                             '</sup>' + \
                             '<span class="opennamu_spead_footnote" id="' + rfn + '_load" style="display: none;"></span>',
                             '',
@@ -1533,7 +1630,7 @@ class class_do_render_namumark:
                     elif footnote_set == 'popup':
                         data_name = self.get_tool_data_storage(
                             '<sup>' + \
-                                '<a fn_target="' + fn + '" id="' + rfn + '" href="javascript:void(0);">(' + foot_v_name + ')</a>' + \
+                                '<a fn_target="' + fn + '" id="' + rfn + '" href="javascript:void(0);"' + color_style + exist_class + '>(' + foot_v_name + ')</a>' + \
                             '</sup>' + \
                             '<span class="opennamu_spead_footnote" id="' + rfn + '_load" style="display: none;"></span>',
                             '',
@@ -1544,7 +1641,7 @@ class class_do_render_namumark:
                         data_name = self.get_tool_data_storage(
                             '<span id="' + rfn + '_over">' + \
                                 '<sup>' + \
-                                    '<a fn_target="' + fn + '" id="' + rfn + '" href="javascript:void(0);">(' + foot_v_name + ')</a>' + \
+                                    '<a fn_target="' + fn + '" id="' + rfn + '" href="javascript:void(0);"' + color_style + exist_class + '>(' + foot_v_name + ')</a>' + \
                                 '</sup>' + \
                                 '<span class="opennamu_popup_footnote" id="' + rfn + '_load" style="display: none;"></span>' + \
                             '</span>',
@@ -1554,7 +1651,7 @@ class class_do_render_namumark:
                         self.render_data_js += 'document.getElementById("' + rfn + '_over").addEventListener("click", function() { opennamu_do_footnote_popover("' + rfn + '", "' + fn + '", undefined, "open"); });\n'
                         self.render_data_js += 'document.addEventListener("click", function() { opennamu_do_footnote_popover("' + rfn + '", "' + fn + '", undefined, "close"); });\n'
                     else:
-                        data_name = self.get_tool_data_storage('<sup><a fn_target="' + fn + '" id="' + rfn + '" href="#' + fn + '">(' + foot_v_name + ')</a></sup>', '', footnote_data_org)
+                        data_name = self.get_tool_data_storage('<sup><a fn_target="' + fn + '" id="' + rfn + '" href="#' + fn + '"' + color_style + exist_class + '>(' + foot_v_name + ')</a></sup>', '', footnote_data_org)
 
                     self.render_data = re.sub(footnote_regex, '<' + data_name + '></' + data_name + '>', self.render_data, 1)
 
@@ -1562,6 +1659,9 @@ class class_do_render_namumark:
 
         self.render_data += '<footnote_category>'
         self.render_data += self.get_tool_footnote_make()
+
+
+
 
     def do_render_redirect(self):
         match = re.search(r'^<back_br>\n#(?:redirect|넘겨주기) ([^\n]+)', self.render_data, flags = re.I)
@@ -2534,20 +2634,7 @@ class class_do_render_namumark:
             self.render_data = self.render_data.replace('<toc_need_part>', '')
             self.render_data = self.render_data.replace('<toc_no_auto>', '')
 
-        def do_render_last_footnote(match):
-            match = match.group(1)
 
-            find_regex = re.compile(r'<footnote_title id="' + match + r'_title">((?:(?!<footnote_title|<\/footnote_title>).)*)<\/footnote_title>')
-            find_data = re.search(find_regex, self.render_data)
-            if find_data:
-                find_data = find_data.group(1)
-                find_data = re.sub(r'<[^<>]*>', '', find_data)
-            else:
-                find_data = ''
-
-            return '<a title="' + find_data + '"'
-
-        self.render_data = re.sub(r'<a fn_target="([^"]+)"', do_render_last_footnote, self.render_data)
 
         self.render_data_js += '''
             document.querySelectorAll('details').forEach((el) => {

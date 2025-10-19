@@ -1,312 +1,555 @@
-<!DOCTYPE html>
+<!DOCTYPE html> 
 <html lang="{{'language_tag'|load_lang}}">
-    <head>
-        <meta name="google-site-verification" content="YblI_5VFlZhOEi4bCDSgBlAxGfO9sPJlfe9IK4iszZM" />
-        <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-4874556590582545" crossorigin="anonymous"></script>
-        <style id="ringo_add_style"></style>
-        <script src="/views/ringo/js/skin_set_do.js.cache_v4"></script>
-        <meta charset="utf-8">
-        {% if imp[3][0] != 0 %} <!-- 문서 부제목 존재 여부 확인 -->
-            <title>{{imp[0]}} {{imp[3][0]}} - {{imp[1][0]}}</title> <!-- 문서 부제목이 존재 시 타이틀 '문서 제목 부제 - 위키 이름'으로 설정 -->
-        {% else %}
-            <title>{{imp[0]}} - {{imp[1][0]}}</title> <!-- 문서 부제목이 존재하지 않을 시 타이틀 '문서 제목 - 위키 이름'으로 설정 -->
+<head>
+  <meta charset="utf-8">
+
+  {% if imp[3][0] != 0 %}
+    <title>{{imp[0]}} {{imp[3][0]}} - {{imp[1][0]}}</title>
+    <meta name="title" content="{{imp[0]}}{{imp[3][0]}} - {{imp[1][0]}}">
+  {% else %}
+    <title>{{imp[0]}} - {{imp[1][0]}}</title>
+    <meta name="title" content="{{imp[0]}} - {{imp[1][0]}}">
+  {% endif %}
+  <meta name="description" content="{{imp[3][6]}}">
+  <meta name="keywords" content="{{imp[0]}}">
+  <meta property="og:title" content="{{imp[0]}} - {{imp[1][0]}}">
+  <meta property="og:image" content="https://i.namu.wiki/i/UX1a0RmaJfABnbuJcd-2PfCO6qfqFMXaVBkNYV0Hwjm007_uH2Cc0fJmv6M9g9BTfzXjUk3jwJpDa09YdZnf79GO_NiDd9uGp7dudqFfQVBz69OaFzGfhSmMbOGezsME4LUzp6meYGFLDHZ32cTifVistPL4rVyv_OyU1WOADOM.webp">
+  <meta property="og:description" content="인천과학고 위키에 오신 것을 환영합니다!">
+
+  {{imp[3][3]|safe}}
+  {{imp[1][5]|safe}}
+  {{imp[2][3]|safe}}
+
+  <link rel="shortcut icon" href="/views/main_css/file/favicon.ico.cache_v1">
+  <link href="https://cdn.jsdelivr.net/gh/sun-typeface/SUIT/fonts/static/woff2/SUIT.css" rel="stylesheet">
+  <script defer src="https://code.iconify.design/1/1.0.3/iconify.min.js"></script>
+  <script defer src="/views/ringo/js/main.js.cache_v3"></script>
+  <script defer src="/views/ringo/js/sidebar.js.cache_v7"></script>
+  <script defer src="/views/ringo/js/skin_set.js.cache_v9"></script>
+  <script defer src="/views/main_css/js/func/autocomplete.js"></script>
+  <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-4874556590582545" crossorigin="anonymous"></script>
+  <script src="/views/ringo/js/skin_set_do.js.cache_v4"></script>
+
+  {% if request.cookies.get('main_css_darkmode', '') == '1' %}
+    {{imp[3][5]|safe}}
+  {% endif %}
+
+  <style>
+    :root{
+      --bar-a: #78a834ff;
+      --bar-b: #78a834ff;
+      --bg:rgb(248, 248, 248);
+      --surface:#ffffff;
+      --text:#111;
+      --muted:#6b7280;
+      --ring:rgba(23,37,84,.12);
+      --radius:14px;
+      --edge-x:clamp(16px, 6vw, 88px);
+      --aside-w:clamp(240px, 28%, 360px);
+      --shadow-card:0 1px 0 rgba(0,0,0,.03),0 10px 28px rgba(16,24,40,.06);
+      --base-font:16px;
+      --hr:#eff2f9;
+    }
+
+
+
+    html,body{margin:0;padding:0}
+    html,body.namu{
+      background:var(--bg);
+      color:var(--text);
+      font-family:'SUIT',system-ui,-apple-system,Segoe UI,Roboto,sans-serif;
+      font-size:var(--base-font);
+      text-size-adjust:100%;
+    }
+    .namu a{color:#2c6be6;text-decoration:none}
+    .namu a:hover{text-decoration:underline}
+
+    .topbar{
+      background:linear-gradient(90deg,var(--bar-a),var(--bar-b));
+      height:64px;display:flex;align-items:center;gap:18px;
+      padding:0 var(--edge-x);position:sticky;top:0;z-index:1000;
+      box-shadow:0 1px 0 rgba(0,0,0,.05);
+    }
+    .topbar__left{display:flex;align-items:center;gap:18px}
+    .logo a{
+      display:inline-flex;align-items:center;height:30px;padding:6px 10px;
+      border-radius:12px;background:rgba(255,255,255,.26);color:#fff;font-weight:800;
+      backdrop-filter:blur(2px);
+    }
+
+    .nav{display:flex;align-items:center;gap:18px}
+    .nav>a,.nav>.menu{color:#eef2ff;font-weight:700;display:inline-flex;align-items:center;gap:8px}
+    .nav>a,.nav>.menu>button{font-size:17px}
+    .nav>a:hover,.nav>.menu:hover{color:#fff}
+    /* 네비 전용: 상단 링크 밑줄 제거 */
+    .nav > a{ text-decoration:none; }
+    .nav > a:hover{ text-decoration:none; }
+
+
+    .dropdown{position:relative}
+    .dropdown>button{color:#eef2ff;font-weight:700;background:transparent;border:0;cursor:pointer;display:inline-flex;align-items:center;gap:6px;padding:0}
+    .dropdown-panel{position:absolute;top:48px;left:0;min-width:200px;background:#fff;border-radius:12px;box-shadow:0 8px 30px rgba(0,0,0,.15);padding:8px;display:none}
+    .dropdown-panel a{display:flex;align-items:center;gap:8px;padding:10px 12px;border-radius:8px;color:#111}
+    .dropdown-panel a:hover{background:#f4f6fb;text-decoration:none}
+
+    .topbar__right{margin-left:auto;display:flex;align-items:center;gap:10px}
+    .search{
+      display:flex;align-items:center;gap:8px;background:#fff;border-radius:999px;
+      padding:8px 12px;
+      box-shadow:0 0 0 1px var(--ring),0 8px 22px rgba(0,0,0,.06)
+    }
+    .search input{
+      width:clamp(120px, 16vw, 240px);
+      font-size:14px;
+      background:transparent;
+      caret-color:#333;
+      border:0!important;
+      border-bottom:0!important;
+      outline:0!important;
+      box-shadow:none!important;
+      -webkit-appearance:none;
+      appearance:none;
+    }
+
+
+    .top-icon{height:40px;width:40px;display:grid;place-items:center;border-radius:10px;background:#fff;color:#2e5bff;cursor:pointer;box-shadow:0 0 0 1px var(--ring),0 6px 18px rgba(0,0,0,.08)}
+
+    .container{
+      max-width:clamp(320px, 92vw, 1320px);
+      margin:24px auto;
+      padding:0 var(--edge-x);
+      display:grid;
+      grid-template-columns:minmax(0, 80%) minmax(200px, 20%);
+      column-gap:18px;
+      row-gap:18px;
+    }
+    main.main, aside.do_fixed{min-width:0;}
+    aside.do_fixed{position:static; width:100%;}
+
+    .main{background:var(--surface);border-radius:var(--radius);box-shadow:var(--shadow-card)}
+    .main__title{padding:22px 30px 0;display:flex;justify-content:space-between;align-items:flex-end;gap:10px}
+    .title h1{
+      margin:0;
+      font-size:clamp(28px, 4.2vw, 40px);
+      line-height:1.18;
+      font-weight:800;
+      letter-spacing:-.01em;
+    }
+
+
+    .sub{color:var(--muted);margin-left:6px;font-weight:600}
+
+    .actions{display:flex;flex-wrap:wrap;gap:8px}
+    .actions a{
+      display:inline-flex;align-items:center;gap:6px;padding:8px 12px;
+      border:1px solid #e6eaf2;border-radius:12px;color:#374151;background:#f6f7fb;
+    }
+    .actions a:hover{background:#eef1f7;text-decoration:none}
+
+    .main__body{padding:0 30px 12px}
+    .pre_banner{margin-top:0}
+
+    .meta{padding:12px 30px 18px;display:flex;justify-content:space-between;color:var(--muted);border-top:1px solid #eef0f3}
+
+    .pre_banner{
+      margin-top:6px;
+      padding-bottom:12px;
+      border-bottom:1px solid #e5e7eb;
+    }
+
+    .pre_banner h1,
+    .pre_banner h2,
+    .pre_banner h3,
+    .pre_banner h4,
+    .pre_banner h5,
+    .pre_banner h6{
+      border-bottom:0 !important;
+      padding-bottom:0;
+      margin-bottom:0;
+    }
+
+    .wiki h2,
+    .wiki h3,
+.wiki h4{
+  border-bottom:1px solid var(--hr);
+  padding-bottom:12px;
+  margin-bottom:8px;
+}
+.wiki h4{padding-bottom:6px;margin-bottom:10px;}
+.wiki .toc h2, .wiki .toc h3, .wiki .toc h4,
+.wiki .category h2, .wiki .category h3, .wiki .category h4,
+.wiki [class*="cate"] h2, .wiki [class*="cate"] h3, .wiki [class*="cate"] h4,
+.wiki [id*="cate"] h2, .wiki [id*="cate"] h3, .wiki [id*="cate"] h4{
+  border-bottom:0 !important;
+  padding-bottom:0;
+  margin-bottom:.5rem;
+}
+
+hr,
+.opennamu_main hr{
+  border:0;
+  height:1px;
+  background:var(--hr);
+  margin:16px 0;
+}
+
+.main_hr{
+  display:block !important;
+  border:0 !important;
+  height:0 !important;
+  background:transparent !important;
+  margin:6px 0 !important;
+  padding:0 !important;
+}
+
+/* 기존 최근변경 항목의 밑줄 제거(박스 스타일로 대체) */
+.opennamu_main .opennamu_recent_change{
+  border-bottom:0 !important;
+  padding-bottom:0 !important;
+  margin:0 !important;
+}
+
+/* 최근 변경: 하얀 칸 카드 스타일 */
+.rc_wrap{
+  display:flex;
+  flex-direction:column;
+  gap:8px;
+  margin-top:8px;
+}
+.rc_wrap .opennamu_recent_change{
+  background:transparent !important;
+  border:0 !important;
+  border-radius:0 !important;
+  padding:0 !important;
+  box-shadow:none !important;
+}
+
+.wiki hr{border:0;height:1px;background:var(--hr);margin:16px 0;}
+.wiki .opennamu_main hr{border:0;height:1px;background:var(--hr);margin:16px 0;}
+
+.aside{display:flex;flex-direction:column;gap:14px}
+.card{background:var(--surface);border-radius:var(--radius);box-shadow:var(--shadow-card);padding:14px}
+.recent-box{min-height:360px;margin-bottom:16px}
+.card h3{margin:4px 8px 10px;font-size:16px;color:#111827}
+.card h3{margin:4px 8px 10px;font-size:16px;color:#111827}
+
+.side_card.rc_box{
+  background:var(--surface);
+  border:1px solid #e6eaf2;   /* 밝은 모드용 기본 테두리 */
+  border-radius:14px;
+  box-shadow:0 1px 0 rgba(0,0,0,.03), 0 10px 28px rgba(16,24,40,.06);
+  padding:12px;
+}
+.rc_wrap{ margin-top:8px; }
+.rc_wrap ul{
+  list-style:none !important;
+  margin:0 !important;
+  padding:0 !important;
+}
+.rc_wrap li{
+  background:transparent !important;
+  border:0 !important;
+  border-bottom:1px solid #e6eaf2;
+  border-radius:0 !important;
+  box-shadow:none !important;
+  padding:8px 2px !important;
+}
+.rc_wrap li:last-child{ border-bottom:0; }
+
+/* 본문(main) 카드에도 같은 테두리 적용 */
+.main{
+  border:1px solid #e6eaf2;
+  background:var(--surface);
+  border-radius:var(--radius);
+  box-shadow:var(--shadow-card);
+}
+
+.footer{text-align:center;color:var(--muted);padding:20px 0 40px;font-size:13px}
+.footer{text-align:center;color:var(--muted);padding:20px 0 40px;font-size:13px}
+
+@media (max-width:860px){
+  .container{grid-template-columns:1fr}
+  .search input{width:clamp(120px, 40vw, 220px)}
+}
+
+/* ======================== */
+/*        다크 모드         */
+/* ======================== */
+{% if request.cookies.get('main_css_darkmode', '') == '1' %}
+body.namu{
+  --surface:#1b2024;  /* 어두운 카드 배경 (본문/사이드 동일) */
+  --bg:#13161a;
+  --text:#e7eaf0;
+  --ring:rgba(255,255,255,.08);
+  --bar-a:#17224d;
+  --bar-b:#17224d;
+  --hr:#2a2f34;
+  background:var(--bg);
+  color:var(--text);
+}
+html{background:#0c1117;}
+
+/* 본문 및 카드 테두리 통일 */
+.namu .main,
+.namu .card,
+.namu .side_card.rc_box{
+  background:var(--surface);
+  border:1px solid #2a2f34 !important;
+  border-radius:14px;
+  box-shadow:none;
+}
+
+.namu .card h3{color:#eef2f7}
+.namu .actions a{background:#1b2024;border-color:#2a2f34;color:#e7ecf3}
+.namu .actions a:hover{background:#252b31}
+
+.namu .dropdown-panel{
+  background:#1b2024;border:1px solid #2a2f34;
+  box-shadow:0 8px 24px rgba(0,0,0,.45)
+}
+.namu .dropdown-panel a{color:#e7ecf3}
+.namu .dropdown-panel a:hover{background:#252b31}
+
+.namu .search{background:#0f141a}
+.namu .search input{color:#e7ecf3}
+.namu .search input::placeholder{color:#96a0ad}
+
+.namu .top-icon{
+  background:#0f141a;color:#9db4ff;
+  box-shadow:0 0 0 1px rgba(255,255,255,.06),0 6px 18px rgba(0,0,0,.4)
+}
+
+.namu .list li:hover{background:#20262c}
+
+.namu hr,
+.namu .opennamu_main hr{background:var(--hr);}
+
+.namu .main_hr{
+  display:block !important;
+  height:0 !important;
+  border:0 !important;
+  background:transparent !important;
+}
+
+/* 다크 모드: 최근 변경 항목 */
+.namu .rc_wrap li{
+  border-bottom:1px solid #2a2f34 !important;
+}
+.namu .rc_wrap li:last-child{ border-bottom:0 !important; }
+{% endif %}
+
+.footnote_tooltip {
+  position: absolute;
+  z-index: 9999;
+  background: #f9f9f9;
+  color: #111;
+  border: 1px solid rgba(0,0,0,0.15);
+  border-radius: 8px;
+  padding: 8px 10px;
+  font-size: 16px;
+  line-height: 1.5em;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+  max-width: 340px;
+  pointer-events: auto; /* 내부 링크 클릭 가능 */
+  word-wrap: break-word;
+}
+</style>
+  </style>
+
+  <script>
+    function toggleDropdown(id){
+      const el=document.getElementById(id);
+      const v=el&&el.style.display==='block';
+      document.querySelectorAll('.dropdown-panel').forEach(p=>p.style.display='none');
+      if(el) el.style.display=v?'none':'block';
+    }
+    document.addEventListener('click',e=>{
+      if(!e.target.closest('.dropdown,.top-icon,.search')){
+        document.querySelectorAll('.dropdown-panel').forEach(p=>p.style.display='none');
+      }
+    });
+  </script>
+</head>
+
+<body class="namu">
+  <header class="topbar" id="main">
+    <div class="topbar__left">
+      <div class="logo"><a href="/">인곽위키</a></div>
+
+      <nav class="nav" aria-label="primary">
+        <div class="dropdown menu">
+          <button type="button" onclick="toggleDropdown('list_menu')">
+            <span class="iconify" data-icon="ic:baseline-list"></span> {{'list'|load_lang}}
+            <span class="iconify" data-icon="ic:baseline-arrow-drop-down"></span>
+          </button>
+          <div id="list_menu" class="dropdown-panel">
+            <a href="/recent_changes"><span class="iconify" data-icon="ic:baseline-autorenew"></span> {{'recent_change'|load_lang}}</a>
+            <a href="/recent_discuss"><span class="iconify" data-icon="ic:baseline-add-comment"></span> {{'recent_discussion'|load_lang}}</a>
+            <a href="/bbs/main"><span class="iconify" data-icon="ic:outline-developer-board"></span> {{'bbs_main'|load_lang}}</a>
+          </div>
+        </div>
+
+        <div class="dropdown menu">
+          <button type="button" onclick="toggleDropdown('school_menu')">
+            <span class="iconify" data-icon="ic:baseline-school"></span> 학교생활
+            <span class="iconify" data-icon="ic:baseline-arrow-drop-down"></span>
+          </button>
+          <div id="school_menu" class="dropdown-panel">
+            <a href="/bob"><span class="iconify" data-icon="ic:baseline-food-bank"></span> 급식</a>
+            <a href="/siganpyo"><span class="iconify" data-icon="ic:baseline-schedule"></span> 시간표</a>
+            <a href="https://iscience.riroschool.kr/portfolio.php?db=1551" target="_blank" rel="noopener noreferrer">
+                <span class="iconify" data-icon="material-symbols:back-to-tab-rounded" data-inline="true"></span>
+                리로스쿨
+            <a href="#" onclick="alert('개발 중인 항목입니다.'); return false;">
+                <span class="iconify" data-icon="material-symbols:desktop-cloud" data-inline="true"></span>
+                인곽에타
+            </a>
+
+            </a>
+          </div>
+        </div>
+
+        <div class="dropdown menu">
+          <button type="button" onclick="toggleDropdown('other_menu')">
+            <span class="iconify" data-icon="ic:baseline-archive"></span> {{'other_tool'|load_lang}}
+            <span class="iconify" data-icon="ic:baseline-arrow-drop-down"></span>
+          </button>
+          <div id="other_menu" class="dropdown-panel">
+            <a href="/random"><span class="iconify" data-icon="ic:baseline-shuffle"></span> {{'random'|load_lang}}</a>
+            {% if imp[2][9] != '0' %}<a href="/manager"><span class="iconify" data-icon="ic:baseline-how-to-reg"></span> {{'admin_tool'|load_lang}}</a>{% endif %}
+            <a href="/upload"><span class="iconify" data-icon="ic:baseline-cloud-upload"></span> {{'upload'|load_lang}}</a>
+            <a href="/change/skin_set"><span class="iconify" data-icon="ic:baseline-settings"></span> {{'skin_setting'|load_lang}}</a>
+          </div>
+        </div>
+      </nav>
+    </div>
+
+    <div class="topbar__right">
+      <a class="top-icon" href="/random" title="{{'random'|load_lang}}">
+        <span class="iconify" data-icon="ic:baseline-shuffle"></span>
+      </a>
+
+      <form class="search" method="post" action="/search" role="search">
+        <div style="position:relative;">
+          <input id="search_input_not_mobile" name="search" placeholder="{{'search'|load_lang}}" autocomplete="off" type="search">
+          <div id="autocomplete_results_not_mobile" class="autocomplete-items"></div>
+        </div>
+      </form>
+
+      <div class="dropdown">
+        <div class="top-icon" onclick="toggleDropdown('user_menu')" title="{{'user_tool'|load_lang}}">
+          <span class="iconify" data-icon="ic:round-person-search"></span>
+        </div>
+        <div id="user_menu" class="dropdown-panel" style="right:0;left:auto;">
+          <a href="/user"><span class="iconify" data-icon="ic:baseline-account-box"></span> {{'user_tool'|load_lang}}</a>
+          <a href="/change"><span class="iconify" data-icon="ic:baseline-manage-accounts"></span> {{'user_setting'|load_lang}}</a>
+          {% if imp[2][2] == 1 %}
+            <a href="/alarm"><span class="iconify" data-icon="ic:baseline-contact-mail"></span> {{'alarm'|load_lang}} ({{imp[2][8]}})</a>
+            <a href="/watch_list"><span class="iconify" data-icon="ic:round-preview"></span> {{'watchlist'|load_lang}}</a>
+            <a href="/star_doc"><span class="iconify" data-icon="ic:twotone-stars"></span> {{'star_doc'|load_lang}}</a>
+            <a href="/logout"><span class="iconify" data-icon="ic:baseline-logout"></span> {{'logout'|load_lang}}</a>
+          {% else %}
+            <a href="/login"><span class="iconify" data-icon="ic:baseline-login"></span> {{'login'|load_lang}}</a>
+            <a href="/register"><span class="iconify" data-icon="ic:baseline-person-add-alt-1"></span> {{'register'|load_lang}}</a>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <div class="container">
+    <main class="main" id="main_data" role="main">
+      <div class="main__title" id="section">
+        <div class="title">
+          <h1 class="blank">
+            <span class="change_space">{{imp[0]|safe}}</span>
+            {% if imp[3][0] != 0 %}<sub class="sub">{{imp[3][0]}}</sub>{% endif %}
+          </h1>
+        </div>
+
+        {% if menu != 0 %}
+        <div class="actions" id="menu">
+          {% for menu_data in menu %}
+            {% if menu[0] == 1 %}{% set menu_href = menu_data[0] %}{% else %}{% set menu_href = '/' + menu_data[0] %}{% endif %}
+            <a href="{{menu_href}}">{{menu_data[1]}}</a>
+          {% endfor %}
+        </div>
         {% endif %}
-        {{imp[3][3]|safe}} <!-- 추가적인 header 삽입-->
-        <link href="https://cdn.jsdelivr.net/gh/sun-typeface/SUIT/fonts/static/woff2/SUIT.css" rel="stylesheet">
-        <script defer src="https://code.iconify.design/1/1.0.3/iconify.min.js"></script>
-        <script defer src="/views/ringo/js/main.js.cache_v3"></script>
-        <script defer src="/views/ringo/js/sidebar.js.cache_v7"></script>
-        <script defer src="/views/ringo/js/skin_set.js.cache_v9"></script>
-        <script defer src="/views/main_css/js/func/autocomplete.js"></script>
-        <link rel="stylesheet" href="/views/ringo/css/main.css.cache_v13">
-        <meta property="og:image" content="https://i.namu.wiki/i/UX1a0RmaJfABnbuJcd-2PfCO6qfqFMXaVBkNYV0Hwjm007_uH2Cc0fJmv6M9g9BTfzXjUk3jwJpDa09YdZnf79GO_NiDd9uGp7dudqFfQVBz69OaFzGfhSmMbOGezsME4LUzp6meYGFLDHZ32cTifVistPL4rVyv_OyU1WOADOM.webp">
-        <meta property="og:description" content="인천과학고 위키에 오신 것을 환영합니다!">
-        <meta property="og:title" content="{{imp[0]}} - {{imp[1][0]}}">
-        {% if request.cookies.get('main_css_darkmode', '') == '1' %} <!-- 다크모드 쿠키가 존재할 경우 -->
-            {{imp[3][5]|safe}} <!-- 다크모드 추가적인 header 삽입 -->
-            <link rel="stylesheet" href="/views/ringo/css/dark.css.cache_v3">
-        {% endif %}
-        <link rel="shortcut icon" href="/views/main_css/file/favicon.ico.cache_v1"> <!-- 파비콘 설정 -->
-        {{imp[1][5]|safe}}
-        {{imp[2][3]|safe}}
-        {% if imp[3][0] != 0 %}
-            <meta name="title" content="{{imp[0]}}{{imp[3][0]}} - {{imp[1][0]}}">
-        {% else %}
-            <meta name="title" content="{{imp[0]}} - {{imp[1][0]}}">
-        {% endif %}
-        <meta name="keywords" content="{{imp[0]}}">
-        <meta name="description" content="{{imp[3][6]}}">
-        <meta name="viewport" content="width=device-width, initial-scale=1">
-    </head>
-    <body>
-        <header id="main">
-            <span id="left">
-                <a id="logo" href="/">{{imp[1][4]|safe}}</a> <!-- 왼쪽 로고(메인페이지 버튼) 표시 -->
-            </span>
-            <span id="right">
-                <div class="top_cel" id="school_life_cel">
-                    <a href="javascript:ringo_opening('school_life_cel_in');">
-                        <span class="iconify" data-icon="ic:baseline-school" data-inline="true"></span>
-                        <span class="not_mobile">학교생활</span>
-                        <span class="iconify" data-icon="ic:baseline-arrow-drop-down" data-inline="true"></span>
-                    </a>
-                    <div class="top_cel_in" id="school_life_cel_in" style="display: none;">
-                        <a href="/bob">
-                            <span class="iconify" data-icon="ic:baseline-food-bank" data-inline="true"></span>
-                            급식
-                        </a>
-                        <a href="/siganpyo">
-                            <span class="iconify" data-icon="ic:baseline-schedule" data-inline="true"></span>
-                            시간표
-                        </a>
-                    </div>
-                </div>
-                <div class="top_cel" id="recent_cel">
-                    <a href="javascript:ringo_opening('recent_cel_in');"> <!-- 드롭다운 내용 표시 -->
-                        <span class="iconify" data-icon="ic:baseline-access-time" data-inline="true"></span>
-                        <span class="not_mobile">{{'list'|load_lang}}</span>
-                        <span class="iconify" data-icon="ic:baseline-arrow-drop-down" data-inline="true"></span>
-                    </a>
-                    <div class="top_cel_in" id="recent_cel_in" style="display: none;">
-                        <a href="/recent_changes">
-                            <span class="iconify" data-icon="ic:baseline-autorenew" data-inline="true"></span>
-                            {{'recent_change'|load_lang}} <!-- 최근 변경 -->
-                        </a>
-                        <a href="/recent_discuss">
-                            <span class="iconify" data-icon="ic:baseline-add-comment" data-inline="true"></span>
-                            {{'recent_discussion'|load_lang}} <!-- 최근 토론 -->
-                        </a>
-                        <a href="/vote">
-                            <span class="iconify" data-icon="ic:baseline-how-to-vote" data-inline="true"></span>
-                            {{'vote_list'|load_lang}} <!-- 투표 목록 -->
-                        </a>
-                        <a href="/bbs/main">
-                            <span class="iconify" data-icon="ic:outline-developer-board" data-inline="true"></span>
-                            {{'bbs_main'|load_lang}} <!-- 게시판 메인 -->
-                        </a>
-                    </div>
-                </div>
-                <div class="top_cel" id="other_cel">
-                    <a href="javascript:ringo_opening('other_cel_in');">
-                        <span class="iconify" data-icon="ic:baseline-archive" data-inline="true"></span>
-                        <span class="not_mobile">{{'tool'|load_lang}}</span>
-                        <span class="iconify" data-icon="ic:baseline-arrow-drop-down" data-inline="true"></span>
-                    </a>
-                    <div class="top_cel_in" id="other_cel_in" style="display: none;">
-                        <a href="/random">
-                            <span class="iconify" data-icon="ic:baseline-shuffle" data-inline="true"></span>
-                            {{'random'|load_lang}} <!-- 무작위 문서 -->
-                        </a>
-                        <a href="/other">
-                            <span class="iconify" data-icon="ic:baseline-build" data-inline="true"></span>
-                            {{'other_tool'|load_lang}} <!-- 기타 도구 -->
-                        </a>
-                        {% if imp[2][9] != '0' %}
-                            <a href="/manager">
-                                <span class="iconify" data-icon="ic:baseline-how-to-reg" data-inline="true"></span>
-                                {{'admin_tool'|load_lang}} <!-- 관리자 도구 -->
-                            </a>
-                        {% endif %}
-                        <a href="/upload">
-                            <span class="iconify" data-icon="ic:baseline-cloud-upload" data-inline="true"></span>
-                            {{'upload'|load_lang}} <!-- 파일 업로드 -->
-                        </a>
-                        <a href="/change/skin_set">
-                            <span class="iconify" data-icon="ic:baseline-settings" data-inline="true"></span>
-                            {{'skin_setting'|load_lang}} <!-- 스킨 설정 -->
-                        </a>
-                    </div>
-                </div>
-                <div class="top_cel" id="user_cel">
-                    <a href="javascript:ringo_opening('user_cel_in');">
-                        {% if imp[2][2] == 1 %}
-                            {% if imp[2][8] != '0' %}
-                                <span class="iconify" data-icon="ic:baseline-add-alert" data-inline="true"></span>
-                            {% else %}
-                                <span class="iconify" data-icon="ic:baseline-person-add" data-inline="true"></span>
-                            {% endif %}
-                        {% else %}
-                            <span class="iconify" data-icon="ic:round-person-search" data-inline="true"></span>
-                        {% endif %}
-                        <span class="not_mobile">{{imp[2][5]}}</span>
-                        <span class="iconify" data-icon="ic:baseline-arrow-drop-down" data-inline="true"></span>
-                    </a>
-                    <div class="top_cel_in" id="user_cel_in" style="display: none;">
-                        <a href="/user">
-                            <span class="iconify" data-icon="ic:baseline-account-box" data-inline="true"></span>
-                            {{'user_tool'|load_lang}}
-                        </a>
-                        <a href="/change">
-                            <span class="iconify" data-icon="ic:baseline-manage-accounts" data-inline="true"></span>
-                            {{'user_setting'|load_lang}}
-                        </a>
-                        {% if imp[2][2] == 1 %}
-                            <a href="/alarm">
-                                <span class="iconify" data-icon="ic:baseline-contact-mail" data-inline="true"></span>
-                                {{'alarm'|load_lang}} ({{imp[2][8]}})
-                            </a>
-                            <a href="/watch_list">
-                                <span class="iconify" data-icon="ic:round-preview" data-inline="true"></span>
-                                {{'watchlist'|load_lang}}
-                            </a>
-                            <a href="/star_doc">
-                                <span class="iconify" data-icon="ic:twotone-stars" data-inline="true"></span>
-                                {{'star_doc'|load_lang}}
-                            </a>
-                            <a href="/logout">
-                                <span class="iconify" data-icon="ic:baseline-logout" data-inline="true"></span>
-                                {{'logout'|load_lang}}
-                            </a>
-                        {% else %}
-                            <a href="/login">
-                                <span class="iconify" data-icon="ic:baseline-login" data-inline="true"></span>
-                                {{'login'|load_lang}}
-                            </a>
-                            <a href="/register">
-                                <span class="iconify" data-icon="ic:baseline-person-add-alt-1" data-inline="true"></span>
-                                {{'register'|load_lang}}
-                            </a>
-                        {% endif %}
-                    </div>
-                </div>
-                {% if imp[1][6] != '' %}
-                    <div class="top_cel" id="add_cel">
-                        <a href="javascript:ringo_opening('add_cel_in');">
-                            <span class="iconify" data-icon="ic:baseline-playlist-add" data-inline="true"></span>
-                            <span class="not_mobile">{{'added_menu'|load_lang}}</span>
-                            <span class="iconify" data-icon="ic:baseline-arrow-drop-down" data-inline="true"></span>
-                        </a>
-                        <div class="top_cel_in" id="add_cel_in" style="display: none;">
-                            {% for added_top_menu in imp[1][6] %}
-                                <a href="{{added_top_menu[1]}}">
-                                    <span class="iconify" data-icon="ic:baseline-plus" data-inline="true"></span>
-                                    {{added_top_menu[0]}}
-                                </a>
-                            {% endfor %}
-                        </div>
-                    </div>
-                {% endif %}
-                <form class="not_mobile" method="post" action="/search" role="search" id="search">
-                    <div style="position: relative; display: inline-block;">
-                        <input id="search_input_not_mobile" class="not_mobile search" name="search" placeholder="{{'search'|load_lang}}" autocomplete="off" type="search">
-                        <div id="autocomplete_results_not_mobile" class="autocomplete-items"></div>
-                    </div>
-                    <button type="submit" id="goto" formaction="/goto" class="search_button">
-                        <span class="iconify" data-icon="ic:round-find-in-page" data-inline="true"></span>
-                    </button>
-                    <button type="submit" id="search" formaction="/search" class="search_button">
-                        <span class="iconify" data-icon="ic:baseline-search" data-inline="true"></span>
-                    </button>
-                </form>
-            </span>
-            <form class="only_mobile" method="post" action="/search" role="search">
-                <div style="position: relative;">
-                    <input id="search_input_mobile" class="only_mobile search" name="search" placeholder="{{'search'|load_lang}}" autocomplete="off" type="search">
-                    <div id="autocomplete_results_mobile" class="autocomplete-items"></div>
-                </div>
-                <button type="submit" id="goto" formaction="/goto" class="search_button">
-                    <span class="iconify" data-icon="ic:round-find-in-page" data-inline="true"></span>
-                </button>
-                <button type="submit" id="search" formaction="/search" class="search_button">
-                    <span class="iconify" data-icon="ic:baseline-search" data-inline="true"></span>
-                </button>
-            </form>
-        </header>
-        <section>
-            <header id="section">
-                <article class="main" id="title">
-                    <h1 class="blank">
-                        <span class="change_space">{{imp[0]}}</span>
-                        {% if imp[3][0] != 0 %} <!-- 문서 부제목이 존재할 경우 -->
-                            <sub>{{imp[3][0]}}</sub> <!-- 문서 부제목 표시 -->
-                        {% endif %}
-                    </h1>
-                    {% if menu != 0 %} <!-- 메뉴가 존재할 경우 -->
-                        <div id="menu">
-                            {% for menu_data in menu %}
-                                {% if menu[0] == 1 %}
-                                    {% set menu_data_2 = menu_data[0] %}
-                                {% else %}
-                                    {% set menu_data_2 = '/' + menu_data[0] %}
-                                {% endif %}
-                                
-                                {% if menu_data|length > 2 and menu_data[2] == 1 %}
-                                    {% set menu_topic = 'topic_color' %}
-                                {% else %}
-                                    {% set menu_topic = '' %}
-                                {% endif %}
-                                
-                                <a class="menu_item_link" href="{{menu_data_2}}" id="{{menu_topic}}">
-                                    {{menu_data[1]}}
-                                </a>
-                            {% endfor %}
-                        </div>
-                    {% endif %}
-                </article>
-            </header>
-            <article class="main" id="main_data">
-                {{imp[1][7][0]|safe}}
-                {{data|safe}}
-                {{imp[1][7][2]|safe}}
-            </article>
-            <div id="edited_time">
-                    {% if imp[3][1] != 0 %} <!-- 문서 작성자 정보가 존재할 경우 -->
-                        {% if imp[3][7] != 0 %} <!-- 문서 조회수가 존재할 경우 -->
-                            <h4 id="last_edit_time">{{'last_edit_time'|load_lang}} : {{imp[3][1]}} | {{'page_view'|load_lang}} : {{imp[3][7]}}</h4> <!-- 마지막 수정 시간/조회수 표시 -->
-                        {% endif %}
-                    {% endif %}
-            {% if imp[3][1] != 0 %}
-            {% endif %}
-            </div>
-            <footer class="not_mobile">
-                <article class="main" id="footer">
-                    {{imp[1][1]|safe}}
-                <br>
-                <p class="credit">- Credit -</p>
-                <p class="credit">Developer. 32nd Kim Gyuwon</p>
-                <p class="credit">Developer. 32nd Lee Dohye</p>
-                <p class="credit">NoYe. 32nd Oh Jimin</p>
-               <p class="credit">Director. 32nd Kim Junseo</p>
-               </article>
-            </footer>
-        </section>
-        <aside class="do_fixed">
-            {% if imp[1][7][1] == '' %}
-                <button id="side_button_1" class="side_button selected">{{'edit'|load_lang}}</button><!--
-             --><button id="side_button_2" class="side_button">{{'discussion'|load_lang}}</button><!--
-             --><button id="side_button_3" class="side_button">{{'bbs'|load_lang}}</button>
-                <div id="side_content">
-                    Loading...
-                </div>
-            {% else %}
-                {{imp[1][7][1]|safe}}
-            {% endif %}
-        </aside>
-        <div id="nav_bar">
-            <div id="go_top">
-                <a href="#main">
-                    <span class="iconify" data-icon="ic:baseline-arrow-upward" data-inline="true"></span>
-                </a>
-            </div>
-            <div id="go_bottom">
-                <a href="#footer">
-                    <span class="iconify" data-icon="ic:baseline-arrow-downward" data-inline="true"></span>
-                </a>
-            </div>
-            <div id="go_toc">
-                <a href="#toc">
-                    <span class="iconify" data-icon="ic:baseline-list" data-inline="true"></span>
-                </a>
+      </div>
+
+      <article class="main__body">
+        <div class="pre_banner">
+          {{imp[1][7][0]|safe}}
+        </div>
+
+        <div class="wiki">
+          {{data|safe}}
+        </div>
+
+        {{imp[1][7][2]|safe}}
+      </article>
+
+      <div class="meta" id="edited_time">
+        <div>
+          {% if imp[3][1] != 0 and imp[3][7] != 0 %}
+            <span id="last_edit_time">{{'last_edit_time'|load_lang}} : {{imp[3][1]}}</span>
+            &nbsp;|&nbsp;<span>{{'page_view'|load_lang}} : {{imp[3][7]}}</span>
+          {% elif imp[3][1] != 0 %}
+            <span id="last_edit_time">{{'last_edit_time'|load_lang}} : {{imp[3][1]}}</span>
+          {% endif %}
+        </div>
+      </div>
+      <div class="footer" id="footer">
+        {{imp[1][1]|safe}}
+        <div class="license-text">
+          이 저작물은 
+          <a href="https://creativecommons.org/licenses/by-nc-sa/3.0/deed.ko" target="_blank">
+            CC BY-NC-SA 3.0
+          </a>
+          에 따라 이용할 수 있습니다. (단, 라이선스가 별도로 명시된 일부 문서 및 이미지는 예외입니다.)
+        </div>
+        <div class="license-text">
+          기여하신 문서의 저작권은 각 기여자에게 있으며, 각 기여자는 자신이 작성한 부분의 저작권을 가집니다.
+        </div>
+        <div class="credit">
+          © 2025 인곽위키 운영진  
+          (Developer. 32nd Kim Gyuwon · Developer. 32nd Lee Dohye · NoYe. 32nd Oh Jimin · Director. 32nd Kim Junseo)
+        </div>    
+      </div>
+    </main>
+
+    <aside class="do_fixed">
+        <div class="side_card rc_box" style="margin-bottom:16px;">
+            <h3 style="margin-top:0;">최근 변경</h3>
+            <div class="rc_wrap">
+                {{ recent_sidebar|safe }}
             </div>
         </div>
-        <footer class="only_mobile" id="footer">
-            {{imp[1][1]|safe}}
-            <br>
-            <p class="credit">- Credit -</p>
-            <p class="credit">Developer. 32nd Kim Gyuwon</p>
-            <p class="credit">Developer. 32nd Lee Dohye</p>
-            <p class="credit">NoYe. 32nd Oh Jimin</p>
-            <p class="credit">Director. 32nd Kim Junseo</p>
-        </footer>
-    </body>
+
+        <div class="side_card rc_box" style="margin-bottom:16px;">
+            <h3 style="margin-top:0;">기여자 순위</h3>
+            <div class="rc_wrap" style="min-height:80px;">
+                <!-- 나중에 집계 결과를 넣을 자리 -->
+                <ul>
+                    <li>다음 업데이트 때 추가 예정</li>
+                </ul>
+            </div>
+        </div>
+
+        {% if imp[1][7][1] == '' %}
+            <button id="side_button_1" class="side_button selected">{{'edit'|load_lang}}</button><!--
+         --><button id="side_button_2" class="side_button">{{'discussion'|load_lang}}</button><!--
+         --><button id="side_button_3" class="side_button">{{'bbs'|load_lang}}</button>
+            <div id="side_content">
+                Loading...
+            </div>
+        {% else %}
+            {{imp[1][7][1]|safe}}
+        {% endif %}
+    </aside>
+
+  </div>
+  
+</body>
 </html>
+
