@@ -300,10 +300,17 @@ hr,
 .footer{text-align:center;color:var(--muted);padding:20px 0 40px;font-size:13px}
 
 @media (max-width:860px){
-  .container{grid-template-columns:1fr}
-  .search input{width:clamp(120px, 40vw, 220px)}
-  .actions{margin-top:16px;}       /* 모바일·패드에서 제목과 버튼 간격 확대 */
+  .container{
+    grid-template-columns: 1fr;
+    column-gap: 0;             /* 우측칸 없으니 칸 간격 제거 */
+  }
+  aside.do_fixed{              /* 우측 사이드 전체 숨김 */
+    display: none;
+  }
+  .search input{ width: clamp(120px, 40vw, 220px) }
+  .actions{ margin-top: 16px; }/* 제목-버튼 간격 유지 */
 }
+
 
 
 /* 아이콘 라벨 숨김 + 검색창 확장 (더 넓은 임계값) */
@@ -354,6 +361,16 @@ hr,
   }
 }
 
+/* 세로(포트레이트) 방향일 때도 우측칸 숨김 */
+@media (orientation: portrait){
+  .container{
+    grid-template-columns: 1fr;
+    column-gap: 0;
+  }
+  aside.do_fixed{
+    display: none;
+  }
+}
 
 /* ======================== */
 /*        다크 모드         */
@@ -436,6 +453,7 @@ html{background:#0c1117;}
   pointer-events: auto; /* 내부 링크 클릭 가능 */
   word-wrap: break-word;
 }
+
 </style>
 
   <script>
@@ -451,7 +469,62 @@ html{background:#0c1117;}
         document.querySelectorAll('.dropdown-panel').forEach(p=>p.style.display='none');
       }
     });
+
+    // ====== 검색 제출 분기 로직 (존재하면 문서로 / 없으면 /search) ======
+    document.addEventListener('DOMContentLoaded', () => {
+      const form  = document.getElementById('search_form') || document.querySelector('form.search');
+      const input = document.getElementById('search_input_not_mobile');
+      if (!form || !input) return;
+
+      // 문자열 정규화: 앞뒤 공백 제거 + 내부 연속 공백을 하나로
+      const normalize = (s) => (s || '').trim().replace(/\s+/g, ' ');
+
+      form.addEventListener('submit', (e) => {
+        const raw = input.value;
+        const q   = normalize(raw);
+        if (!q) return;               // 비었으면 그냥 /search로
+
+        // 1) 자동완성 DOM에서 "정확히 같은 제목"을 찾는다
+        //    (autocomplete.js가 #autocomplete_results_not_mobile 안에 <a href="/w/제목">…</a>들을 넣음)
+        const box = document.getElementById('autocomplete_results_not_mobile');
+        if (box) {
+          // 후보들을 모아 텍스트가 q와 '완전 일치'하는 첫 링크를 찾음
+          const items = Array.from(box.querySelectorAll('a, .item, .autocomplete-item'));
+          // 항목 구조가 다양할 수 있으니 a[data-title], a .title, a 텍스트 등 넓게 본다
+          const pick = items.find(el => {
+            const titleFromAttr = (el.getAttribute && (el.getAttribute('data-title') || el.getAttribute('data-value'))) || '';
+            const titleFromSpan = el.querySelector ? (el.querySelector('.title')?.textContent || '') : '';
+            const titleFromText = (el.textContent || '');
+            const cand = normalize(titleFromAttr || titleFromSpan || titleFromText);
+            return cand === q;
+          });
+
+          if (pick) {
+            e.preventDefault();
+            // 링크 우선: <a href>가 있으면 그걸, 없으면 데이터에서 조립
+            const a = pick.tagName === 'A' ? pick : pick.querySelector('a');
+            const href = a?.getAttribute('href');
+            if (href) {
+              // 절대경로/상대경로 모두 허용 (/w/제목 형태가 가장 이상적)
+              window.location.href = href;
+              return;
+            } else {
+              // a가 없으면 /w/<제목>로 직접 작성
+              window.location.href = '/w/' + encodeURIComponent(q);
+              return;
+            }
+          }
+        }
+
+        // 2) 자동완성에서 정확 일치가 없으면, 안전하게 /search로 보낸다
+        //    (서버가 유사매칭/리다이렉트/동음이의 처리)
+        //    → 기본 제출 유지
+      });
+    });
   </script>
+
+
+
 </head>
 
 <body class="namu">
@@ -524,12 +597,13 @@ html{background:#0c1117;}
       </a>
 
 
-      <form class="search" method="post" action="/search" role="search">
+      <form id="search_form" class="search" method="post" action="/search" role="search">
         <div style="position:relative;">
           <input id="search_input_not_mobile" name="search" placeholder="{{'search'|load_lang}}" autocomplete="off" type="search">
           <div id="autocomplete_results_not_mobile" class="autocomplete-items"></div>
         </div>
       </form>
+
 
       <div class="dropdown">
         <div class="top-icon" onclick="toggleDropdown('user_menu')" title="{{'user_tool'|load_lang}}">
