@@ -92,7 +92,7 @@
     .dropdown-panel a{display:flex;align-items:center;gap:8px;padding:10px 12px;border-radius:8px;color:#111}
     .dropdown-panel a:hover{background:#f4f6fb;text-decoration:none}
 
-    .topbar__right{margin-left:auto;display:flex;align-items:center;gap:10px}
+    .topbar__right{margin-left:auto;display:flex;align-items:center;gap:16px}
     .search{
       display:flex;align-items:center;gap:8px;background:#fff;border-radius:999px;
       padding:8px 12px;
@@ -127,7 +127,16 @@
     aside.do_fixed{position:static; width:100%;}
 
     .main{background:var(--surface);border-radius:var(--radius);box-shadow:var(--shadow-card)}
-    .main__title{padding:22px 30px 0;display:flex;justify-content:space-between;align-items:flex-end;gap:10px}
+    .main__title{
+      padding:22px 30px 0;
+      display:flex;
+      justify-content:space-between;
+      align-items:flex-end;
+      gap:10px;
+      flex-wrap:wrap;              /* 너비가 좁으면 줄바꿈 */
+      row-gap:12px;                /* 줄바꿈 시 위아래 간격 */
+    }
+
     .title h1{
       margin:0;
       font-size:clamp(28px, 4.2vw, 40px);
@@ -139,7 +148,14 @@
 
     .sub{color:var(--muted);margin-left:6px;font-weight:600}
 
-    .actions{display:flex;flex-wrap:wrap;gap:8px}
+    .actions{
+      display:flex;
+      flex-wrap:wrap;
+      gap:8px;
+      margin-top:12px;             /* 제목과의 기본 간격 */
+      flex-basis:100%;             /* 줄바꿈 시 전체폭 차지 → 제목 아래로 배치 */
+    }
+
     .actions a{
       display:inline-flex;align-items:center;gap:6px;padding:8px 12px;
       border:1px solid #e6eaf2;border-radius:12px;color:#374151;background:#f6f7fb;
@@ -270,6 +286,39 @@ hr,
 @media (max-width:860px){
   .container{grid-template-columns:1fr}
   .search input{width:clamp(120px, 40vw, 220px)}
+  .actions{margin-top:16px;}       /* 모바일·패드에서 제목과 버튼 간격 확대 */
+}
+
+
+/* 아이콘 라벨 숨김 + 검색창 확장 (더 넓은 임계값) */
+@media (max-width:980px){
+  .topbar { gap: 12px; }
+
+  /* 아이콘 옆 글자(라벨) 숨김 */
+  .nav .menu .label{
+    display: none;
+  }
+  /* 화살표도 숨기면 더 깔끔 */
+  .nav .menu button .iconify[data-icon="ic:baseline-arrow-drop-down"]{
+    display: none;
+  }
+    /* 랜덤 아이콘 왼쪽에만 넉넉한 간격 부여 */
+    .icon-random{
+      margin-left: 60px;
+    }
+
+  /* 검색창 공간 최대화 */
+  .topbar__left { flex: 0 0 auto; }
+  .topbar__right { flex: 1 1 auto; }
+
+  .search{
+    flex: 1 1 420px;    /* 우측 영역에서 가능한 만큼 넓게 */
+    min-width: 0;       /* 줄어들 수 있도록 */
+  }
+  .search input{
+    width: 100% !important;   /* 남는 공간 전부 사용 */
+    max-width: none;          /* clamp 상한 해제 느낌 */
+  }
 }
 
 /* ======================== */
@@ -379,7 +428,8 @@ html{background:#0c1117;}
       <nav class="nav" aria-label="primary">
         <div class="dropdown menu">
           <button type="button" onclick="toggleDropdown('list_menu')">
-            <span class="iconify" data-icon="ic:baseline-list"></span> {{'list'|load_lang}}
+            <span class="iconify" data-icon="ic:baseline-list"></span>
+            <span class="label">{{'list'|load_lang}}</span>
             <span class="iconify" data-icon="ic:baseline-arrow-drop-down"></span>
           </button>
           <div id="list_menu" class="dropdown-panel">
@@ -389,9 +439,11 @@ html{background:#0c1117;}
           </div>
         </div>
 
+
         <div class="dropdown menu">
           <button type="button" onclick="toggleDropdown('school_menu')">
-            <span class="iconify" data-icon="ic:baseline-school"></span> 학교생활
+            <span class="iconify" data-icon="ic:baseline-school"></span>
+            <span class="label">학교생활</span>
             <span class="iconify" data-icon="ic:baseline-arrow-drop-down"></span>
           </button>
           <div id="school_menu" class="dropdown-panel">
@@ -409,9 +461,11 @@ html{background:#0c1117;}
           </div>
         </div>
 
+
         <div class="dropdown menu">
           <button type="button" onclick="toggleDropdown('other_menu')">
-            <span class="iconify" data-icon="ic:baseline-archive"></span> {{'other_tool'|load_lang}}
+            <span class="iconify" data-icon="ic:baseline-archive"></span>
+            <span class="label">{{'other_tool'|load_lang}}</span>
             <span class="iconify" data-icon="ic:baseline-arrow-drop-down"></span>
           </button>
           <div id="other_menu" class="dropdown-panel">
@@ -421,13 +475,15 @@ html{background:#0c1117;}
             <a href="/change/skin_set"><span class="iconify" data-icon="ic:baseline-settings"></span> {{'skin_setting'|load_lang}}</a>
           </div>
         </div>
+
       </nav>
     </div>
 
     <div class="topbar__right">
-      <a class="top-icon" href="/random" title="{{'random'|load_lang}}">
+      <a class="top-icon icon-random" href="/random" title="{{'random'|load_lang}}">
         <span class="iconify" data-icon="ic:baseline-shuffle"></span>
       </a>
+
 
       <form class="search" method="post" action="/search" role="search">
         <div style="position:relative;">
