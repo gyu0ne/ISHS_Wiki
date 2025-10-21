@@ -291,6 +291,27 @@ hr,
 
 
 /* 아이콘 라벨 숨김 + 검색창 확장 (더 넓은 임계값) */
+/* 랜덤 아이콘 왼쪽에만 넉넉한 간격 부여 (전역 적용) */
+.icon-random{
+  margin-left: 60px;
+}
+
+/* footer 안쪽 폭을 고정(너무 길어지지 않게) */
+.footer-inner{
+  max-width: min(920px, 90%);
+  margin: 0 auto;
+}
+/* 한국어 기준 보기 좋은 줄 길이(약 60~70자)로 제한 */
+.footer .license-text,
+.footer .credit{
+  max-width: 68ch;
+  margin: 6px auto;
+  line-height: 1.6;
+  word-break: keep-all;      /* 한국어 단어 뚝 끊김 방지 */
+  text-wrap: pretty;         /* 가능하면 보기 좋게 개행 (지원 브라우저) */
+}
+
+/* 아이콘 라벨 숨김 + 검색창 확장 (더 넓은 임계값) */
 @media (max-width:980px){
   .topbar { gap: 12px; }
 
@@ -302,10 +323,6 @@ hr,
   .nav .menu button .iconify[data-icon="ic:baseline-arrow-drop-down"]{
     display: none;
   }
-    /* 랜덤 아이콘 왼쪽에만 넉넉한 간격 부여 */
-    .icon-random{
-      margin-left: 60px;
-    }
 
   /* 검색창 공간 최대화 */
   .topbar__left { flex: 0 0 auto; }
@@ -320,6 +337,7 @@ hr,
     max-width: none;          /* clamp 상한 해제 느낌 */
   }
 }
+
 
 /* ======================== */
 /*        다크 모드         */
@@ -403,9 +421,9 @@ html{background:#0c1117;}
   word-wrap: break-word;
 }
 </style>
-  </style>
 
   <script>
+
     function toggleDropdown(id){
       const el=document.getElementById(id);
       const v=el&&el.style.display==='block';
@@ -556,22 +574,26 @@ html{background:#0c1117;}
         </div>
       </div>
       <div class="footer" id="footer">
-        {{imp[1][1]|safe}}
-        <div class="license-text">
-          이 저작물은 
-          <a href="https://creativecommons.org/licenses/by-nc-sa/3.0/deed.ko" target="_blank">
-            CC BY-NC-SA 3.0
-          </a>
-          에 따라 이용할 수 있습니다. (단, 라이선스가 별도로 명시된 일부 문서 및 이미지는 예외입니다.)
+        <div class="footer-inner">
+          {{imp[1][1]|safe}}
+          <div class="license-text">
+            이 저작물은 
+            <a href="https://creativecommons.org/licenses/by-nc-sa/3.0/deed.ko" target="_blank">
+              CC BY-NC-SA 3.0
+            </a>
+            에 따라 이용할 수 있습니다. (단, 라이선스가 별도 명시된 일부 파일 제외)
+          </div>
+   
+          <div class="license-text">
+            기여하신 문서의 저작권은 각 기여자에게 있으며, 각 기여자는 자신이 작성한 부분의 저작권을 가집니다.
+          </div>
+          <div class="credit">
+            © 2025 인곽위키 운영진  
+            (Developer. 32nd Kim Gyuwon · Developer. 32nd Lee Dohye · NoYe. 32nd Oh Jimin · Director. 32nd Kim Junseo)
+          </div>
         </div>
-        <div class="license-text">
-          기여하신 문서의 저작권은 각 기여자에게 있으며, 각 기여자는 자신이 작성한 부분의 저작권을 가집니다.
-        </div>
-        <div class="credit">
-          © 2025 인곽위키 운영진  
-          (Developer. 32nd Kim Gyuwon · Developer. 32nd Lee Dohye · NoYe. 32nd Oh Jimin · Director. 32nd Kim Junseo)
-        </div>    
       </div>
+
     </main>
 
     <aside class="do_fixed">
