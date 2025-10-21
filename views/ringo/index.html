@@ -70,12 +70,28 @@
       padding:0 var(--edge-x);position:sticky;top:0;z-index:1000;
       box-shadow:0 1px 0 rgba(0,0,0,.05);
     }
-    .topbar__left{display:flex;align-items:center;gap:18px}
-    .logo a{
-      display:inline-flex;align-items:center;height:30px;padding:6px 10px;
-      border-radius:12px;background:rgba(255,255,255,.26);color:#fff;font-weight:800;
-      backdrop-filter:blur(2px);
-    }
+    .topbar__left{display:flex;align-items:center;gap:4px}
+.logo a {
+  display: inline-flex;
+  align-items: center;
+  height: -40px;               /* 로고 높이 조금 키움 */
+  padding: 0;                 /* 내부 여백 제거 */
+  border-radius: 0;           /* 둥근 배경 제거 */
+  background: none;           /* 투명 배경 제거 */
+  color: #fff;
+  font-weight: 800;
+  backdrop-filter: none;
+}
+
+.logo img {
+  height: 170px;               /* 실제 로고 이미지 크기 */
+  width: auto;
+  display: block;
+
+  margin-top: 6px;     /* ↓ 아래로 4px 내림 */
+  margin-left: -15px;   /* ← 왼쪽으로 8px 이동 */
+}
+
 
     .nav{display:flex;align-items:center;gap:18px}
     .nav>a,.nav>.menu{color:#eef2ff;font-weight:700;display:inline-flex;align-items:center;gap:8px}
@@ -441,7 +457,12 @@ html{background:#0c1117;}
 <body class="namu">
   <header class="topbar" id="main">
     <div class="topbar__left">
-      <div class="logo"><a href="/">인곽위키</a></div>
+<div class="logo">
+  <a href="/">
+    <img src="/views/main_css/file/inki.png" alt="인곽위키 로고">
+  </a>
+</div>
+
 
       <nav class="nav" aria-label="primary">
         <div class="dropdown menu">
