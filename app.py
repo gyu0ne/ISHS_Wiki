@@ -242,7 +242,7 @@ with get_db_connect(init_mode = True) as conn:
     app.jinja_env.filters['md5_replace'] = md5_replace
     app.jinja_env.filters['load_lang'] = load_lang
     app.jinja_env.filters['cut_100'] = cut_100
-
+    app.jinja_env.filters['url_pas'] = url_pas 
     app.url_map.converters['everything'] = EverythingConverter
     app.url_map.converters['regex'] = RegexConverter
 
