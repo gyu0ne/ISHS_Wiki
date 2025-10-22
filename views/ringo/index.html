@@ -436,6 +436,21 @@ html{background:#0c1117;}
   border-bottom:1px solid #2a2f34 !important;
 }
 .namu .rc_wrap li:last-child{ border-bottom:0 !important; }
+
+/* ★★ 다크 모드: 주석(풋노트) 툴팁 어둡게 ★★ */
+.namu .footnote_tooltip{
+  background:#0f141a;              /* 어두운 배경 */
+  color:#e7eaf0;                   /* 밝은 텍스트 */
+  border:1px solid #2a2f34;        /* 다크모드 테두리 톤과 일치 */
+  box-shadow:0 8px 24px rgba(0,0,0,.45);  /* 다크 톤에 맞춘 그림자 */
+}
+
+/* 링크가 들어올 수도 있으니 대비 확보 */
+.namu .footnote_tooltip a{
+  color:#9db4ff;
+  text-decoration:underline;
+}
+
 {% endif %}
 
 .footnote_tooltip {
@@ -453,6 +468,7 @@ html{background:#0c1117;}
   pointer-events: auto; /* 내부 링크 클릭 가능 */
   word-wrap: break-word;
 }
+
 
 </style>
 
@@ -642,8 +658,14 @@ html{background:#0c1117;}
             {% if menu[0] == 1 %}{% set menu_href = menu_data[0] %}{% else %}{% set menu_href = '/' + menu_data[0] %}{% endif %}
             <a href="{{menu_href}}">{{menu_data[1]}}</a>
           {% endfor %}
+
+          {# 관리자에게만 보이는 '문서 ACL 설정' 추가 #}
+          {% if imp[2][9] != '0' %}
+            <a href="/acl/{{ imp[0]|url_pas }}">문서 ACL 설정</a>
+          {% endif %}
         </div>
         {% endif %}
+
       </div>
 
       <article class="main__body">
