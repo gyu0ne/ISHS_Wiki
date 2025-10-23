@@ -127,10 +127,10 @@ async def edit(name = 'Test', section = 0, do_type = ''):
             return redirect(conn, '/login')
 
         edit_req_mode = 0
-        #if await acl_check(name, 'document_edit') == 1:
-        #    edit_req_mode = 1
-        #    if await acl_check(name, 'document_edit_request') == 1:
-        #        return redirect(conn, '/raw_acl/' + url_pas(name))
+        if await acl_check(name, 'document_edit') == 1:
+            edit_req_mode = 1
+            if await acl_check(name, 'document_edit_request') == 1:
+                return redirect(conn, '/raw_acl/' + url_pas(name))
             
         if do_title_length_check(conn, name) == 1:
             return await re_error(conn, 38)
