@@ -70,26 +70,23 @@
       padding:0 var(--edge-x);position:sticky;top:0;z-index:1000;
       box-shadow:0 1px 0 rgba(0,0,0,.05);
     }
-    .topbar__left{display:flex;align-items:center;gap:4px}
+    .topbar__left{display:flex;align-items:center;gap:18px}
 .logo a {
-  display: inline-flex;
-  align-items: center;
-  height: -40px;               /* 로고 높이 조금 키움 */
-  padding: 0;                 /* 내부 여백 제거 */
-  border-radius: 0;           /* 둥근 배경 제거 */
-  background: none;           /* 투명 배경 제거 */
-  color: #fff;
-  font-weight: 800;
-  backdrop-filter: none;
+  display: inline-flex;         /* flex로 이미지 중앙정렬 */
+  align-items: center;          /* 세로 중앙 정렬 */
+  justify-content: center;
+  height: 64px;                 /* topbar 높이와 일치 */
+  padding: 0;
+  margin: 0;
+  background: none;
+  border: none;
 }
 
 .logo img {
-  height: 170px;               /* 실제 로고 이미지 크기 */
-  width: auto;
   display: block;
-
-  margin-top: 6px;     /* ↓ 아래로 4px 내림 */
-  margin-left: -15px;   /* ← 왼쪽으로 8px 이동 */
+  height: 42px;                 /* topbar 안에 잘 맞는 크기 */
+  width: auto;
+  margin: 0;                    /* margin-top 제거 */
 }
 
 
