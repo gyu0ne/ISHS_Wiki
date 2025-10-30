@@ -5,6 +5,7 @@ import atexit
 import logging
 import hmac
 import hashlib
+import socket
 
 from route.tool.func import *
 from route import *
@@ -563,6 +564,18 @@ async def check_auto_login():
 
 @app.before_request
 def before_request_func():
+    # --- 구글봇 확인 로직 ---
+    user_agent = flask.request.headers.get('User-Agent', '').lower()
+    if 'googlebot' in user_agent:
+        try:
+            ip = ip_check()
+            hostname = socket.gethostbyaddr(ip)[0]
+            if hostname.endswith('.googlebot.com') or hostname.endswith('.google.com'):
+                return  # 구글봇이면 암호 확인 건너뛰기
+        except Exception:
+            pass  # DNS 조회 실패 시 구글봇이 아닌 것으로 간주
+    # --- ---
+    
     db_data = global_some_set_do('wiki_access_password')
     if db_data and db_data != '':
         access_password = db_data
