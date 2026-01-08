@@ -1,35 +1,40 @@
-<!DOCTYPE html> 
+<!DOCTYPE html>
 <html lang="{{'language_tag'|load_lang}}">
+
 <head>
   <meta charset="utf-8">
   <!-- Google Tag Manager -->
-  <script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
-  new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
-  j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
-  'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
-  })(window,document,'script','dataLayer','GTM-TZSSCDT6');</script>
+  <script>(function (w, d, s, l, i) {
+      w[l] = w[l] || []; w[l].push({
+        'gtm.start':
+          new Date().getTime(), event: 'gtm.js'
+      }); var f = d.getElementsByTagName(s)[0],
+        j = d.createElement(s), dl = l != 'dataLayer' ? '&l=' + l : ''; j.async = true; j.src =
+          'https://www.googletagmanager.com/gtm.js?id=' + i + dl; f.parentNode.insertBefore(j, f);
+    })(window, document, 'script', 'dataLayer', 'GTM-TZSSCDT6');</script>
   <!-- End Google Tag Manager -->
   <!-- Google tag (gtag.js) -->
   <script async src="https://www.googletagmanager.com/gtag/js?id=G-JMEY5CHF10"></script>
   <meta name="google-adsense-account" content="ca-pub-2375716944179194">
   <script>
     window.dataLayer = window.dataLayer || [];
-    function gtag(){dataLayer.push(arguments);}
+    function gtag() { dataLayer.push(arguments); }
     gtag('js', new Date());
 
     gtag('config', 'G-JMEY5CHF10');
   </script>
   {% if imp[3][0] != 0 %}
-    <title>{{imp[0]}} {{imp[3][0]}} - {{imp[1][0]}}</title>
-    <meta name="title" content="{{imp[0]}}{{imp[3][0]}} - {{imp[1][0]}}">
+  <title>{{imp[0]}} {{imp[3][0]}} - {{imp[1][0]}}</title>
+  <meta name="title" content="{{imp[0]}}{{imp[3][0]}} - {{imp[1][0]}}">
   {% else %}
-    <title>{{imp[0]}} - {{imp[1][0]}}</title>
-    <meta name="title" content="{{imp[0]}} - {{imp[1][0]}}">
+  <title>{{imp[0]}} - {{imp[1][0]}}</title>
+  <meta name="title" content="{{imp[0]}} - {{imp[1][0]}}">
   {% endif %}
   <meta name="description" content="{{imp[3][6]}}">
   <meta name="keywords" content="{{imp[0]}}">
   <meta property="og:title" content="{{imp[0]}} - {{imp[1][0]}}">
-  <meta property="og:image" content="https://i.namu.wiki/i/UX1a0RmaJfABnbuJcd-2PfCO6qfqFMXaVBkNYV0Hwjm007_uH2Cc0fJmv6M9g9BTfzXjUk3jwJpDa09YdZnf79GO_NiDd9uGp7dudqFfQVBz69OaFzGfhSmMbOGezsME4LUzp6meYGFLDHZ32cTifVistPL4rVyv_OyU1WOADOM.webp">
+  <meta property="og:image"
+    content="https://i.namu.wiki/i/UX1a0RmaJfABnbuJcd-2PfCO6qfqFMXaVBkNYV0Hwjm007_uH2Cc0fJmv6M9g9BTfzXjUk3jwJpDa09YdZnf79GO_NiDd9uGp7dudqFfQVBz69OaFzGfhSmMbOGezsME4LUzp6meYGFLDHZ32cTifVistPL4rVyv_OyU1WOADOM.webp">
   <meta property="og:description" content="인천과학고 위키에 오신 것을 환영합니다!">
 
   {{imp[3][3]|safe}}
@@ -43,163 +48,319 @@
   <script defer src="/views/ringo/js/sidebar.js.cache_v7"></script>
   <script defer src="/views/ringo/js/skin_set.js.cache_v9"></script>
   <script defer src="/views/main_css/js/func/autocomplete.js"></script>
-  <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-4874556590582545" crossorigin="anonymous"></script>
+  <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-2375716944179194"
+    crossorigin="anonymous"></script>
   <script src="/views/ringo/js/skin_set_do.js.cache_v4"></script>
 
   {% if request.cookies.get('main_css_darkmode', '') == '1' %}
-    {{imp[3][5]|safe}}
+  {{imp[3][5]|safe}}
   {% endif %}
 
   <style>
-    :root{
+    :root {
       --bar-a: #78a834ff;
       --bar-b: #78a834ff;
-      --bg:rgb(248, 248, 248);
-      --surface:#ffffff;
-      --text:#111;
-      --muted:#6b7280;
-      --ring:rgba(23,37,84,.12);
-      --radius:14px;
-      --edge-x:clamp(16px, 6vw, 88px);
-      --aside-w:clamp(240px, 28%, 360px);
-      --shadow-card:0 1px 0 rgba(0,0,0,.03),0 10px 28px rgba(16,24,40,.06);
-      --base-font:16px;
-      --hr:#eff2f9;
+      --bg: rgb(248, 248, 248);
+      --surface: #ffffff;
+      --text: #111;
+      --muted: #6b7280;
+      --ring: rgba(23, 37, 84, .12);
+      --radius: 14px;
+      --edge-x: clamp(16px, 6vw, 88px);
+      --aside-w: clamp(240px, 28%, 360px);
+      --shadow-card: 0 1px 0 rgba(0, 0, 0, .03), 0 10px 28px rgba(16, 24, 40, .06);
+      --base-font: 16px;
+      --hr: #eff2f9;
     }
 
 
 
-    html,body{margin:0;padding:0}
-    html,body.namu{
-      background:var(--bg);
-      color:var(--text);
-      font-family:'SUIT',system-ui,-apple-system,Segoe UI,Roboto,sans-serif;
-      font-size:var(--base-font);
-      text-size-adjust:100%;
+    html,
+    body {
+      margin: 0;
+      padding: 0
     }
-    .namu a{color:#2c6be6;text-decoration:none}
-    .namu a:hover{text-decoration:underline}
 
-    .topbar{
-      background:linear-gradient(90deg,var(--bar-a),var(--bar-b));
-      height:64px;display:flex;align-items:center;gap:18px;
-      padding:0 var(--edge-x);position:sticky;top:0;z-index:1000;
-      box-shadow:0 1px 0 rgba(0,0,0,.05);
+    html,
+    body.namu {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'SUIT', system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+      font-size: var(--base-font);
+      text-size-adjust: 100%;
     }
-    .topbar__left{display:flex;align-items:center;gap:18px}
-.logo a {
-  display: inline-flex;         /* flex로 이미지 중앙정렬 */
-  align-items: center;          /* 세로 중앙 정렬 */
-  justify-content: center;
-  height: 64px;                 /* topbar 높이와 일치 */
-  padding: 0;
-  margin: 0;
-  background: none;
-  border: none;
-}
 
-.logo img {
-  display: block;
-  height: 42px;                 /* topbar 안에 잘 맞는 크기 */
-  width: auto;
-  margin: 0;                    /* margin-top 제거 */
-}
+    .namu a {
+      color: #2c6be6;
+      text-decoration: none
+    }
+
+    .namu a:hover {
+      text-decoration: underline
+    }
+
+    .topbar {
+      background: linear-gradient(90deg, var(--bar-a), var(--bar-b));
+      height: 64px;
+      display: flex;
+      align-items: center;
+      gap: 18px;
+      padding: 0 var(--edge-x);
+      position: sticky;
+      top: 0;
+      z-index: 1000;
+      box-shadow: 0 1px 0 rgba(0, 0, 0, .05);
+    }
+
+    .topbar__left {
+      display: flex;
+      align-items: center;
+      gap: 18px
+    }
+
+    .logo a {
+      display: inline-flex;
+      /* flex로 이미지 중앙정렬 */
+      align-items: center;
+      /* 세로 중앙 정렬 */
+      justify-content: center;
+      height: 64px;
+      /* topbar 높이와 일치 */
+      padding: 0;
+      margin: 0;
+      background: none;
+      border: none;
+    }
+
+    .logo img {
+      display: block;
+      height: 42px;
+      /* topbar 안에 잘 맞는 크기 */
+      width: auto;
+      margin: 0;
+      /* margin-top 제거 */
+    }
 
 
-    .nav{display:flex;align-items:center;gap:18px}
-    .nav>a,.nav>.menu{color:#eef2ff;font-weight:700;display:inline-flex;align-items:center;gap:8px}
-    .nav>a,.nav>.menu>button{font-size:17px}
-    .nav>a:hover,.nav>.menu:hover{color:#fff}
+    .nav {
+      display: flex;
+      align-items: center;
+      gap: 18px
+    }
+
+    .nav>a,
+    .nav>.menu {
+      color: #eef2ff;
+      font-weight: 700;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px
+    }
+
+    .nav>a,
+    .nav>.menu>button {
+      font-size: 17px
+    }
+
+    .nav>a:hover,
+    .nav>.menu:hover {
+      color: #fff
+    }
+
     /* 네비 전용: 상단 링크 밑줄 제거 */
-    .nav > a{ text-decoration:none; }
-    .nav > a:hover{ text-decoration:none; }
-
-
-    .dropdown{position:relative}
-    .dropdown>button{color:#eef2ff;font-weight:700;background:transparent;border:0;cursor:pointer;display:inline-flex;align-items:center;gap:6px;padding:0}
-    .dropdown-panel{position:absolute;top:48px;left:0;min-width:200px;background:#fff;border-radius:12px;box-shadow:0 8px 30px rgba(0,0,0,.15);padding:8px;display:none}
-    .dropdown-panel a{display:flex;align-items:center;gap:8px;padding:10px 12px;border-radius:8px;color:#111}
-    .dropdown-panel a:hover{background:#f4f6fb;text-decoration:none}
-
-    .topbar__right{margin-left:auto;display:flex;align-items:center;gap:16px}
-    .search{
-      display:flex;align-items:center;gap:8px;background:#fff;border-radius:999px;
-      padding:8px 12px;
-      box-shadow:0 0 0 1px var(--ring),0 8px 22px rgba(0,0,0,.06)
+    .nav>a {
+      text-decoration: none;
     }
-    .search input{
-      width:clamp(120px, 16vw, 240px);
-      font-size:14px;
-      background:transparent;
-      caret-color:#333;
-      border:0!important;
-      border-bottom:0!important;
-      outline:0!important;
-      box-shadow:none!important;
-      -webkit-appearance:none;
-      appearance:none;
+
+    .nav>a:hover {
+      text-decoration: none;
     }
 
 
-    .top-icon{height:40px;width:40px;display:grid;place-items:center;border-radius:10px;background:#fff;color:#2e5bff;cursor:pointer;box-shadow:0 0 0 1px var(--ring),0 6px 18px rgba(0,0,0,.08)}
-
-    .container{
-      max-width:clamp(320px, 92vw, 1320px);
-      margin:24px auto;
-      padding:0 var(--edge-x);
-      display:grid;
-      grid-template-columns:minmax(0, 80%) minmax(200px, 20%);
-      column-gap:18px;
-      row-gap:18px;
-    }
-    main.main, aside.do_fixed{min-width:0;}
-    aside.do_fixed{position:static; width:100%;}
-
-    .main{background:var(--surface);border-radius:var(--radius);box-shadow:var(--shadow-card)}
-    .main__title{
-      padding:22px 30px 0;
-      display:flex;
-      justify-content:space-between;
-      align-items:flex-end;
-      gap:10px;
-      flex-wrap:wrap;              /* 너비가 좁으면 줄바꿈 */
-      row-gap:12px;                /* 줄바꿈 시 위아래 간격 */
+    .dropdown {
+      position: relative
     }
 
-    .title h1{
-      margin:0;
-      font-size:clamp(28px, 4.2vw, 40px);
-      line-height:1.18;
-      font-weight:800;
-      letter-spacing:-.01em;
+    .dropdown>button {
+      color: #eef2ff;
+      font-weight: 700;
+      background: transparent;
+      border: 0;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 0
+    }
+
+    .dropdown-panel {
+      position: absolute;
+      top: 48px;
+      left: 0;
+      min-width: 200px;
+      background: #fff;
+      border-radius: 12px;
+      box-shadow: 0 8px 30px rgba(0, 0, 0, .15);
+      padding: 8px;
+      display: none
+    }
+
+    .dropdown-panel a {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 12px;
+      border-radius: 8px;
+      color: #111
+    }
+
+    .dropdown-panel a:hover {
+      background: #f4f6fb;
+      text-decoration: none
+    }
+
+    .topbar__right {
+      margin-left: auto;
+      display: flex;
+      align-items: center;
+      gap: 16px
+    }
+
+    .search {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      background: #fff;
+      border-radius: 999px;
+      padding: 8px 12px;
+      box-shadow: 0 0 0 1px var(--ring), 0 8px 22px rgba(0, 0, 0, .06)
+    }
+
+    .search input {
+      width: clamp(120px, 16vw, 240px);
+      font-size: 14px;
+      background: transparent;
+      caret-color: #333;
+      border: 0 !important;
+      border-bottom: 0 !important;
+      outline: 0 !important;
+      box-shadow: none !important;
+      -webkit-appearance: none;
+      appearance: none;
     }
 
 
-    .sub{color:var(--muted);margin-left:6px;font-weight:600}
-
-    .actions{
-      display:flex;
-      flex-wrap:wrap;
-      gap:8px;
-      margin-top:12px;             /* 제목과의 기본 간격 */
-      flex-basis:100%;             /* 줄바꿈 시 전체폭 차지 → 제목 아래로 배치 */
+    .top-icon {
+      height: 40px;
+      width: 40px;
+      display: grid;
+      place-items: center;
+      border-radius: 10px;
+      background: #fff;
+      color: #2e5bff;
+      cursor: pointer;
+      box-shadow: 0 0 0 1px var(--ring), 0 6px 18px rgba(0, 0, 0, .08)
     }
 
-    .actions a{
-      display:inline-flex;align-items:center;gap:6px;padding:8px 12px;
-      border:1px solid #e6eaf2;border-radius:12px;color:#374151;background:#f6f7fb;
+    .container {
+      max-width: clamp(320px, 92vw, 1320px);
+      margin: 24px auto;
+      padding: 0 var(--edge-x);
+      display: grid;
+      grid-template-columns: minmax(0, 80%) minmax(200px, 20%);
+      column-gap: 18px;
+      row-gap: 18px;
     }
-    .actions a:hover{background:#eef1f7;text-decoration:none}
 
-    .main__body{padding:0 30px 12px}
-    .pre_banner{margin-top:0}
+    main.main,
+    aside.do_fixed {
+      min-width: 0;
+    }
 
-    .meta{padding:12px 30px 18px;display:flex;justify-content:space-between;color:var(--muted);border-top:1px solid #eef0f3}
+    aside.do_fixed {
+      position: static;
+      width: 100%;
+    }
 
-    .pre_banner{
-      margin-top:6px;
-      padding-bottom:12px;
-      border-bottom:1px solid #e5e7eb;
+    .main {
+      background: var(--surface);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow-card)
+    }
+
+    .main__title {
+      padding: 22px 30px 0;
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-end;
+      gap: 10px;
+      flex-wrap: wrap;
+      /* 너비가 좁으면 줄바꿈 */
+      row-gap: 12px;
+      /* 줄바꿈 시 위아래 간격 */
+    }
+
+    .title h1 {
+      margin: 0;
+      font-size: clamp(28px, 4.2vw, 40px);
+      line-height: 1.18;
+      font-weight: 800;
+      letter-spacing: -.01em;
+    }
+
+
+    .sub {
+      color: var(--muted);
+      margin-left: 6px;
+      font-weight: 600
+    }
+
+    .actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 12px;
+      /* 제목과의 기본 간격 */
+      flex-basis: 100%;
+      /* 줄바꿈 시 전체폭 차지 → 제목 아래로 배치 */
+    }
+
+    .actions a {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 8px 12px;
+      border: 1px solid #e6eaf2;
+      border-radius: 12px;
+      color: #374151;
+      background: #f6f7fb;
+    }
+
+    .actions a:hover {
+      background: #eef1f7;
+      text-decoration: none
+    }
+
+    .main__body {
+      padding: 0 30px 12px
+    }
+
+    .pre_banner {
+      margin-top: 0
+    }
+
+    .meta {
+      padding: 12px 30px 18px;
+      display: flex;
+      justify-content: space-between;
+      color: var(--muted);
+      border-top: 1px solid #eef0f3
+    }
+
+    .pre_banner {
+      margin-top: 6px;
+      padding-bottom: 12px;
+      border-bottom: 1px solid #e5e7eb;
     }
 
     .pre_banner h1,
@@ -207,280 +368,424 @@
     .pre_banner h3,
     .pre_banner h4,
     .pre_banner h5,
-    .pre_banner h6{
-      border-bottom:0 !important;
-      padding-bottom:0;
-      margin-bottom:0;
+    .pre_banner h6 {
+      border-bottom: 0 !important;
+      padding-bottom: 0;
+      margin-bottom: 0;
     }
 
     .wiki h2,
     .wiki h3,
-.wiki h4{
-  border-bottom:1px solid var(--hr);
-  padding-bottom:12px;
-  margin-bottom:8px;
-}
-.wiki h4{padding-bottom:6px;margin-bottom:10px;}
-.wiki .toc h2, .wiki .toc h3, .wiki .toc h4,
-.wiki .category h2, .wiki .category h3, .wiki .category h4,
-.wiki [class*="cate"] h2, .wiki [class*="cate"] h3, .wiki [class*="cate"] h4,
-.wiki [id*="cate"] h2, .wiki [id*="cate"] h3, .wiki [id*="cate"] h4{
-  border-bottom:0 !important;
-  padding-bottom:0;
-  margin-bottom:.5rem;
-}
+    .wiki h4 {
+      border-bottom: 1px solid var(--hr);
+      padding-bottom: 12px;
+      margin-bottom: 8px;
+    }
 
-hr,
-.opennamu_main hr{
-  border:0;
-  height:1px;
-  background:var(--hr);
-  margin:16px 0;
-}
+    .wiki h4 {
+      padding-bottom: 6px;
+      margin-bottom: 10px;
+    }
 
-.main_hr{
-  display:block !important;
-  border:0 !important;
-  height:0 !important;
-  background:transparent !important;
-  margin:6px 0 !important;
-  padding:0 !important;
-}
+    .wiki .toc h2,
+    .wiki .toc h3,
+    .wiki .toc h4,
+    .wiki .category h2,
+    .wiki .category h3,
+    .wiki .category h4,
+    .wiki [class*="cate"] h2,
+    .wiki [class*="cate"] h3,
+    .wiki [class*="cate"] h4,
+    .wiki [id*="cate"] h2,
+    .wiki [id*="cate"] h3,
+    .wiki [id*="cate"] h4 {
+      border-bottom: 0 !important;
+      padding-bottom: 0;
+      margin-bottom: .5rem;
+    }
 
-/* 기존 최근변경 항목의 밑줄 제거(박스 스타일로 대체) */
-.opennamu_main .opennamu_recent_change{
-  border-bottom:0 !important;
-  padding-bottom:0 !important;
-  margin:0 !important;
-}
+    hr,
+    .opennamu_main hr {
+      border: 0;
+      height: 1px;
+      background: var(--hr);
+      margin: 16px 0;
+    }
 
-/* 최근 변경: 하얀 칸 카드 스타일 */
-.rc_wrap{
-  display:flex;
-  flex-direction:column;
-  gap:8px;
-  margin-top:8px;
-}
-.rc_wrap .opennamu_recent_change{
-  background:transparent !important;
-  border:0 !important;
-  border-radius:0 !important;
-  padding:0 !important;
-  box-shadow:none !important;
-}
+    .main_hr {
+      display: block !important;
+      border: 0 !important;
+      height: 0 !important;
+      background: transparent !important;
+      margin: 6px 0 !important;
+      padding: 0 !important;
+    }
 
-.wiki hr{border:0;height:1px;background:var(--hr);margin:16px 0;}
-.wiki .opennamu_main hr{border:0;height:1px;background:var(--hr);margin:16px 0;}
+    /* 기존 최근변경 항목의 밑줄 제거(박스 스타일로 대체) */
+    .opennamu_main .opennamu_recent_change {
+      border-bottom: 0 !important;
+      padding-bottom: 0 !important;
+      margin: 0 !important;
+    }
 
-.aside{display:flex;flex-direction:column;gap:14px}
-.card{background:var(--surface);border-radius:var(--radius);box-shadow:var(--shadow-card);padding:14px}
-.recent-box{min-height:360px;margin-bottom:16px}
-.card h3{margin:4px 8px 10px;font-size:16px;color:#111827}
-.card h3{margin:4px 8px 10px;font-size:16px;color:#111827}
+    /* 최근 변경: 하얀 칸 카드 스타일 */
+    .rc_wrap {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      margin-top: 8px;
+    }
 
-.side_card.rc_box{
-  background:var(--surface);
-  border:1px solid #e6eaf2;   /* 밝은 모드용 기본 테두리 */
-  border-radius:14px;
-  box-shadow:0 1px 0 rgba(0,0,0,.03), 0 10px 28px rgba(16,24,40,.06);
-  padding:12px;
-}
-.rc_wrap{ margin-top:8px; }
-.rc_wrap ul{
-  list-style:none !important;
-  margin:0 !important;
-  padding:0 !important;
-}
-.rc_wrap li{
-  background:transparent !important;
-  border:0 !important;
-  border-bottom:1px solid #e6eaf2;
-  border-radius:0 !important;
-  box-shadow:none !important;
-  padding:8px 2px !important;
-}
-.rc_wrap li:last-child{ border-bottom:0; }
+    .rc_wrap .opennamu_recent_change {
+      background: transparent !important;
+      border: 0 !important;
+      border-radius: 0 !important;
+      padding: 0 !important;
+      box-shadow: none !important;
+    }
 
-/* 본문(main) 카드에도 같은 테두리 적용 */
-.main{
-  border:1px solid #e6eaf2;
-  background:var(--surface);
-  border-radius:var(--radius);
-  box-shadow:var(--shadow-card);
-}
+    .wiki hr {
+      border: 0;
+      height: 1px;
+      background: var(--hr);
+      margin: 16px 0;
+    }
 
-.footer{text-align:center;color:var(--muted);padding:20px 0 40px;font-size:13px}
-.footer{text-align:center;color:var(--muted);padding:20px 0 40px;font-size:13px}
+    .wiki .opennamu_main hr {
+      border: 0;
+      height: 1px;
+      background: var(--hr);
+      margin: 16px 0;
+    }
 
-@media (max-width:860px){
-  .container{
-    grid-template-columns: 1fr;
-    column-gap: 0;             /* 우측칸 없으니 칸 간격 제거 */
-  }
-  aside.do_fixed{              /* 우측 사이드 전체 숨김 */
-    display: none;
-  }
-  .search input{ width: clamp(120px, 40vw, 220px) }
-  .actions{ margin-top: 16px; }/* 제목-버튼 간격 유지 */
-}
+    .aside {
+      display: flex;
+      flex-direction: column;
+      gap: 14px
+    }
+
+    .card {
+      background: var(--surface);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow-card);
+      padding: 14px
+    }
+
+    .recent-box {
+      min-height: 360px;
+      margin-bottom: 16px
+    }
+
+    .card h3 {
+      margin: 4px 8px 10px;
+      font-size: 16px;
+      color: #111827
+    }
+
+    .card h3 {
+      margin: 4px 8px 10px;
+      font-size: 16px;
+      color: #111827
+    }
+
+    .side_card.rc_box {
+      background: var(--surface);
+      border: 1px solid #e6eaf2;
+      /* 밝은 모드용 기본 테두리 */
+      border-radius: 14px;
+      box-shadow: 0 1px 0 rgba(0, 0, 0, .03), 0 10px 28px rgba(16, 24, 40, .06);
+      padding: 12px;
+    }
+
+    .rc_wrap {
+      margin-top: 8px;
+    }
+
+    .rc_wrap ul {
+      list-style: none !important;
+      margin: 0 !important;
+      padding: 0 !important;
+    }
+
+    .rc_wrap li {
+      background: transparent !important;
+      border: 0 !important;
+      border-bottom: 1px solid #e6eaf2;
+      border-radius: 0 !important;
+      box-shadow: none !important;
+      padding: 8px 2px !important;
+    }
+
+    .rc_wrap li:last-child {
+      border-bottom: 0;
+    }
+
+    /* 본문(main) 카드에도 같은 테두리 적용 */
+    .main {
+      border: 1px solid #e6eaf2;
+      background: var(--surface);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow-card);
+    }
+
+    .footer {
+      text-align: center;
+      color: var(--muted);
+      padding: 20px 0 40px;
+      font-size: 13px
+    }
+
+    .footer {
+      text-align: center;
+      color: var(--muted);
+      padding: 20px 0 40px;
+      font-size: 13px
+    }
+
+    @media (max-width:860px) {
+      .container {
+        grid-template-columns: 1fr;
+        column-gap: 0;
+        /* 우측칸 없으니 칸 간격 제거 */
+      }
+
+      aside.do_fixed {
+        /* 우측 사이드 전체 숨김 */
+        display: none;
+      }
+
+      .search input {
+        width: clamp(120px, 40vw, 220px)
+      }
+
+      .actions {
+        margin-top: 16px;
+      }
+
+      /* 제목-버튼 간격 유지 */
+    }
 
 
 
-/* 아이콘 라벨 숨김 + 검색창 확장 (더 넓은 임계값) */
-/* 랜덤 아이콘 왼쪽에만 넉넉한 간격 부여 (전역 적용) */
-.icon-random{
-  margin-left: 60px;
-}
+    /* 아이콘 라벨 숨김 + 검색창 확장 (더 넓은 임계값) */
+    /* 랜덤 아이콘 왼쪽에만 넉넉한 간격 부여 (전역 적용) */
+    .icon-random {
+      margin-left: 60px;
+    }
 
-/* footer 안쪽 폭을 고정(너무 길어지지 않게) */
-.footer-inner{
-  max-width: min(920px, 90%);
-  margin: 0 auto;
-}
-/* 한국어 기준 보기 좋은 줄 길이(약 60~70자)로 제한 */
-.footer .license-text,
-.footer .credit{
-  max-width: 68ch;
-  margin: 6px auto;
-  line-height: 1.6;
-  word-break: keep-all;      /* 한국어 단어 뚝 끊김 방지 */
-  text-wrap: pretty;         /* 가능하면 보기 좋게 개행 (지원 브라우저) */
-}
+    /* footer 안쪽 폭을 고정(너무 길어지지 않게) */
+    .footer-inner {
+      max-width: min(920px, 90%);
+      margin: 0 auto;
+    }
 
-/* 아이콘 라벨 숨김 + 검색창 확장 (더 넓은 임계값) */
-@media (max-width:980px){
-  .topbar { gap: 12px; }
+    /* 한국어 기준 보기 좋은 줄 길이(약 60~70자)로 제한 */
+    .footer .license-text,
+    .footer .credit {
+      max-width: 68ch;
+      margin: 6px auto;
+      line-height: 1.6;
+      word-break: keep-all;
+      /* 한국어 단어 뚝 끊김 방지 */
+      text-wrap: pretty;
+      /* 가능하면 보기 좋게 개행 (지원 브라우저) */
+    }
 
-  /* 아이콘 옆 글자(라벨) 숨김 */
-  .nav .menu .label{
-    display: none;
-  }
-  /* 화살표도 숨기면 더 깔끔 */
-  .nav .menu button .iconify[data-icon="ic:baseline-arrow-drop-down"]{
-    display: none;
-  }
+    /* 아이콘 라벨 숨김 + 검색창 확장 (더 넓은 임계값) */
+    @media (max-width:980px) {
+      .topbar {
+        gap: 12px;
+      }
 
-  /* 검색창 공간 최대화 */
-  .topbar__left { flex: 0 0 auto; }
-  .topbar__right { flex: 1 1 auto; }
+      /* 아이콘 옆 글자(라벨) 숨김 */
+      .nav .menu .label {
+        display: none;
+      }
 
-  .search{
-    flex: 1 1 420px;    /* 우측 영역에서 가능한 만큼 넓게 */
-    min-width: 0;       /* 줄어들 수 있도록 */
-  }
-  .search input{
-    width: 100% !important;   /* 남는 공간 전부 사용 */
-    max-width: none;          /* clamp 상한 해제 느낌 */
-  }
-}
+      /* 화살표도 숨기면 더 깔끔 */
+      .nav .menu button .iconify[data-icon="ic:baseline-arrow-drop-down"] {
+        display: none;
+      }
 
-/* 세로(포트레이트) 방향일 때도 우측칸 숨김 */
-@media (orientation: portrait){
-  .container{
-    grid-template-columns: 1fr;
-    column-gap: 0;
-  }
-  aside.do_fixed{
-    display: none;
-  }
-}
+      /* 검색창 공간 최대화 */
+      .topbar__left {
+        flex: 0 0 auto;
+      }
 
-/* ======================== */
-/*        다크 모드         */
-/* ======================== */
-{% if request.cookies.get('main_css_darkmode', '') == '1' %}
-body.namu{
-  --surface:#1b2024;  /* 어두운 카드 배경 (본문/사이드 동일) */
-  --bg:#13161a;
-  --text:#e7eaf0;
-  --ring:rgba(255,255,255,.08);
-  --bar-a:#17224d;
-  --bar-b:#17224d;
-  --hr:#2a2f34;
-  background:var(--bg);
-  color:var(--text);
-}
-html{background:#0c1117;}
+      .topbar__right {
+        flex: 1 1 auto;
+      }
 
-/* 본문 및 카드 테두리 통일 */
-.namu .main,
-.namu .card,
-.namu .side_card.rc_box{
-  background:var(--surface);
-  border:1px solid #2a2f34 !important;
-  border-radius:14px;
-  box-shadow:none;
-}
+      .search {
+        flex: 1 1 420px;
+        /* 우측 영역에서 가능한 만큼 넓게 */
+        min-width: 0;
+        /* 줄어들 수 있도록 */
+      }
 
-.namu .card h3{color:#eef2f7}
-.namu .actions a{background:#1b2024;border-color:#2a2f34;color:#e7ecf3}
-.namu .actions a:hover{background:#252b31}
+      .search input {
+        width: 100% !important;
+        /* 남는 공간 전부 사용 */
+        max-width: none;
+        /* clamp 상한 해제 느낌 */
+      }
+    }
 
-.namu .dropdown-panel{
-  background:#1b2024;border:1px solid #2a2f34;
-  box-shadow:0 8px 24px rgba(0,0,0,.45)
-}
-.namu .dropdown-panel a{color:#e7ecf3}
-.namu .dropdown-panel a:hover{background:#252b31}
+    /* 세로(포트레이트) 방향일 때도 우측칸 숨김 */
+    @media (orientation: portrait) {
+      .container {
+        grid-template-columns: 1fr;
+        column-gap: 0;
+      }
 
-.namu .search{background:#0f141a}
-.namu .search input{color:#e7ecf3}
-.namu .search input::placeholder{color:#96a0ad}
+      aside.do_fixed {
+        display: none;
+      }
+    }
 
-.namu .top-icon{
-  background:#0f141a;color:#9db4ff;
-  box-shadow:0 0 0 1px rgba(255,255,255,.06),0 6px 18px rgba(0,0,0,.4)
-}
+    /* ======================== */
+    /*        다크 모드         */
+    /* ======================== */
+      {
+      % if request.cookies.get('main_css_darkmode', '')=='1' %
+    }
 
-.namu .list li:hover{background:#20262c}
+    body.namu {
+      --surface: #1b2024;
+      /* 어두운 카드 배경 (본문/사이드 동일) */
+      --bg: #13161a;
+      --text: #e7eaf0;
+      --ring: rgba(255, 255, 255, .08);
+      --bar-a: #17224d;
+      --bar-b: #17224d;
+      --hr: #2a2f34;
+      background: var(--bg);
+      color: var(--text);
+    }
 
-.namu hr,
-.namu .opennamu_main hr{background:var(--hr);}
+    html {
+      background: #0c1117;
+    }
 
-.namu .main_hr{
-  display:block !important;
-  height:0 !important;
-  border:0 !important;
-  background:transparent !important;
-}
+    /* 본문 및 카드 테두리 통일 */
+    .namu .main,
+    .namu .card,
+    .namu .side_card.rc_box {
+      background: var(--surface);
+      border: 1px solid #2a2f34 !important;
+      border-radius: 14px;
+      box-shadow: none;
+    }
 
-/* 다크 모드: 최근 변경 항목 */
-.namu .rc_wrap li{
-  border-bottom:1px solid #2a2f34 !important;
-}
-.namu .rc_wrap li:last-child{ border-bottom:0 !important; }
+    .namu .card h3 {
+      color: #eef2f7
+    }
 
-/* ★★ 다크 모드: 주석(풋노트) 툴팁 어둡게 ★★ */
-.namu .footnote_tooltip{
-  background:#0f141a;              /* 어두운 배경 */
-  color:#e7eaf0;                   /* 밝은 텍스트 */
-  border:1px solid #2a2f34;        /* 다크모드 테두리 톤과 일치 */
-  box-shadow:0 8px 24px rgba(0,0,0,.45);  /* 다크 톤에 맞춘 그림자 */
-}
+    .namu .actions a {
+      background: #1b2024;
+      border-color: #2a2f34;
+      color: #e7ecf3
+    }
 
-/* 링크가 들어올 수도 있으니 대비 확보 */
-.namu .footnote_tooltip a{
-  color:#9db4ff;
-  text-decoration:underline;
-}
+    .namu .actions a:hover {
+      background: #252b31
+    }
 
-{% endif %}
+    .namu .dropdown-panel {
+      background: #1b2024;
+      border: 1px solid #2a2f34;
+      box-shadow: 0 8px 24px rgba(0, 0, 0, .45)
+    }
 
-.footnote_tooltip {
-  position: absolute;
-  z-index: 9999;
-  background: #f9f9f9;
-  color: #111;
-  border: 1px solid rgba(0,0,0,0.15);
-  border-radius: 8px;
-  padding: 8px 10px;
-  font-size: 16px;
-  line-height: 1.5em;
-  box-shadow: 0 2px 10px rgba(0,0,0,0.2);
-  max-width: 340px;
-  pointer-events: auto; /* 내부 링크 클릭 가능 */
-  word-wrap: break-word;
-}
+    .namu .dropdown-panel a {
+      color: #e7ecf3
+    }
+
+    .namu .dropdown-panel a:hover {
+      background: #252b31
+    }
+
+    .namu .search {
+      background: #0f141a
+    }
+
+    .namu .search input {
+      color: #e7ecf3
+    }
+
+    .namu .search input::placeholder {
+      color: #96a0ad
+    }
+
+    .namu .top-icon {
+      background: #0f141a;
+      color: #9db4ff;
+      box-shadow: 0 0 0 1px rgba(255, 255, 255, .06), 0 6px 18px rgba(0, 0, 0, .4)
+    }
+
+    .namu .list li:hover {
+      background: #20262c
+    }
+
+    .namu hr,
+    .namu .opennamu_main hr {
+      background: var(--hr);
+    }
+
+    .namu .main_hr {
+      display: block !important;
+      height: 0 !important;
+      border: 0 !important;
+      background: transparent !important;
+    }
+
+    /* 다크 모드: 최근 변경 항목 */
+    .namu .rc_wrap li {
+      border-bottom: 1px solid #2a2f34 !important;
+    }
+
+    .namu .rc_wrap li:last-child {
+      border-bottom: 0 !important;
+    }
+
+    /* ★★ 다크 모드: 주석(풋노트) 툴팁 어둡게 ★★ */
+    .namu .footnote_tooltip {
+      background: #0f141a;
+      /* 어두운 배경 */
+      color: #e7eaf0;
+      /* 밝은 텍스트 */
+      border: 1px solid #2a2f34;
+      /* 다크모드 테두리 톤과 일치 */
+      box-shadow: 0 8px 24px rgba(0, 0, 0, .45);
+      /* 다크 톤에 맞춘 그림자 */
+    }
+
+    /* 링크가 들어올 수도 있으니 대비 확보 */
+    .namu .footnote_tooltip a {
+      color: #9db4ff;
+      text-decoration: underline;
+    }
+
+      {
+      % endif %
+    }
+
+    .footnote_tooltip {
+      position: absolute;
+      z-index: 9999;
+      background: #f9f9f9;
+      color: #111;
+      border: 1px solid rgba(0, 0, 0, 0.15);
+      border-radius: 8px;
+      padding: 8px 10px;
+      font-size: 16px;
+      line-height: 1.5em;
+      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+      max-width: 340px;
+      pointer-events: auto;
+      /* 내부 링크 클릭 가능 */
+      word-wrap: break-word;
+    }
 
 
     /* 미리보기(Preview) 영역 글자 크기 본문과 동일하게 적용 */
@@ -488,26 +793,25 @@ html{background:#0c1117;}
       font-size: 1.16em;
       line-height: 1.6;
     }
-
-</style>
+  </style>
 
   <script>
 
-    function toggleDropdown(id){
-      const el=document.getElementById(id);
-      const v=el&&el.style.display==='block';
-      document.querySelectorAll('.dropdown-panel').forEach(p=>p.style.display='none');
-      if(el) el.style.display=v?'none':'block';
+    function toggleDropdown(id) {
+      const el = document.getElementById(id);
+      const v = el && el.style.display === 'block';
+      document.querySelectorAll('.dropdown-panel').forEach(p => p.style.display = 'none');
+      if (el) el.style.display = v ? 'none' : 'block';
     }
-    document.addEventListener('click',e=>{
-      if(!e.target.closest('.dropdown,.top-icon,.search')){
-        document.querySelectorAll('.dropdown-panel').forEach(p=>p.style.display='none');
+    document.addEventListener('click', e => {
+      if (!e.target.closest('.dropdown,.top-icon,.search')) {
+        document.querySelectorAll('.dropdown-panel').forEach(p => p.style.display = 'none');
       }
     });
 
     // ====== 검색 제출 분기 로직 (존재하면 문서로 / 없으면 /search) ======
     document.addEventListener('DOMContentLoaded', () => {
-      const form  = document.getElementById('search_form') || document.querySelector('form.search');
+      const form = document.getElementById('search_form') || document.querySelector('form.search');
       const input = document.getElementById('search_input_not_mobile');
       if (!form || !input) return;
 
@@ -516,7 +820,7 @@ html{background:#0c1117;}
 
       form.addEventListener('submit', (e) => {
         const raw = input.value;
-        const q   = normalize(raw);
+        const q = normalize(raw);
         if (!q) return;               // 비었으면 그냥 /search로
 
         // 1) 자동완성 DOM에서 "정확히 같은 제목"을 찾는다
@@ -564,16 +868,16 @@ html{background:#0c1117;}
 
 <body class="namu">
   <!-- Google Tag Manager (noscript) -->
-  <noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-TZSSCDT6"
-  height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
+  <noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-TZSSCDT6" height="0" width="0"
+      style="display:none;visibility:hidden"></iframe></noscript>
   <!-- End Google Tag Manager (noscript) -->
   <header class="topbar" id="main">
     <div class="topbar__left">
-<div class="logo">
-  <a href="/">
-    <img src="/views/main_css/file/inki.png" alt="인곽위키 로고">
-  </a>
-</div>
+      <div class="logo">
+        <a href="/">
+          <img src="/views/main_css/file/inki.png" alt="인곽위키 로고">
+        </a>
+      </div>
 
 
       <nav class="nav" aria-label="primary">
@@ -584,9 +888,12 @@ html{background:#0c1117;}
             <span class="iconify" data-icon="ic:baseline-arrow-drop-down"></span>
           </button>
           <div id="list_menu" class="dropdown-panel">
-            <a href="/recent_changes"><span class="iconify" data-icon="ic:baseline-autorenew"></span> {{'recent_change'|load_lang}}</a>
-            <a href="/recent_discuss"><span class="iconify" data-icon="ic:baseline-add-comment"></span> {{'recent_discussion'|load_lang}}</a>
-            <a href="/bbs/main"><span class="iconify" data-icon="ic:outline-developer-board"></span> {{'bbs_main'|load_lang}}</a>
+            <a href="/recent_changes"><span class="iconify" data-icon="ic:baseline-autorenew"></span>
+              {{'recent_change'|load_lang}}</a>
+            <a href="/recent_discuss"><span class="iconify" data-icon="ic:baseline-add-comment"></span>
+              {{'recent_discussion'|load_lang}}</a>
+            <a href="/bbs/main"><span class="iconify" data-icon="ic:outline-developer-board"></span>
+              {{'bbs_main'|load_lang}}</a>
           </div>
         </div>
 
@@ -601,12 +908,12 @@ html{background:#0c1117;}
             <a href="/bob"><span class="iconify" data-icon="ic:baseline-food-bank"></span> 급식</a>
             <a href="/siganpyo"><span class="iconify" data-icon="ic:baseline-schedule"></span> 시간표</a>
             <a href="https://iscience.riroschool.kr/portfolio.php?db=1551" target="_blank" rel="noopener noreferrer">
-                <span class="iconify" data-icon="material-symbols:back-to-tab-rounded" data-inline="true"></span>
-                리로스쿨
-            <a href="#" onclick="alert('개발 중인 항목입니다.'); return false;">
+              <span class="iconify" data-icon="material-symbols:back-to-tab-rounded" data-inline="true"></span>
+              리로스쿨
+              <a href="#" onclick="alert('개발 중인 항목입니다.'); return false;">
                 <span class="iconify" data-icon="material-symbols:desktop-cloud" data-inline="true"></span>
                 인곽에타
-            </a>
+              </a>
 
             </a>
           </div>
@@ -621,10 +928,13 @@ html{background:#0c1117;}
           </button>
           <div id="other_menu" class="dropdown-panel">
             <a href="/random"><span class="iconify" data-icon="ic:baseline-shuffle"></span> {{'random'|load_lang}}</a>
-            {% if imp[2][9] != '0' %}<a href="/manager"><span class="iconify" data-icon="ic:baseline-how-to-reg"></span> {{'admin_tool'|load_lang}}</a>{% endif %}
-            <a href="/upload"><span class="iconify" data-icon="ic:baseline-cloud-upload"></span> {{'upload'|load_lang}}</a>
-            <a href="/change/skin_set"><span class="iconify" data-icon="ic:baseline-settings"></span> {{'skin_setting'|load_lang}}</a>
-            <a href="/other"><span class="iconify" data-icon="ic:baseline-build"></span> 기타 도구</a>            
+            {% if imp[2][9] != '0' %}<a href="/manager"><span class="iconify" data-icon="ic:baseline-how-to-reg"></span>
+              {{'admin_tool'|load_lang}}</a>{% endif %}
+            <a href="/upload"><span class="iconify" data-icon="ic:baseline-cloud-upload"></span>
+              {{'upload'|load_lang}}</a>
+            <a href="/change/skin_set"><span class="iconify" data-icon="ic:baseline-settings"></span>
+              {{'skin_setting'|load_lang}}</a>
+            <a href="/other"><span class="iconify" data-icon="ic:baseline-build"></span> 기타 도구</a>
           </div>
         </div>
 
@@ -640,7 +950,8 @@ html{background:#0c1117;}
 
       <form id="search_form" class="search" method="post" action="/search" role="search">
         <div style="position:relative;">
-          <input id="search_input_not_mobile" name="search" placeholder="{{'search'|load_lang}}" autocomplete="off" type="search">
+          <input id="search_input_not_mobile" name="search" placeholder="{{'search'|load_lang}}" autocomplete="off"
+            type="search">
           <div id="autocomplete_results_not_mobile" class="autocomplete-items"></div>
         </div>
       </form>
@@ -651,16 +962,20 @@ html{background:#0c1117;}
           <span class="iconify" data-icon="ic:round-person-search"></span>
         </div>
         <div id="user_menu" class="dropdown-panel" style="right:0;left:auto;">
-          <a href="/user"><span class="iconify" data-icon="ic:baseline-account-box"></span> {{'user_tool'|load_lang}}</a>
-          <a href="/change"><span class="iconify" data-icon="ic:baseline-manage-accounts"></span> {{'user_setting'|load_lang}}</a>
+          <a href="/user"><span class="iconify" data-icon="ic:baseline-account-box"></span>
+            {{'user_tool'|load_lang}}</a>
+          <a href="/change"><span class="iconify" data-icon="ic:baseline-manage-accounts"></span>
+            {{'user_setting'|load_lang}}</a>
           {% if imp[2][2] == 1 %}
-            <a href="/alarm"><span class="iconify" data-icon="ic:baseline-contact-mail"></span> {{'alarm'|load_lang}} ({{imp[2][8]}})</a>
-            <a href="/watch_list"><span class="iconify" data-icon="ic:round-preview"></span> {{'watchlist'|load_lang}}</a>
-            <a href="/star_doc"><span class="iconify" data-icon="ic:twotone-stars"></span> {{'star_doc'|load_lang}}</a>
-            <a href="/logout"><span class="iconify" data-icon="ic:baseline-logout"></span> {{'logout'|load_lang}}</a>
+          <a href="/alarm"><span class="iconify" data-icon="ic:baseline-contact-mail"></span> {{'alarm'|load_lang}}
+            ({{imp[2][8]}})</a>
+          <a href="/watch_list"><span class="iconify" data-icon="ic:round-preview"></span> {{'watchlist'|load_lang}}</a>
+          <a href="/star_doc"><span class="iconify" data-icon="ic:twotone-stars"></span> {{'star_doc'|load_lang}}</a>
+          <a href="/logout"><span class="iconify" data-icon="ic:baseline-logout"></span> {{'logout'|load_lang}}</a>
           {% else %}
-            <a href="/login"><span class="iconify" data-icon="ic:baseline-login"></span> {{'login'|load_lang}}</a>
-            <a href="/register"><span class="iconify" data-icon="ic:baseline-person-add-alt-1"></span> {{'register'|load_lang}}</a>
+          <a href="/login"><span class="iconify" data-icon="ic:baseline-login"></span> {{'login'|load_lang}}</a>
+          <a href="/register"><span class="iconify" data-icon="ic:baseline-person-add-alt-1"></span>
+            {{'register'|load_lang}}</a>
           {% endif %}
         </div>
       </div>
@@ -680,13 +995,14 @@ html{background:#0c1117;}
         {% if menu != 0 %}
         <div class="actions" id="menu">
           {% for menu_data in menu %}
-            {% if menu[0] == 1 %}{% set menu_href = menu_data[0] %}{% else %}{% set menu_href = '/' + menu_data[0] %}{% endif %}
-            <a href="{{menu_href}}">{{menu_data[1]}}</a>
+          {% if menu[0] == 1 %}{% set menu_href = menu_data[0] %}{% else %}{% set menu_href = '/' + menu_data[0] %}{%
+          endif %}
+          <a href="{{menu_href}}">{{menu_data[1]}}</a>
           {% endfor %}
 
           {# 관리자에게만 보이는 '문서 ACL 설정' 추가 #}
           {% if imp[2][9] != '0' %}
-            <a href="/acl/{{ imp[0]|url_pas }}">문서 ACL 설정</a>
+          <a href="/acl/{{ imp[0]|url_pas }}">문서 ACL 설정</a>
           {% endif %}
         </div>
         {% endif %}
@@ -698,8 +1014,35 @@ html{background:#0c1117;}
           {{imp[1][7][0]|safe}}
         </div>
 
+        <!-- 인곽위키광고1 - 본문 상단 -->
+        <div style="margin: 16px 0;">
+          <ins class="adsbygoogle" style="display:block" data-ad-client="ca-pub-2375716944179194"
+            data-ad-slot="6701531259" data-ad-format="auto" data-full-width-responsive="true"></ins>
+          <script>
+            (adsbygoogle = window.adsbygoogle || []).push({});
+          </script>
+        </div>
+
         <div class="wiki">
           {{data|safe}}
+        </div>
+
+        <!-- 인곽위키광고2 - 본문 하단 (in-article) -->
+        <div style="margin: 16px 0;">
+          <ins class="adsbygoogle" style="display:block; text-align:center;" data-ad-layout="in-article"
+            data-ad-format="fluid" data-ad-client="ca-pub-2375716944179194" data-ad-slot="4712650406"></ins>
+          <script>
+            (adsbygoogle = window.adsbygoogle || []).push({});
+          </script>
+        </div>
+
+        <!-- 인곽위키광고3 - 본문 하단 -->
+        <div style="margin: 16px 0;">
+          <ins class="adsbygoogle" style="display:block" data-ad-client="ca-pub-2375716944179194"
+            data-ad-slot="7631469540" data-ad-format="auto" data-full-width-responsive="true"></ins>
+          <script>
+            (adsbygoogle = window.adsbygoogle || []).push({});
+          </script>
         </div>
 
         {{imp[1][7][2]|safe}}
@@ -708,10 +1051,10 @@ html{background:#0c1117;}
       <div class="meta" id="edited_time">
         <div>
           {% if imp[3][1] != 0 and imp[3][7] != 0 %}
-            <span id="last_edit_time">{{'last_edit_time'|load_lang}} : {{imp[3][1]}}</span>
-            &nbsp;|&nbsp;<span>{{'page_view'|load_lang}} : {{imp[3][7]}}</span>
+          <span id="last_edit_time">{{'last_edit_time'|load_lang}} : {{imp[3][1]}}</span>
+          &nbsp;|&nbsp;<span>{{'page_view'|load_lang}} : {{imp[3][7]}}</span>
           {% elif imp[3][1] != 0 %}
-            <span id="last_edit_time">{{'last_edit_time'|load_lang}} : {{imp[3][1]}}</span>
+          <span id="last_edit_time">{{'last_edit_time'|load_lang}} : {{imp[3][1]}}</span>
           {% endif %}
         </div>
       </div>
@@ -719,18 +1062,18 @@ html{background:#0c1117;}
         <div class="footer-inner">
           {{imp[1][1]|safe}}
           <div class="license-text">
-            이 저작물은 
+            이 저작물은
             <a href="https://creativecommons.org/licenses/by-nc-sa/3.0/deed.ko" target="_blank">
               CC BY-NC-SA 3.0
             </a>
             에 따라 이용할 수 있습니다. (단, 라이선스가 별도 명시된 일부 파일 제외)
           </div>
-   
+
           <div class="license-text">
             기여하신 문서의 저작권은 각 기여자에게 있으며, 각 기여자는 자신이 작성한 부분의 저작권을 가집니다.
           </div>
           <div class="credit">
-            © 2025 인곽위키 운영진  
+            © 2025 인곽위키 운영진
             (Developer. 32nd Kim Gyuwon · Developer. 32nd Lee Dohye · NoYe. 32nd Oh Jimin · Director. 32nd Kim Junseo)
           </div>
         </div>
@@ -739,37 +1082,37 @@ html{background:#0c1117;}
     </main>
 
     <aside class="do_fixed">
-        <div class="side_card rc_box" style="margin-bottom:16px;">
-            <h3 style="margin-top:0;">최근 변경</h3>
-            <div class="rc_wrap">
-                {{ recent_sidebar|safe }}
-            </div>
+      <div class="side_card rc_box" style="margin-bottom:16px;">
+        <h3 style="margin-top:0;">최근 변경</h3>
+        <div class="rc_wrap">
+          {{ recent_sidebar|safe }}
         </div>
+      </div>
 
-        <div class="side_card rc_box" style="margin-bottom:16px;">
-            <h3 style="margin-top:0;">기여자 순위</h3>
-            <div class="rc_wrap" style="min-height:80px;">
-                <!-- 나중에 집계 결과를 넣을 자리 -->
-                <ul>
-                    <li>다음 업데이트 때 추가 예정</li>
-                </ul>
-            </div>
+      <div class="side_card rc_box" style="margin-bottom:16px;">
+        <h3 style="margin-top:0;">기여자 순위</h3>
+        <div class="rc_wrap" style="min-height:80px;">
+          <!-- 나중에 집계 결과를 넣을 자리 -->
+          <ul>
+            <li>다음 업데이트 때 추가 예정</li>
+          </ul>
         </div>
+      </div>
 
-        {% if imp[1][7][1] == '' %}
-            <button id="side_button_1" class="side_button selected">{{'edit'|load_lang}}</button><!--
+      {% if imp[1][7][1] == '' %}
+      <button id="side_button_1" class="side_button selected">{{'edit'|load_lang}}</button><!--
          --><button id="side_button_2" class="side_button">{{'discussion'|load_lang}}</button><!--
          --><button id="side_button_3" class="side_button">{{'bbs'|load_lang}}</button>
-            <div id="side_content">
-                Loading...
-            </div>
-        {% else %}
-            {{imp[1][7][1]|safe}}
-        {% endif %}
+      <div id="side_content">
+        Loading...
+      </div>
+      {% else %}
+      {{imp[1][7][1]|safe}}
+      {% endif %}
     </aside>
 
   </div>
-  
-</body>
-</html>
 
+</body>
+
+</html>
