@@ -646,9 +646,8 @@
     /* ======================== */
     /*        다크 모드         */
     /* ======================== */
-      {
-      % if request.cookies.get('main_css_darkmode', '')=='1' %
-    }
+
+      {% if request.cookies.get('main_css_darkmode', '')=='1' %}
 
     body.namu {
       --surface: #1b2024;
@@ -766,9 +765,7 @@
       text-decoration: underline;
     }
 
-      {
-      % endif %
-    }
+      {% endif %}
 
     .footnote_tooltip {
       position: absolute;
@@ -1031,7 +1028,6 @@
           {{imp[1][7][0]|safe}}
         </div>
 
-        <!-- 인곽위키광고1 - 본문 상단 -->
         <div class="ad-container" style="margin: 16px 0;">
           <ins class="adsbygoogle" style="display:block" data-ad-client="ca-pub-2375716944179194"
             data-ad-slot="6701531259" data-ad-format="auto" data-full-width-responsive="true"></ins>
@@ -1044,7 +1040,6 @@
           {{data|safe}}
         </div>
 
-        <!-- 인곽위키광고2 - 본문 하단 (in-article) -->
         <div class="ad-container" style="margin: 16px 0;">
           <ins class="adsbygoogle" style="display:block; text-align:center;" data-ad-layout="in-article"
             data-ad-format="fluid" data-ad-client="ca-pub-2375716944179194" data-ad-slot="4712650406"></ins>
@@ -1053,7 +1048,6 @@
           </script>
         </div>
 
-        <!-- 인곽위키광고3 - 본문 하단 -->
         <div class="ad-container" style="margin: 16px 0;">
           <ins class="adsbygoogle" style="display:block" data-ad-client="ca-pub-2375716944179194"
             data-ad-slot="7631469540" data-ad-format="auto" data-full-width-responsive="true"></ins>
