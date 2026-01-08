@@ -8,6 +8,7 @@ async def main_search(name='Test', num=1):
     )
     from .go_api_func_search import api_func_search
     import flask, html, re
+    import difflib
 
     with get_db_connect() as conn:
         curs = conn.cursor()
@@ -44,6 +45,17 @@ async def main_search(name='Test', num=1):
             </ul>
         '''
 
+        # [Algorithm Improvement] Did you mean...? - 자동 검색어 보정
+        if link_id != '':
+            curs.execute(db_change("select title from data"))
+            all_data = [i[0] for i in curs.fetchall()]
+            
+            sim_list = difflib.get_close_matches(name, all_data, n=1, cutoff=0.1)
+            if sim_list:
+                div += '<ul><li>이것을 찾으셨나요? : '
+                div += '<a href="/w/' + url_pas(sim_list[0]) + '">' + html.escape(sim_list[0]) + '</a>'
+                div += '</li></ul>'
+
         title_list = await api_func_search(name, 'title', num)
         div += '<h2>문서명 검색 결과</h2><ul>'
         for t in title_list:
@@ -78,6 +90,7 @@ async def main_search_deep(name='Test', search_type='title', num=1):
     )
     from .go_api_func_search import api_func_search
     import flask, html, re
+    import difflib
 
     with get_db_connect() as conn:
         curs = conn.cursor()
@@ -122,6 +135,17 @@ async def main_search_deep(name='Test', search_type='title', num=1):
                 <li>''' + get_lang(conn, 'go') + ''' : <a ''' + link_id + ' href="/w/' + url_pas(name) + '">' + html.escape(name) + '''</a></li>
             </ul>
         '''
+
+        # [Algorithm Improvement] Did you mean...? - 자동 검색어 보정
+        if link_id != '':
+            curs.execute(db_change("select title from data"))
+            all_data = [i[0] for i in curs.fetchall()]
+            
+            sim_list = difflib.get_close_matches(name, all_data, n=1, cutoff=0.1)
+            if sim_list:
+                div += '<ul><li>이것을 찾으셨나요? : '
+                div += '<a href="/w/' + url_pas(sim_list[0]) + '">' + html.escape(sim_list[0]) + '</a>'
+                div += '</li></ul>'
 
         if search_type == 'title':
             title_list = await api_func_search(name, 'title', num)
