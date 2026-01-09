@@ -16,6 +16,13 @@ async def main_search(name='Test', num=1):
         if name == '':
             return redirect(conn)
 
+        # 완전 일치하는 문서가 있으면 바로 해당 문서로 이동 (첫 번째 페이지에서만)
+        if num == 1:
+            curs.execute(db_change("select title from data where title = ? collate nocase"), [name])
+            exact_match = curs.fetchone()
+            if exact_match:
+                return redirect(conn, '/w/' + url_pas(exact_match[0]))
+
         div = '''
             <form method="post" action="/search_page/1/''' + url_pas(name) + '''"
                   onsubmit="event.preventDefault(); location.href='/search/' + encodeURIComponent(this.search.value);">
