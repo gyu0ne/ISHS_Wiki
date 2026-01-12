@@ -3,7 +3,7 @@
 
 <head>
   <meta charset="utf-8">
-  <!-- Google Tag Manager -->
+  <!-- Google Tag Manager - GTM이 Analytics와 AdSense를 통합 관리 -->
   <script>(function (w, d, s, l, i) {
       w[l] = w[l] || []; w[l].push({
         'gtm.start':
@@ -13,16 +13,9 @@
           'https://www.googletagmanager.com/gtm.js?id=' + i + dl; f.parentNode.insertBefore(j, f);
     })(window, document, 'script', 'dataLayer', 'GTM-TZSSCDT6');</script>
   <!-- End Google Tag Manager -->
-  <!-- Google tag (gtag.js) -->
-  <script async src="https://www.googletagmanager.com/gtag/js?id=G-JMEY5CHF10"></script>
+  
+  <!-- AdSense 계정 메타 -->
   <meta name="google-adsense-account" content="ca-pub-2375716944179194">
-  <script>
-    window.dataLayer = window.dataLayer || [];
-    function gtag() { dataLayer.push(arguments); }
-    gtag('js', new Date());
-
-    gtag('config', 'G-JMEY5CHF10');
-  </script>
   {% if imp[3][0] != 0 %}
   <title>{{imp[0]}} {{imp[3][0]}} - {{imp[1][0]}}</title>
   <meta name="title" content="{{imp[0]}}{{imp[3][0]}} - {{imp[1][0]}}">
@@ -48,8 +41,11 @@
   <script defer src="/views/ringo/js/sidebar.js.cache_v7"></script>
   <script defer src="/views/ringo/js/skin_set.js.cache_v9"></script>
   <script defer src="/views/main_css/js/func/autocomplete.js"></script>
-  <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-2375716944179194"
+  
+  <!-- AdSense - defer로 DOM 로드 후 실행 -->
+  <script defer src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-2375716944179194"
     crossorigin="anonymous"></script>
+  
   <script src="/views/ringo/js/skin_set_do.js.cache_v4"></script>
 
   {% if request.cookies.get('main_css_darkmode', '') == '1' %}
@@ -1028,32 +1024,26 @@
           {{imp[1][7][0]|safe}}
         </div>
 
-        <div class="ad-container" style="margin: 16px 0;">
-          <ins class="adsbygoogle" style="display:block" data-ad-client="ca-pub-2375716944179194"
-            data-ad-slot="6701531259" data-ad-format="auto" data-full-width-responsive="true"></ins>
-          <script>
-            (adsbygoogle = window.adsbygoogle || []).push({});
-          </script>
+        <div class="ad-container" style="margin: 16px 0; min-height: 100px;">
+          <ins class="adsbygoogle"
+            style="display:block; width:100%; min-height:90px;"
+            data-ad-client="ca-pub-2375716944179194"
+            data-ad-slot="6701531259"
+            data-ad-format="auto"
+            data-full-width-responsive="true"></ins>
         </div>
 
         <div class="wiki">
           {{data|safe}}
         </div>
 
-        <div class="ad-container" style="margin: 16px 0;">
-          <ins class="adsbygoogle" style="display:block; text-align:center;" data-ad-layout="in-article"
-            data-ad-format="fluid" data-ad-client="ca-pub-2375716944179194" data-ad-slot="4712650406"></ins>
-          <script>
-            (adsbygoogle = window.adsbygoogle || []).push({});
-          </script>
-        </div>
-
-        <div class="ad-container" style="margin: 16px 0;">
-          <ins class="adsbygoogle" style="display:block" data-ad-client="ca-pub-2375716944179194"
-            data-ad-slot="7631469540" data-ad-format="auto" data-full-width-responsive="true"></ins>
-          <script>
-            (adsbygoogle = window.adsbygoogle || []).push({});
-          </script>
+        <div class="ad-container" style="margin: 16px 0; min-height: 100px;">
+          <ins class="adsbygoogle"
+            style="display:block; width:100%; min-height:90px;"
+            data-ad-client="ca-pub-2375716944179194"
+            data-ad-slot="7631469540"
+            data-ad-format="auto"
+            data-full-width-responsive="true"></ins>
         </div>
 
         {{imp[1][7][2]|safe}}
@@ -1123,6 +1113,40 @@
     </aside>
 
   </div>
+
+  <!-- AdSense 광고 초기화 (모든 광고 슬롯을 한 번에 처리) -->
+  <script>
+    (function() {
+      // adsbygoogle 스크립트가 로드될 때까지 대기 후 초기화
+      function initAds() {
+        // adsbygoogle 객체가 준비되지 않으면 재시도
+        if (typeof adsbygoogle === 'undefined') {
+          setTimeout(initAds, 100);
+          return;
+        }
+        
+        try {
+          var adElements = document.querySelectorAll('.adsbygoogle');
+          for (var i = 0; i < adElements.length; i++) {
+            var ad = adElements[i];
+            // 이미 초기화된 광고는 건너뛰기
+            if (!ad.getAttribute('data-adsbygoogle-status')) {
+              (adsbygoogle = window.adsbygoogle || []).push({});
+            }
+          }
+        } catch (e) {
+          console.log('AdSense 초기화 오류:', e);
+        }
+      }
+      
+      // DOM이 완전히 로드된 후 실행
+      if (document.readyState === 'complete') {
+        initAds();
+      } else {
+        window.addEventListener('load', initAds);
+      }
+    })();
+  </script>
 
 </body>
 
