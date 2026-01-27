@@ -242,9 +242,12 @@ async def recent_change(name = '', tool = '', num = 1, set_type = 'normal'):
                 sub = 0
 
             return easy_minify(conn, flask.render_template(
-                "ishs_base.html",
+                skin_check(conn),
+                imp=[title, await wiki_set(), await wiki_custom(conn), wiki_css([0, 0])],
                 title=title,
                 data=div,
+                menu=menu,
+                sub=sub,
                 sidebar="""
                 h3>도움말</h3>
                 <p>최근 편집 기록을 확인할 수 있습니다.</p>

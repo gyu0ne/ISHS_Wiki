@@ -226,13 +226,35 @@ class class_do_render_namumark:
                             var basePx = parseFloat(cs.fontSize) || 14;
                             tip.style.fontSize = 16 + "px";
 
-                            // (2) 가운데 위로 고정
+                            // (2) 툴팁 위치 계산 (화면 경계 고려)
                             var rect = el.getBoundingClientRect();
                             var tipWidth = tip.offsetWidth || 200;   // 초기 대략값
                             var tipHeight = tip.offsetHeight || 40;  // 초기 대략값
-                            // 가운데 정렬 (요소 중앙 기준)
-                            tip.style.left = (window.scrollX + rect.left + (rect.width / 2) - (tipWidth / 2)) + "px";
-                            tip.style.top  = (window.scrollY + rect.top - tipHeight -1) + "px";
+                            
+                            // 기본: 요소 중앙 위쪽에 표시
+                            var left = window.scrollX + rect.left + (rect.width / 2) - (tipWidth / 2);
+                            var top = window.scrollY + rect.top - tipHeight - 8;
+                            
+                            // 왼쪽 경계 체크 (최소 8px 마진)
+                            if (left < 8) {{
+                                left = 8;
+                            }}
+                            
+                            // 오른쪽 경계 체크
+                            var rightEdge = left + tipWidth;
+                            var windowWidth = window.innerWidth || document.documentElement.clientWidth;
+                            if (rightEdge > windowWidth - 8) {{
+                                left = windowWidth - tipWidth - 8;
+                                if (left < 8) left = 8; // 다시 왼쪽 체크
+                            }}
+                            
+                            // 위쪽 경계 체크 (화면 위로 벗어나면 요소 아래에 표시)
+                            if (top < window.scrollY + 8) {{
+                                top = window.scrollY + rect.bottom + 8;
+                            }}
+                            
+                            tip.style.left = left + "px";
+                            tip.style.top  = top + "px";
                         }};
 
                         var out = function(e) {{
