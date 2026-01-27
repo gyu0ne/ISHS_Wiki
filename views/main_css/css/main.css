@@ -350,7 +350,7 @@
 
 /* math */
 .katex {
-    line-height: 0;
+    font-size: 1.1em;
 }
 
 /* 취소선 */
@@ -416,11 +416,7 @@
     white-space: pre-line;
 }
 
-.opennamu_main .katex .base {
-    max-width: 100%;
-    overflow-x: hidden;
-    overflow-y: hidden;
-}
+
 
 .opennamu_main .opennamu_width_200 {
     width: 200px;
@@ -794,7 +790,7 @@
 
 /* math */
 .katex {
-    line-height: 0;
+    font-size: 1.1em;
 }
 
 /* 취소선 */
@@ -860,11 +856,7 @@
     white-space: pre-line;
 }
 
-.opennamu_main .katex .base {
-    max-width: 100%;
-    overflow-x: hidden;
-    overflow-y: hidden;
-}
+
 
 .opennamu_main .opennamu_width_200 {
     width: 200px;

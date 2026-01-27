@@ -2050,14 +2050,14 @@ class class_do_render_namumark:
                         if_state = ""
                         parameter = ""
                         
-                        if_regex = r"([^ ]+)(?: *)(!=|==)(?: *)([^\n]+)"
+                        if_regex = r"([^ ]+)(?: *)(!=|==)(?: *)([^\n&]+)"
                         if_data_get = re.search(if_regex, if_data)
                         if if_data_get:
                             if_data_get_data = if_data_get.groups()
 
                             var_name = if_data_get_data[0]
                             if_state = if_data_get_data[1]
-                            parameter = if_data_get_data[2]
+                            parameter = if_data_get_data[2].strip()
 
                             if_data = re.sub(if_regex, '', if_data)
                             # 조건문 뒤의 줄바꿈 제거 (여러 줄 형식 지원)
@@ -2088,6 +2088,47 @@ class class_do_render_namumark:
                                 parameter = re.sub(r'(^&quot;|&quot;$)', '', parameter)
                                 if parameter != var_data:
                                     result_data = True
+
+                        # AND 연산자 처리 (&&, &)
+                        and_match = re.search(r'^\s*&\s*&?\s*(.+)', if_data)
+                        if and_match:
+                            # 두 번째 조건 파싱
+                            second_condition = and_match.group(1)
+                            if_regex_2 = r"([^ ]+)(?: *)(!=|==)(?: *)([^\n\u0026]+)"
+                            if_data_get_2 = re.search(if_regex_2, second_condition)
+                            
+                            if if_data_get_2:
+                                var_name_2 = if_data_get_2.group(1)
+                                if_state_2 = if_data_get_2.group(2)
+                                parameter_2 = if_data_get_2.group(3).strip()
+                                
+                                var_data_2 = param_dict.get(var_name_2, None)
+                                
+                                result_data_2 = False
+                                
+                                if if_state_2 == "==":
+                                    if parameter_2 == "null" and var_data_2 == None:
+                                        result_data_2 = True
+                                    else:
+                                        parameter_2 = re.sub(r'^\u0026quot;|\u0026quot;$', '', parameter_2)
+                                        if parameter_2 == var_data_2:
+                                            result_data_2 = True
+                                else:
+                                    if parameter_2 == "null" and var_data_2 != None:
+                                        result_data_2 = True
+                                    elif parameter_2 == "null" and var_data_2 == None:
+                                        result_data_2 = False
+                                    else:
+                                        parameter_2 = re.sub(r'^\u0026quot;|\u0026quot;$', '', parameter_2)
+                                        if parameter_2 != var_data_2:
+                                            result_data_2 = True
+                                
+                                # AND: 둘 다 True여야 함
+                                result_data = result_data and result_data_2
+                                
+                                # second_condition에서 두 번째 조건 제거하여 남은 내용 추출
+                                if_data = re.sub(if_regex_2, '', second_condition)
+                                if_data = re.sub(r'^\n+', '', if_data)
 
                         if result_data:
                             middle_data_pass = if_data
