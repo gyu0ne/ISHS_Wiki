@@ -208,63 +208,74 @@ class class_do_render_namumark:
                 tip_id = rfn_id + '_tip'
                 js_parts.append(f"""
                     (function() {{
-                        var el = document.getElementById("{rfn_id}");
-                        if (!el) return;
+                        // 같은 ID를 가진 모든 요소에 이벤트 등록 (목차 + 본문 제목)
+                        var elements = document.querySelectorAll('[id="{rfn_id}"]');
+                        if (elements.length === 0) return;
 
-                        var over = function() {{
-                            var tip = document.createElement("div");
-                            tip.id = "{tip_id}";
-                            tip.className = "footnote_tooltip";
-                            tip.innerHTML = '{foot_text_js}';
-                            document.body.appendChild(tip);
+                        elements.forEach(function(el) {{
+                            var over = function(e) {{
+                                // 이미 툴팁이 있으면 제거
+                                var existingTip = document.getElementById("{tip_id}");
+                                if (existingTip) existingTip.remove();
 
-                            tip.style.position = "absolute";
-                            tip.style.pointerEvents = "auto";
+                                var tip = document.createElement("div");
+                                tip.id = "{tip_id}";
+                                tip.className = "footnote_tooltip";
+                                tip.innerHTML = '{foot_text_js}';
+                                document.body.appendChild(tip);
 
-                            
-                            var cs = window.getComputedStyle(el);
-                            var basePx = parseFloat(cs.fontSize) || 14;
-                            tip.style.fontSize = 16 + "px";
+                                tip.style.position = "absolute";
+                                tip.style.pointerEvents = "auto";
 
-                            // (2) 툴팁 위치 계산 (화면 경계 고려)
-                            var rect = el.getBoundingClientRect();
-                            var tipWidth = tip.offsetWidth || 200;   // 초기 대략값
-                            var tipHeight = tip.offsetHeight || 40;  // 초기 대략값
-                            
-                            // 기본: 요소 중앙 위쪽에 표시
-                            var left = window.scrollX + rect.left + (rect.width / 2) - (tipWidth / 2);
-                            var top = window.scrollY + rect.top - tipHeight + 2;
-                            
-                            // 왼쪽 경계 체크 (최소 8px 마진)
-                            if (left < 8) {{
-                                left = 8;
-                            }}
-                            
-                            // 오른쪽 경계 체크
-                            var rightEdge = left + tipWidth;
-                            var windowWidth = window.innerWidth || document.documentElement.clientWidth;
-                            if (rightEdge > windowWidth - 8) {{
-                                left = windowWidth - tipWidth - 8;
-                                if (left < 8) left = 8; // 다시 왼쪽 체크
-                            }}
-                            
-                            // 위쪽 경계 체크 (화면 위로 벗어나면 요소 아래에 표시)
-                            if (top < window.scrollY + 8) {{
-                                top = window.scrollY + rect.bottom + 8;
-                            }}
-                            
-                            tip.style.left = left + "px";
-                            tip.style.top  = top + "px";
-                        }};
+                                
+                                var cs = window.getComputedStyle(el);
+                                var basePx = parseFloat(cs.fontSize) || 14;
+                                tip.style.fontSize = 16 + "px";
 
-                        var out = function(e) {{
-                            var tip = document.getElementById("{tip_id}");
-                            if (!tip) return;
-                            // 툴팁 영역 위에 있으면 닫지 않음
-                            var related = e.relatedTarget;
-                            if (related && tip.contains(related)) return;
-                            tip.remove();
-                        }};
+                                // (2) 툴팁 위치 계산 (화면 경계 고려)
+                                var rect = el.getBoundingClientRect();
+                                var tipWidth = tip.offsetWidth || 200;   // 초기 대략값
+                                var tipHeight = tip.offsetHeight || 40;  // 초기 대략값
+                                
+                                // 기본: 요소 중앙 위쪽에 표시
+                                var left = window.scrollX + rect.left + (rect.width / 2) - (tipWidth / 2);
+                                var top = window.scrollY + rect.top - tipHeight + 2;
+                                
+                                // 왼쪽 경계 체크 (최소 8px 마진)
+                                if (left < 8) {{
+                                    left = 8;
+                                }}
+                                
+                                // 오른쪽 경계 체크
+                                var rightEdge = left + tipWidth;
+                                var windowWidth = window.innerWidth || document.documentElement.clientWidth;
+                                if (rightEdge > windowWidth - 8) {{
+                                    left = windowWidth - tipWidth - 8;
+                                    if (left < 8) left = 8; // 다시 왼쪽 체크
+                                }}
+                                
+                                // 위쪽 경계 체크 (화면 위로 벗어나면 요소 아래에 표시)
+                                if (top < window.scrollY + 8) {{
+                                    top = window.scrollY + rect.bottom + 8;
+                                }}
+                                
+                                tip.style.left = left + "px";
+                                tip.style.top  = top + "px";
+                            }};
+
+                            var out = function(e) {{
+                                var tip = document.getElementById("{tip_id}");
+                                if (!tip) return;
+                                // 툴팁 영역 위에 있으면 닫지 않음
+                                var related = e.relatedTarget;
+                                if (related && tip.contains(related)) return;
+                                tip.remove();
+                            }};
+
+                            el.addEventListener("mouseenter", over);
+                            el.addEventListener("mouseleave", out);
+                        }});
+
                         // 툴팁 위에서도 닫히지 않게, 툴팁 자체에도 이벤트 추가
                         document.addEventListener("mouseover", function(ev) {{
                             var tip = document.getElementById("{tip_id}");
@@ -274,8 +285,6 @@ class class_do_render_namumark:
                                 tip.remove();
                             }});
                         }});
-                        el.addEventListener("mouseenter", over);
-                        el.addEventListener("mouseleave", out);
                     }})();
                 """)
 
