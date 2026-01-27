@@ -238,8 +238,10 @@ function opennamu_do_footnote_popover(set_name, load_name, sub_obj = undefined, 
             let left = document.getElementById(set_name).getBoundingClientRect().left;
             let left_org = document.getElementById(set_name + '_load').getBoundingClientRect().left;
             let top = window.pageYOffset + document.getElementById(set_name).getBoundingClientRect().top;
+            let linkHeight = document.getElementById(set_name).offsetHeight;
 
-            document.getElementById(set_name + '_load').style.top = String(top) + "px";
+            // 주석 링크 바로 아래에 툴팁을 배치 (50px 간격 - 마우스 이동 시 사라지지 않도록)
+            document.getElementById(set_name + '_load').style.top = String(top + linkHeight + 50) + "px";
             if(screen_width - (left + width) < 50) {
                 if(left > 350) {
                     document.getElementById(set_name + '_load').style.left = String(left - 300) + "px";

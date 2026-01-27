@@ -233,7 +233,7 @@ class class_do_render_namumark:
                             
                             // 기본: 요소 중앙 위쪽에 표시
                             var left = window.scrollX + rect.left + (rect.width / 2) - (tipWidth / 2);
-                            var top = window.scrollY + rect.top - tipHeight - 8;
+                            var top = window.scrollY + rect.top - tipHeight + 2;
                             
                             // 왼쪽 경계 체크 (최소 8px 마진)
                             if (left < 8) {{
@@ -1381,15 +1381,20 @@ class class_do_render_namumark:
 
                     link_exist = ''
                     if link_main != '':
+                        # 문서를 DB에서 조회 (대소문자 구분 설정 반영)
                         self.curs.execute(db_change("select title from data where title = ?" + self.link_case_insensitive), [link_main])
                         db_data = self.curs.fetchall()
                         if not db_data:
+                            # 문서가 존재하지 않는 경우
                             if not link_main in self.data_backlink:
                                 self.data_backlink[link_main] = {}
 
                             self.data_backlink[link_main]['no'] = ''
+                            
+                            # [핵심] 존재하지 않음 클래스 부여 (이 클래스가 있어야 빨간색이 됨)
                             link_exist = 'opennamu_not_exist_link'
                         else:
+                            # 문서가 존재하는 경우
                             link_main = db_data[0][0]
                             if not link_main in self.data_backlink:
                                 self.data_backlink[link_main] = {}
