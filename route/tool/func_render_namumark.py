@@ -2062,7 +2062,7 @@ class class_do_render_namumark:
                             if_data = re.sub(if_regex, '', if_data)
 
                         var_data = None
-                        if var_name in self.parameter:
+                        if isinstance(self.parameter, dict) and var_name in self.parameter:
                             var_data = self.parameter[var_name]
 
                         result_data = False
