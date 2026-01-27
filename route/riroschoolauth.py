@@ -1,17 +1,22 @@
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
+from pydantic import BaseModel
 import requests, time
 from bs4 import BeautifulSoup
 
 app = FastAPI()
+
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"], allow_credentials=True,
     allow_methods=["*"], allow_headers=["*"],
 )
 
-@app.get("/api/riro_login")
-def riro_login(id: str, password: str):
+class LoginRequest(BaseModel):
+    id: str
+    password: str
+
+def check_riro_login(user_id: str, user_pw: str):
     s = requests.Session()
     headers = {
         "Content-Type": "application/x-www-form-urlencoded",
@@ -33,7 +38,7 @@ def riro_login(id: str, password: str):
                 headers=headers,
                 data={
                     "app": "user", "mode": "login", "userType": "1",
-                    "id": id, "pw": password, "deeplink": "", "redirect_link": ""
+                    "id": user_id, "pw": user_pw, "deeplink": "", "redirect_link": ""
                 },
                 timeout=15,
             )
@@ -41,22 +46,22 @@ def riro_login(id: str, password: str):
             try:
                 login_json = r.json()
             except ValueError:
-                raise RuntimeError("Not JSON response")
+                return {"status": "error", "message": "인증 서버에서 잘못된 응답을 받았습니다."}
 
             code = str(login_json.get("code"))
             if code == "902":
                 return {"status": "error", "message": "아이디 또는 비밀번호가 틀렸습니다."}
             if code != "000":
-                raise RuntimeError(f"로그인 실패 code={code}")
+                return {"status": "error", "message": f"로그인 실패 code={code}"}
 
             token = login_json.get("token")
             if not token:
-                raise RuntimeError("Token not found")
+                return {"status": "error", "message": "Token not found"}
 
             r2 = s.post(
                 "https://iscience.riroschool.kr/user.php",
                 headers=headers,
-                data={"pw": password},
+                data={"pw": user_pw},
                 cookies={"cookie_token": token},
                 allow_redirects=False,
                 timeout=15,
@@ -65,8 +70,11 @@ def riro_login(id: str, password: str):
             soup = BeautifulSoup(html, "html.parser")
 
             account_type = "normal"
-            if soup.select(".td_title")[0].get_text() == "통합아이디":
-                account_type = "integrated"
+            try:
+                if soup.select(".td_title")[0].get_text() == "통합아이디":
+                    account_type = "integrated"
+            except:
+                pass
 
             if account_type == "normal":
                 el_student = soup.select_one("span.m_level3")
@@ -87,8 +95,8 @@ def riro_login(id: str, password: str):
                     student_number = student_number_raw
 
                 generation = 0
-                if len(id) >= 2 and id[:2].isdigit():
-                    generation = int("20" + id[:2]) - 1994 + 1
+                if len(user_id) >= 2 and user_id[:2].isdigit():
+                    generation = int("20" + user_id[:2]) - 1994 + 1
 
                 if all([name, student_number, student]) and generation > 0:
                     return {
@@ -100,44 +108,49 @@ def riro_login(id: str, password: str):
                     }
 
             elif account_type == "integrated":
-                riro_id = soup.select(".elem_fix")[0].get_text()[:8]
-                student = soup.select(".elem_fix")[0].get_text()[15:-1]
+                try:
+                    riro_id = soup.select(".elem_fix")[0].get_text()[:8]
+                    student = soup.select(".elem_fix")[0].get_text()[15:-1]
 
-                inputs = soup.select(".input_disabled")
+                    inputs = soup.select(".input_disabled")
 
-                name = (inputs[0].get_text(strip=True) or "")
-                student_number_raw = (inputs[1].get_text(strip=True) or "")
+                    name = (inputs[0].get_text(strip=True) or "")
+                    student_number_raw = (inputs[1].get_text(strip=True) or "")
 
-                if len(student_number_raw) >= 3:
-                    student_number = student_number_raw[0] + student_number_raw[2:]
-                else:
-                    student_number = student_number_raw
+                    if len(student_number_raw) >= 3:
+                        student_number = student_number_raw[0] + student_number_raw[2:]
+                    else:
+                        student_number = student_number_raw
 
-                generation = 0
-                if len(riro_id) >= 2 and riro_id[:2].isdigit():
-                    generation = int("20" + riro_id[:2]) - 1994 + 1
+                    generation = 0
+                    if len(riro_id) >= 2 and riro_id[:2].isdigit():
+                        generation = int("20" + riro_id[:2]) - 1994 + 1
 
-                print(riro_id, student, name, student_number, generation)
-                if all([name, student_number, student]) and generation > 0:
-                    return {
-                        "status": "success",
-                        "name": name,
-                        "student_number": student_number,
-                        "generation": generation,
-                        "student": student,
-                    }
-                print("통합아이디")
+                    if all([name, student_number, student]) and generation > 0:
+                        return {
+                            "status": "success",
+                            "name": name,
+                            "student_number": student_number,
+                            "generation": generation,
+                            "student": student,
+                        }
+                except:
+                    pass
 
             raise RuntimeError("Data missing. Retrying...")
 
         except (requests.RequestException, RuntimeError) as e:
-            print("Error:", e)
+            # print("Error:", e)
             time.sleep(SLEEP_SEC)
 
     return {
         "status": "error",
         "message": "인증 서버와 통신 중 오류가 발생했습니다."
     }
+
+@app.post("/api/riro_login")
+def riro_login_api(req: LoginRequest):
+    return check_riro_login(req.id, req.password)
 
 if __name__ == "__main__":
     import uvicorn

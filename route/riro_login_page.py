@@ -1,4 +1,5 @@
 from .tool.func import *
+from .riroschoolauth import check_riro_login
 import requests
 import asyncio
 
@@ -16,15 +17,10 @@ async def riro_login_page():
             riro_pw = flask.request.form.get('riro_pw', '')
 
             try:
-                api_url = "http://127.0.0.1:5001/api/riro_login"
-                post_data = {'id': riro_id, 'password': riro_pw}
-                response = requests.post(api_url, data=post_data, timeout=30)
-                response.raise_for_status()
-                result = response.json()
-            except requests.exceptions.RequestException as e:
-                result = {'status': 'error', 'message': f'인증 서버에 연결할 수 없습니다: {e}'}
-            except ValueError:
-                result = {'status': 'error', 'message': '인증 서버에서 잘못된 응답을 받았습니다.'}
+                loop = asyncio.get_running_loop()
+                result = await loop.run_in_executor(None, check_riro_login, riro_id, riro_pw)
+            except Exception as e:
+                result = {'status': 'error', 'message': f'인증 중 오류가 발생했습니다: {e}'}
 
             if result.get('status') == 'success':
                 pending_user_id = flask.session.get('pending_riro_verification_for_user', None)
