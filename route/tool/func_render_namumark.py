@@ -2060,10 +2060,14 @@ class class_do_render_namumark:
                             parameter = if_data_get_data[2]
 
                             if_data = re.sub(if_regex, '', if_data)
+                            # 조건문 뒤의 줄바꿈 제거 (여러 줄 형식 지원)
+                            if_data = re.sub(r'^\n+', '', if_data)
 
                         var_data = None
-                        if isinstance(self.parameter, dict) and var_name in self.parameter:
-                            var_data = self.parameter[var_name]
+                        # parameter를 안전하게 처리 (self.parameter를 수정하지 않음)
+                        param_dict = self.parameter if isinstance(self.parameter, dict) else {}
+                        if var_name in param_dict:
+                            var_data = param_dict[var_name]
 
                         result_data = False
 
@@ -2077,6 +2081,9 @@ class class_do_render_namumark:
                         else:
                             if parameter == "null" and var_data != None:
                                 result_data = True
+                            elif parameter == "null" and var_data == None:
+                                # None을 null로 간주하여 null != null은 False
+                                result_data = False
                             else:
                                 parameter = re.sub(r'(^&quot;|&quot;$)', '', parameter)
                                 if parameter != var_data:
