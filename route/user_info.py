@@ -16,9 +16,9 @@ async def user_info(name = ''):
             curs.execute(db_change("select count(*) from user_notice where name = ? and readme = ''"), [ip])
             count = curs.fetchall()
             if count and count[0][0] != 0:
-                tool_menu += '<li><a class="opennamu_not_exist_link" href="/alarm">' + get_lang(conn, 'alarm') + ' (' + str(count[0][0]) + ')</a></li>'
+                tool_menu += '<li><a class="opennamu_not_exist_link" href="/alarm" style="color: #1a56db !important; font-weight: 600;">' + get_lang(conn, 'alarm') + ' (' + str(count[0][0]) + ')</a></li>'
             else:
-                tool_menu += '<li><a href="/alarm">' + get_lang(conn, 'alarm') + '</a></li>'
+                tool_menu += '<li><a href="/alarm" style="color: #1a56db !important; font-weight: 600;">' + get_lang(conn, 'alarm') + '</a></li>'
     
             if ip_or_user(ip) == 0:
                 login_menu += '''
@@ -26,10 +26,10 @@ async def user_info(name = ''):
                     <li><a href="/change">''' + get_lang(conn, 'user_setting') + '''</a></li>
                 '''
     
-                tool_menu += '<li><a href="/watch_list">' + get_lang(conn, 'watchlist') + '</a></li>'
-                tool_menu += '<li><a href="/star_doc">' + get_lang(conn, 'star_doc') + '</a></li>'
-                tool_menu += '<li><a href="/challenge">' + get_lang(conn, 'challenge_and_level_manage') + '</a></li>'
-                tool_menu += '<li><a href="/acl/user:' + url_pas(ip) + '">' + get_lang(conn, 'user_document_acl') + '</a></li>'
+                tool_menu += '<li><a href="/watch_list" style="color: #1a56db !important; font-weight: 600;">' + get_lang(conn, 'watchlist') + '</a></li>'
+                tool_menu += '<li><a href="/star_doc" style="color: #1a56db !important; font-weight: 600;">' + get_lang(conn, 'star_doc') + '</a></li>'
+                tool_menu += '<li><a href="/challenge" style="color: #1a56db !important; font-weight: 600;">' + get_lang(conn, 'challenge_and_level_manage') + '</a></li>'
+                tool_menu += '<li><a href="/acl/user:' + url_pas(ip) + '" style="color: #1a56db !important; font-weight: 600;">' + get_lang(conn, 'user_document_acl') + '</a></li>'
             else:
                 login_menu += '''
                     <li><a href="/login">''' + get_lang(conn, 'login') + '''</a></li>
@@ -64,12 +64,12 @@ async def user_info(name = ''):
                 ''' + tool_menu + '''
                 <h2>''' + get_lang(conn, 'other') + '''</h2>
                 <ul>
-                    <li><a href="/record/''' + url_pas(ip) + '''">''' + get_lang(conn, 'edit_record') + '''</a></li>
-                    <li><a href="/record/topic/''' + url_pas(ip) + '''">''' + get_lang(conn, 'discussion_record') + '''</a></li>
-                    <li><a href="/record/bbs/''' + url_pas(ip) + '''">''' + get_lang(conn, 'bbs_record') + '''</a></li>
-                    <li><a href="/record/bbs_comment/''' + url_pas(ip) + '''">''' + get_lang(conn, 'bbs_comment_record') + '''</a></li>
-                    <li><a href="/topic/user:''' + url_pas(ip) + '''">''' + get_lang(conn, 'user_discussion') + '''</a></li>
-                    <li><a href="/count/''' + url_pas(ip) + '''">''' + get_lang(conn, 'count') + '''</a></li>
+                    <li><a href="/record/''' + url_pas(ip) + '''" style="color: #1a56db !important; font-weight: 600;">''' + get_lang(conn, 'edit_record') + '''</a></li>
+                    <li><a href="/record/topic/''' + url_pas(ip) + '''" style="color: #1a56db !important; font-weight: 600;">''' + get_lang(conn, 'discussion_record') + '''</a></li>
+                    <li><a href="/record/bbs/''' + url_pas(ip) + '''" style="color: #1a56db !important; font-weight: 600;">''' + get_lang(conn, 'bbs_record') + '''</a></li>
+                    <li><a href="/record/bbs_comment/''' + url_pas(ip) + '''" style="color: #1a56db !important; font-weight: 600;">''' + get_lang(conn, 'bbs_comment_record') + '''</a></li>
+                    <li><a href="/topic/user:''' + url_pas(ip) + '''" style="color: #1a56db !important; font-weight: 600;">''' + get_lang(conn, 'user_discussion') + '''</a></li>
+                    <li><a href="/count/''' + url_pas(ip) + '''" style="color: #1a56db !important; font-weight: 600;">''' + get_lang(conn, 'count') + '''</a></li>
                 </ul>
                 ''' + admin_menu + '''
             ''',

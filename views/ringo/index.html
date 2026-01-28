@@ -87,7 +87,7 @@
     }
 
     .namu a {
-      color: #2c6be6;
+      color: #1d4ed8;
       text-decoration: none
     }
 
@@ -191,14 +191,15 @@
 
     .dropdown-panel {
       position: absolute;
-      top: 48px;
+      top: 28px;
       left: 0;
       min-width: 200px;
       background: #fff;
       border-radius: 12px;
       box-shadow: 0 8px 30px rgba(0, 0, 0, .15);
       padding: 8px;
-      display: none
+      display: none;
+      z-index: 9999
     }
 
     .dropdown-panel a {
@@ -207,7 +208,8 @@
       gap: 8px;
       padding: 10px 12px;
       border-radius: 8px;
-      color: #111
+      color: #111827 !important;
+      font-weight: 600 !important
     }
 
     .dropdown-panel a:hover {
@@ -776,6 +778,17 @@
       text-decoration: underline;
     }
 
+    /* 다크 모드: 드롭다운 패널 링크 */
+    .namu .dropdown-panel a {
+      color: #e7eaf0 !important;
+      font-weight: 600 !important;
+    }
+
+    .namu .dropdown-panel a:hover {
+      background: #1a2332 !important;
+      color: #ffffff !important;
+    }
+
 {% endif %}
 
     .footnote_tooltip {
@@ -825,7 +838,7 @@
     /* 주석 툴팁 내부의 링크 색상 */
     /* 존재하는 문서 링크 (파란색) */
     .opennamu_main .opennamu_popup_footnote a:not(.opennamu_not_exist_link) {
-      color: #2c6be6 !important;
+      color: #1d4ed8 !important;
       text-decoration: none;
     }
 
@@ -846,11 +859,12 @@
 
     /* 다크 모드: 주석 툴팁 내부의 링크 색상 */
     .namu .opennamu_main .opennamu_popup_footnote a:not(.opennamu_not_exist_link) {
-      color: #9db4ff !important;
+      color: #1a56db !important;
+      font-weight: 600 !important;
     }
 
     .namu .opennamu_main .opennamu_popup_footnote a:not(.opennamu_not_exist_link):hover {
-      color: #7a9de8 !important;
+      color: #0d3c8a !important;
     }
 
     .namu .opennamu_main .opennamu_popup_footnote a.opennamu_not_exist_link {
@@ -1049,6 +1063,7 @@
             {{'user_tool'|load_lang}}</a>
           <a href="/change"><span class="iconify" data-icon="ic:baseline-manage-accounts"></span>
             {{'user_setting'|load_lang}}</a>
+          <a href="/viewlog"><span class="iconify" data-icon="ic:baseline-visibility"></span> 열람 기록</a>
           {% if imp[2][2] == 1 %}
           <a href="/alarm"><span class="iconify" data-icon="ic:baseline-contact-mail"></span> {{'alarm'|load_lang}}
             ({{imp[2][8]}})</a>

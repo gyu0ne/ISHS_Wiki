@@ -141,7 +141,7 @@ function opennamu_do_ip_click(obj) {
                 let data_html = '';
                 for (let key in data) {
                     for (let for_a = 0; for_a < data[key].length; for_a++) {
-                        data_html += '<a href="' + data[key][for_a][0] + '">' + data[key][for_a][1] + '</a> | ';
+                        data_html += '<a href="' + data[key][for_a][0] + '" style="color: #1a56db !important; font-weight: 600;">' + data[key][for_a][1] + '</a> | ';
                     }
                 }
 
