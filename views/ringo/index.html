@@ -799,6 +799,56 @@
       box-shadow: 0 0 0 1px rgba(255, 255, 255, .06), 0 6px 18px rgba(0, 0, 0, .4)
     }
 
+    /* 본문(wiki) 및 사이드바 목록(최근 변경 등) 링크 주황색 적용 (조금 더 진한 주황색 #ff922b) */
+    .namu .wiki a:not(.opennamu_not_exist_link),
+    .namu .rc_wrap a {
+      color: #ff922b !important;
+      text-decoration: none;
+    }
+    
+    .namu .wiki a:not(.opennamu_not_exist_link):hover,
+    .namu .rc_wrap a:hover {
+      color: #fd7e14 !important;
+      text-decoration: underline;
+    }
+
+    /* 외부 링크 (새 탭으로 열리는 링크) 초록색 적용 */
+    .namu a[target="_blank"]:not(.opennamu_not_exist_link) {
+      color: #00d084 !important; /* 선명한 초록색 */
+    }
+    
+    .namu a[target="_blank"]:not(.opennamu_not_exist_link):hover {
+      color: #00fa9a !important;
+      text-decoration: underline;
+    }
+    
+    /* 각주 등 팝업 내 링크도 주황색 적용 */
+    .namu .opennamu_popup_footnote a:not(.opennamu_not_exist_link) {
+      color: #ff922b !important;
+    }
+
+    /* 하단 푸터 텍스트 밝기 조정 */
+    .namu .license-text,
+    .namu .credit {
+      color: #adb5bd !important; /* 조금 더 밝은 회색 */
+    }
+    
+    /* 저작권 링크(CC 라이선스) 주황색 변경 (Specificity 보강) */
+    .namu .license-text a,
+    .namu .license-text a[target="_blank"] {
+      color: #ff922b !important;
+    }
+    
+    .namu .license-text a:hover,
+    .namu .license-text a[target="_blank"]:hover {
+      color: #fd7e14 !important;
+      text-decoration: underline;
+    }
+
+    .namu .meta {
+      color: #adb5bd !important;
+    }
+
     .namu .list li:hover {
       background: #20262c
     }
@@ -836,14 +886,14 @@
       /* 다크 톤에 맞춘 그림자 */
     }
 
-    /* 다크 모드: 존재하는 문서 링크 */
+    /* 다크 모드: 존재하는 문서 링크 (Orange) */
     .namu .footnote_tooltip a:not(.opennamu_not_exist_link) {
-      color: #9db4ff !important;
+      color: #ffa94d !important;
       text-decoration: none;
     }
 
     .namu .footnote_tooltip a:not(.opennamu_not_exist_link):hover {
-      color: #7a9de8 !important;
+      color: #ffd8a8 !important;
       text-decoration: underline;
     }
 
@@ -936,14 +986,14 @@
       text-decoration: underline;
     }
 
-    /* 다크 모드: 주석 툴팁 내부의 링크 색상 */
+    /* 다크 모드: 주석 툴팁 내부의 링크 색상 (Orange) */
     .namu .opennamu_main .opennamu_popup_footnote a:not(.opennamu_not_exist_link) {
-      color: #1a56db !important;
+      color: #f08c00 !important;
       font-weight: 600 !important;
     }
 
     .namu .opennamu_main .opennamu_popup_footnote a:not(.opennamu_not_exist_link):hover {
-      color: #0d3c8a !important;
+      color: #e67700 !important;
     }
 
     .namu .opennamu_main .opennamu_popup_footnote a.opennamu_not_exist_link {
