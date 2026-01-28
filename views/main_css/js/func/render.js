@@ -241,7 +241,7 @@ function opennamu_do_footnote_popover(set_name, load_name, sub_obj = undefined, 
             let linkHeight = document.getElementById(set_name).offsetHeight;
 
             // IP 팝업은 더 가까이, 주석 툴팁은 기존대로 (50px)
-            let offsetY = set_name.startsWith('opennamu_ip_render_') ? 5 : 50;
+            let offsetY = (set_name.startsWith('opennamu_ip_render_') || set_name.startsWith('opennamu_list_history_')) ? 5 : 50;
             document.getElementById(set_name + '_load').style.top = String(top + linkHeight + offsetY) + "px";
             if(screen_width - (left + width) < 50) {
                 if(left > 350) {
