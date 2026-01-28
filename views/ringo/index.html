@@ -671,6 +671,29 @@
       }
     }
 
+    /* User Info Header Styles */
+    .user-info-header {
+      padding: 8px 12px;
+      border-bottom: 1px solid #e5e7eb;
+      margin-bottom: 0;
+    }
+    
+    .user-info-label {
+      font-size: 14px;
+      color: var(--muted);
+      margin-bottom: 2px;
+      font-weight: 500;
+      opacity: 0.8;
+    }
+    
+    .user-info-name {
+      color: var(--text);
+      font-weight: 750;
+      font-size: 22px;
+      line-height: 1.2;
+      word-break: break-all;
+    }
+
 {% if request.cookies.get('main_css_darkmode', '')=='1' %}
 
     body.namu {
@@ -685,9 +708,23 @@
       color: var(--text);
     }
 
+    /* Dark Mode User Info Header */
+    .namu .user-info-header {
+      border-bottom: 1px solid #2a2f34;
+    }
+    
+    .namu .user-info-label {
+      color: #9ca3af;
+    }
+    
+    .namu .user-info-name {
+      color: #e7eaf0;
+    }
+
     html {
       background: #0c1117;
     }
+
 
     .namu .main,
     .namu .card,
@@ -1120,6 +1157,12 @@
           <span class="iconify" data-icon="ic:round-person-search"></span>
         </div>
         <div id="user_menu" class="dropdown-panel" style="right:0;left:auto;">
+          {% if imp[2][2] == 1 %}
+          <div class="user-info-header">
+            <div class="user-info-label">{{'user'|load_lang}}</div>
+            <div class="user-info-name">{{imp[2][5]}}</div>
+          </div>
+          {% endif %}
           <a href="/user"><span class="iconify" data-icon="ic:baseline-account-box"></span>
             {{'user_tool'|load_lang}}</a>
           <a href="/change"><span class="iconify" data-icon="ic:baseline-manage-accounts"></span>
