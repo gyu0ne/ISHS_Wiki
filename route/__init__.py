@@ -152,6 +152,8 @@ from route.view_w_raw import view_w_raw
 from route.view_w import view_w
 from route.view_xref import view_xref
 from route.view_random import view_random
+from route.viewlog import view_log_init, check_view_log, view_viewlog
+
 
 from route.vote_add import vote_add
 from route.vote_close import vote_close

@@ -25,34 +25,43 @@ function ringo_do_skin_set() {
 
     if(window.localStorage.getItem('main_css_off_sidebar') && window.localStorage.getItem('main_css_off_sidebar') === '0') {
     } else {
-        document.getElementById('ringo_add_style').innerHTML += `
-            section {
-                width: auto !important;
-                display: block !important;
-                margin: auto !important;
-            }
+        let style_target = document.getElementById('ringo_add_style');
+        if (style_target) {
+            style_target.innerHTML += `
+                section {
+                    width: auto !important;
+                    display: block !important;
+                    margin: auto !important;
+                }
 
-            .do_fixed {
-                display: none !important;
-            }
-        `;
+                .do_fixed {
+                    display: none !important;
+                }
+            `;
+        }
     }
 
     if(window.localStorage.getItem('main_css_fixed_width') && window.localStorage.getItem('main_css_fixed_width') !== '') {
         let fixed_width_data = window.localStorage.getItem('main_css_fixed_width');
-        document.getElementById('ringo_add_style').innerHTML += `
-            article.main {
-                max-width: ` + fixed_width_data + `px !important;
-            }
-        `;
+        let style_target = document.getElementById('ringo_add_style');
+        if (style_target) {
+            style_target.innerHTML += `
+                article.main {
+                    max-width: ` + fixed_width_data + `px !important;
+                }
+            `;
+        }
     }
 
     if(window.localStorage.getItem('main_css_sidebar_right') && window.localStorage.getItem('main_css_sidebar_right') === '1') {
-        document.getElementById('ringo_add_style').innerHTML += `
-            .do_fixed {
-                float: right !important;
-            }
-        `;
+        let style_target = document.getElementById('ringo_add_style');
+        if (style_target) {
+            style_target.innerHTML += `
+                .do_fixed {
+                    float: right !important;
+                }
+            `;
+        }
     }
 }
 

@@ -208,6 +208,7 @@ with get_db_connect(init_mode = True) as conn:
                 loop.run_until_complete(update(conn, int(ver_set_data[0][0]), data_db_set))
         else:
             set_init(conn)
+            view_log_init(conn)
 
     set_init_always(conn, version_list['c_ver'], run_mode)
 
@@ -597,6 +598,8 @@ def before_request_func():
                 '''
 
 # Init-custom
+app.before_request(check_view_log)
+
 if os.path.exists('custom.py'):
     from custom import custom_run
     custom_run('error', app)
@@ -791,6 +794,9 @@ app.route('/w_from/<everything:name>', defaults = { 'do_type' : 'from' })(view_w
 app.route('/w/<everything:name>')(view_w)
 
 app.route('/random')(view_random)
+
+app.route('/viewlog')(view_viewlog)
+app.route('/viewlog/<everything:name>')(view_viewlog)
 
 # Func-edit
 app.route('/edit/<everything:name>', methods = ['POST', 'GET'])(edit)
