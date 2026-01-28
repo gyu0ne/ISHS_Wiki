@@ -886,14 +886,14 @@
       /* 다크 톤에 맞춘 그림자 */
     }
 
-    /* 다크 모드: 존재하는 문서 링크 (Orange) */
+    /* 다크 모드: 존재하는 문서 링크 (Orange - Darker) */
     .namu .footnote_tooltip a:not(.opennamu_not_exist_link) {
-      color: #ffa94d !important;
+      color: #ff922b !important;
       text-decoration: none;
     }
 
     .namu .footnote_tooltip a:not(.opennamu_not_exist_link):hover {
-      color: #ffd8a8 !important;
+      color: #fd7e14 !important;
       text-decoration: underline;
     }
 
@@ -908,7 +908,9 @@
     }
 
     /* 다크 모드: 드롭다운 패널 링크 */
-    .namu .dropdown-panel a {
+    .namu .dropdown-panel a,
+    .namu .dropdown-panel a.opennamu_link_out,
+    .namu .dropdown-panel a.opennamu_link_inter {
       color: #e7eaf0 !important;
       font-weight: 600 !important;
     }
@@ -916,6 +918,34 @@
     .namu .dropdown-panel a:hover {
       background: #1a2332 !important;
       color: #ffffff !important;
+    }
+
+    /* 다크 모드: 주석 툴팁 내부의 링크 색상 (Orange) */
+    .namu .opennamu_main .opennamu_popup_footnote a:not(.opennamu_not_exist_link) {
+      color: #ff922b !important;
+      font-weight: 600 !important;
+    }
+
+    .namu .opennamu_main .opennamu_popup_footnote a:not(.opennamu_not_exist_link):hover {
+      color: #e67700 !important;
+    }
+
+    .namu .opennamu_main .opennamu_popup_footnote a.opennamu_not_exist_link {
+      color: #ff6b6b !important;
+    }
+    
+    /* 사용자 도구 목록 및 기타 리스트 링크 (주황색 강제 적용 - 범위 확대) */
+    .namu .wiki ul li a,
+    .namu .wiki .list a,
+    .namu .main ul li a,
+    .namu ul li a,
+    /* 구체적인 링크 대상별 강제 적용 (User Tools) */
+    .namu .wiki ul li a:hover,
+    .namu .wiki .list a:hover,
+    .namu .main ul li a:hover,
+    .namu ul li a:hover {
+        color: #fd7e14 !important;
+        text-decoration: underline;
     }
 
 {% endif %}
@@ -984,24 +1014,6 @@
     .opennamu_main .opennamu_popup_footnote a.opennamu_not_exist_link:hover {
       color: #a11 !important;
       text-decoration: underline;
-    }
-
-    /* 다크 모드: 주석 툴팁 내부의 링크 색상 (Orange) */
-    .namu .opennamu_main .opennamu_popup_footnote a:not(.opennamu_not_exist_link) {
-      color: #f08c00 !important;
-      font-weight: 600 !important;
-    }
-
-    .namu .opennamu_main .opennamu_popup_footnote a:not(.opennamu_not_exist_link):hover {
-      color: #e67700 !important;
-    }
-
-    .namu .opennamu_main .opennamu_popup_footnote a.opennamu_not_exist_link {
-      color: #ff6b6b !important;
-    }
-
-    .namu .opennamu_main .opennamu_popup_footnote a.opennamu_not_exist_link:hover {
-      color: #ff4444 !important;
     }
 
     /* 광고가 로드되지 않을 때 빈 공간 숨기기 */
