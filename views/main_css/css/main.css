@@ -721,7 +721,7 @@
     font-weight: initial;
 }
 
-@media(max-widhth: 1000px) {
+@media(max-width: 1000px) {
     #menu {
         margin-top: 7px;
     }
