@@ -1144,9 +1144,6 @@
             {{'user_setting'|load_lang}}</a>
           <a href="/viewlog"><span class="iconify" data-icon="ic:baseline-visibility"></span> 열람 기록</a>
           {% if imp[2][2] == 1 %}
-          <a href="/alarm"><span class="iconify" data-icon="ic:baseline-contact-mail"></span> {{'alarm'|load_lang}}
-            ({{imp[2][8]}})</a>
-          <a href="/watch_list"><span class="iconify" data-icon="ic:round-preview"></span> {{'watchlist'|load_lang}}</a>
           <a href="/star_doc"><span class="iconify" data-icon="ic:twotone-stars"></span> {{'star_doc'|load_lang}}</a>
           <a href="/logout"><span class="iconify" data-icon="ic:baseline-logout"></span> {{'logout'|load_lang}}</a>
           {% else %}
@@ -1251,7 +1248,7 @@
 
     <aside class="do_fixed">
       <div class="side_card rc_box" style="margin-bottom:16px;">
-        <h3 style="margin-top:0;">최근 변경</h3>
+        <h3 style="margin-top:0;"><a href="/recent_changes" style="color: inherit; text-decoration: none;">최근 변경</a></h3>
         <div class="rc_wrap">
           {{ recent_sidebar|safe }}
         </div>
