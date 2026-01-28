@@ -70,8 +70,6 @@
       --hr: #eff2f9;
     }
 
-
-
     html,
     body {
       margin: 0;
@@ -117,12 +115,9 @@
 
     .logo a {
       display: inline-flex;
-      /* flex로 이미지 중앙정렬 */
       align-items: center;
-      /* 세로 중앙 정렬 */
       justify-content: center;
       height: 64px;
-      /* topbar 높이와 일치 */
       padding: 0;
       margin: 0;
       background: none;
@@ -132,12 +127,9 @@
     .logo img {
       display: block;
       height: 42px;
-      /* topbar 안에 잘 맞는 크기 */
       width: auto;
       margin: 0;
-      /* margin-top 제거 */
     }
-
 
     .nav {
       display: flex;
@@ -164,7 +156,6 @@
       color: #fff
     }
 
-    /* 네비 전용: 상단 링크 밑줄 제거 */
     .nav>a {
       text-decoration: none;
     }
@@ -172,7 +163,6 @@
     .nav>a:hover {
       text-decoration: none;
     }
-
 
     .dropdown {
       position: relative
@@ -248,7 +238,6 @@
       appearance: none;
     }
 
-
     .top-icon {
       height: 40px;
       width: 40px;
@@ -294,9 +283,7 @@
       align-items: flex-end;
       gap: 10px;
       flex-wrap: wrap;
-      /* 너비가 좁으면 줄바꿈 */
       row-gap: 12px;
-      /* 줄바꿈 시 위아래 간격 */
     }
 
     .title h1 {
@@ -306,7 +293,6 @@
       font-weight: 800;
       letter-spacing: -.01em;
     }
-
 
     .sub {
       color: var(--muted);
@@ -319,9 +305,7 @@
       flex-wrap: wrap;
       gap: 8px;
       margin-top: 12px;
-      /* 제목과의 기본 간격 */
       flex-basis: 100%;
-      /* 줄바꿈 시 전체폭 차지 → 제목 아래로 배치 */
     }
 
     .actions a {
@@ -420,14 +404,12 @@
       padding: 0 !important;
     }
 
-    /* 기존 최근변경 항목의 밑줄 제거(박스 스타일로 대체) */
     .opennamu_main .opennamu_recent_change {
       border-bottom: 0 !important;
       padding-bottom: 0 !important;
       margin: 0 !important;
     }
 
-    /* 최근 변경: 하얀 칸 카드 스타일 */
     .rc_wrap {
       display: flex;
       flex-direction: column;
@@ -490,7 +472,6 @@
     .side_card.rc_box {
       background: var(--surface);
       border: 1px solid #e6eaf2;
-      /* 밝은 모드용 기본 테두리 */
       border-radius: 14px;
       box-shadow: 0 1px 0 rgba(0, 0, 0, .03), 0 10px 28px rgba(16, 24, 40, .06);
       padding: 12px;
@@ -519,7 +500,6 @@
       border-bottom: 0;
     }
 
-    /* 본문(main) 카드에도 같은 테두리 적용 */
     .main {
       border: 1px solid #e6eaf2;
       background: var(--surface);
@@ -545,11 +525,9 @@
       .container {
         grid-template-columns: 1fr;
         column-gap: 0;
-        /* 우측칸 없으니 칸 간격 제거 */
       }
 
       aside.do_fixed {
-        /* 우측 사이드 전체 숨김 */
         display: none;
       }
 
@@ -560,64 +538,48 @@
       .actions {
         margin-top: 16px;
       }
-
-      /* 제목-버튼 간격 유지 */
     }
 
-
-
-    /* 아이콘 라벨 숨김 + 검색창 확장 (더 넓은 임계값) */
-    /* 랜덤 아이콘 왼쪽에만 넉넉한 간격 부여 (전역 적용) */
     .icon-random {
       margin-left: 60px;
     }
 
-    /* footer 안쪽 폭을 고정(너무 길어지지 않게) */
     .footer-inner {
       max-width: min(920px, 90%);
       margin: 0 auto;
     }
 
-    /* 한국어 기준 보기 좋은 줄 길이(약 60~70자)로 제한 */
     .footer .license-text,
     .footer .credit {
       max-width: 68ch;
       margin: 6px auto;
       line-height: 1.6;
       word-break: keep-all;
-      /* 한국어 단어 뚝 끊김 방지 */
       text-wrap: pretty;
-      /* 가능하면 보기 좋게 개행 (지원 브라우저) */
     }
 
-    /* 아이콘 라벨 숨김 + 검색창 확장 (더 넓은 임계값) */
     @media (max-width:980px) {
       .topbar {
         gap: 12px;
       }
 
-      /* 액션 버튼 크기 90%로 축소 */
       .actions a {
         transform: scale(0.9);
         transform-origin: left center;
       }
 
-      /* 랜덤 아이콘 숨김 */
       .icon-random {
         display: none !important;
       }
 
-      /* 아이콘 옆 글자(라벨) 숨김 */
       .nav .menu .label {
         display: none;
       }
 
-      /* 화살표도 숨기면 더 깔끔 */
       .nav .menu button .iconify[data-icon="ic:baseline-arrow-drop-down"] {
         display: none;
       }
 
-      /* 검색창 공간 최대화 */
       .topbar__left {
         flex: 0 0 auto;
       }
@@ -626,74 +588,64 @@
         flex: 1 1 auto;
       }
 
-      /* 모바일 레이아웃 조정 */
-      /* 로고 오른쪽 10 */
       .logo {
         margin-left: 10px;
       }
       
-      /* 사용자 도구(우측 끝) 왼쪽 20 (기존 10 + 10) */
       .topbar__right {
         padding-right: 20px;
       }
 
-      /* 드롭다운 메뉴(네비게이션) 왼쪽 15 이동 (기존 5 + 10) */
       .nav {
         margin-left: -15px;
       }
       
-      /* 본문 여백 축소하여 글자 줄바꿈 최소화 (사용자 요청: 수동 조절 예정) */
       .main__body {
         padding: 0 15px 12px !important;
       }
       
-      /* 제목과 버튼을 왼쪽 위로 이동 (여백 축소) */
       .main__title {
         padding: 20px 20px 0 !important;
       }
 
-      /* 액션 버튼 줄바꿈 방지 (스크롤형) */
       .actions {
         flex-wrap: nowrap !important;
         overflow-x: auto;
         white-space: nowrap;
-        gap: 4px; /* 간격 축소 */
-        padding-bottom: 4px; /* 스크롤 여유 */
-        scrollbar-width: none; /* 스크롤바 숨김 (Firefox) */
+        gap: 4px;
+        padding-bottom: 4px;
+        scrollbar-width: none;
       }
       .actions::-webkit-scrollbar {
-        display: none; /* 스크롤바 숨김 (Chrome/Safari) */
+        display: none;
       }
       
       .actions a {
-        flex: 0 0 auto; /* 크기 유지 */
-        padding: 6px 10px; /* 패딩 축소 */
+        flex: 0 0 auto;
+        padding: 6px 10px;
       }
 
-      /* 모바일 배경색 흰색으로 변경 및 카드 확장 */
       :root {
         --bg: #ffffff;
-        --edge-x: 0px; /* 컨테이너 좌우 패딩 제거 */
+        --edge-x: 0px;
       }
 
       body.namu {
         background: #ffffff;
       }
 
-      /* 컨테이너 여백 제거 및 전체 너비로 확장 */
       .container {
         margin: 0 !important;
         padding: 0 !important;
         max-width: 100% !important;
-        display: block !important; /* grid 대신 block으로 변경하여 꽉 채움 */
+        display: block !important;
       }
 
-      /* 메인 카드 스타일 평탄화 (테두리/그림자/라운딩 제거) */
       .main {
         border-radius: 0 !important;
         box-shadow: none !important;
         border: none !important;
-        min-height: calc(100vh - 64px); /* 상단바 제외 화면 전체 높이 확보 */
+        min-height: calc(100vh - 64px);
       }
 
       .search {
@@ -708,7 +660,6 @@
       }
     }
 
-    /* 세로(포트레이트) 방향일 때도 우측칸 숨김 */
     @media (orientation: portrait) {
       .container {
         grid-template-columns: 1fr;
@@ -720,15 +671,10 @@
       }
     }
 
-    /* ======================== */
-    /*        다크 모드         */
-    /* ======================== */
-
 {% if request.cookies.get('main_css_darkmode', '')=='1' %}
 
     body.namu {
       --surface: #1b2024;
-      /* 어두운 카드 배경 (본문/사이드 동일) */
       --bg: #13161a;
       --text: #e7eaf0;
       --ring: rgba(255, 255, 255, .08);
@@ -743,7 +689,6 @@
       background: #0c1117;
     }
 
-    /* 본문 및 카드 테두리 통일 */
     .namu .main,
     .namu .card,
     .namu .side_card.rc_box {
@@ -799,7 +744,6 @@
       box-shadow: 0 0 0 1px rgba(255, 255, 255, .06), 0 6px 18px rgba(0, 0, 0, .4)
     }
 
-    /* 본문(wiki) 및 사이드바 목록(최근 변경 등) 링크 주황색 적용 (조금 더 진한 주황색 #ff922b) */
     .namu .wiki a:not(.opennamu_not_exist_link),
     .namu .rc_wrap a {
       color: #ff922b !important;
@@ -812,9 +756,18 @@
       text-decoration: underline;
     }
 
-    /* 외부 링크 (새 탭으로 열리는 링크) 초록색 적용 */
+    .namu .wiki a.opennamu_not_exist_link {
+      color: #ff6b6b !important;
+      text-decoration: none;
+    }
+
+    .namu .wiki a.opennamu_not_exist_link:hover {
+      color: #992222 !important;
+      text-decoration: underline;
+    }
+
     .namu a[target="_blank"]:not(.opennamu_not_exist_link) {
-      color: #00d084 !important; /* 선명한 초록색 */
+      color: #00d084 !important;
     }
     
     .namu a[target="_blank"]:not(.opennamu_not_exist_link):hover {
@@ -822,18 +775,15 @@
       text-decoration: underline;
     }
     
-    /* 각주 등 팝업 내 링크도 주황색 적용 */
     .namu .opennamu_popup_footnote a:not(.opennamu_not_exist_link) {
       color: #ff922b !important;
     }
 
-    /* 하단 푸터 텍스트 밝기 조정 */
     .namu .license-text,
     .namu .credit {
-      color: #adb5bd !important; /* 조금 더 밝은 회색 */
+      color: #adb5bd !important;
     }
     
-    /* 저작권 링크(CC 라이선스) 주황색 변경 (Specificity 보강) */
     .namu .license-text a,
     .namu .license-text a[target="_blank"] {
       color: #ff922b !important;
@@ -865,7 +815,6 @@
       background: transparent !important;
     }
 
-    /* 다크 모드: 최근 변경 항목 */
     .namu .rc_wrap li {
       border-bottom: 1px solid #2a2f34 !important;
     }
@@ -874,19 +823,13 @@
       border-bottom: 0 !important;
     }
 
-    /* ★★ 다크 모드: 주석(풋노트) 툴팁 어둡게 ★★ */
     .namu .footnote_tooltip {
       background: #0f141a;
-      /* 어두운 배경 */
       color: #e7eaf0;
-      /* 밝은 텍스트 */
       border: 1px solid #2a2f34;
-      /* 다크모드 테두리 톤과 일치 */
       box-shadow: 0 8px 24px rgba(0, 0, 0, .45);
-      /* 다크 톤에 맞춘 그림자 */
     }
 
-    /* 다크 모드: 존재하는 문서 링크 (Orange - Darker) */
     .namu .footnote_tooltip a:not(.opennamu_not_exist_link) {
       color: #ff922b !important;
       text-decoration: none;
@@ -897,7 +840,6 @@
       text-decoration: underline;
     }
 
-    /* 다크 모드: 존재하지 않는 문서 링크 */
     .namu .footnote_tooltip a.opennamu_not_exist_link {
       color: #ff6b6b !important;
     }
@@ -907,8 +849,8 @@
       text-decoration: underline;
     }
 
-    /* 다크 모드: 드롭다운 패널 링크 */
     .namu .dropdown-panel a,
+    .namu .dropdown-panel a[target="_blank"],
     .namu .dropdown-panel a.opennamu_link_out,
     .namu .dropdown-panel a.opennamu_link_inter {
       color: #e7eaf0 !important;
@@ -920,7 +862,6 @@
       color: #ffffff !important;
     }
 
-    /* 다크 모드: 주석 툴팁 내부의 링크 색상 (Orange) */
     .namu .opennamu_main .opennamu_popup_footnote a:not(.opennamu_not_exist_link) {
       color: #ff922b !important;
       font-weight: 600 !important;
@@ -934,12 +875,10 @@
       color: #ff6b6b !important;
     }
     
-    /* 사용자 도구 목록 및 기타 리스트 링크 (주황색 강제 적용 - 범위 확대) */
     .namu .wiki ul li a,
     .namu .wiki .list a,
     .namu .main ul li a,
     .namu ul li a,
-    /* 구체적인 링크 대상별 강제 적용 (User Tools) */
     .namu .wiki ul li a:hover,
     .namu .wiki .list a:hover,
     .namu .main ul li a:hover,
@@ -963,11 +902,9 @@
       box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
       max-width: 340px;
       pointer-events: auto;
-      /* 내부 링크 클릭 가능 */
       word-wrap: break-word;
     }
 
-    /* hover 툴팁(.footnote_tooltip) 내부의 링크 색상 */
     .footnote_tooltip a:not(.opennamu_not_exist_link) {
       color: #2c6be6 !important;
       text-decoration: none;
@@ -988,14 +925,11 @@
     }
 
 
-    /* 미리보기(Preview) 영역 글자 크기 본문과 동일하게 적용 */
     #opennamu_preview_area {
       font-size: 1.16em;
       line-height: 1.6;
     }
 
-    /* 주석 툴팁 내부의 링크 색상 */
-    /* 존재하는 문서 링크 (파란색) */
     .opennamu_main .opennamu_popup_footnote a:not(.opennamu_not_exist_link) {
       color: #1d4ed8 !important;
       text-decoration: none;
@@ -1006,7 +940,6 @@
       text-decoration: underline;
     }
 
-    /* 존재하지 않는 문서 링크 (빨간색) */
     .opennamu_main .opennamu_popup_footnote a.opennamu_not_exist_link {
       color: #d33 !important;
     }
@@ -1016,7 +949,6 @@
       text-decoration: underline;
     }
 
-    /* 광고가 로드되지 않을 때 빈 공간 숨기기 */
     .ad-container {
       min-height: 0 !important;
     }
@@ -1048,27 +980,21 @@
       }
     });
 
-    // ====== 검색 제출 분기 로직 (존재하면 문서로 / 없으면 /search) ======
     document.addEventListener('DOMContentLoaded', () => {
       const form = document.getElementById('search_form') || document.querySelector('form.search');
       const input = document.getElementById('search_input_not_mobile');
       if (!form || !input) return;
 
-      // 문자열 정규화: 앞뒤 공백 제거 + 내부 연속 공백을 하나로
       const normalize = (s) => (s || '').trim().replace(/\s+/g, ' ');
 
       form.addEventListener('submit', (e) => {
         const raw = input.value;
         const q = normalize(raw);
-        if (!q) return;               // 비었으면 그냥 /search로
+        if (!q) return;
 
-        // 1) 자동완성 DOM에서 "정확히 같은 제목"을 찾는다
-        //    (autocomplete.js가 #autocomplete_results_not_mobile 안에 <a href="/w/제목">…</a>들을 넣음)
         const box = document.getElementById('autocomplete_results_not_mobile');
         if (box) {
-          // 후보들을 모아 텍스트가 q와 '완전 일치'하는 첫 링크를 찾음
           const items = Array.from(box.querySelectorAll('a, .item, .autocomplete-item'));
-          // 항목 구조가 다양할 수 있으니 a[data-title], a .title, a 텍스트 등 넓게 본다
           const pick = items.find(el => {
             const titleFromAttr = (el.getAttribute && (el.getAttribute('data-title') || el.getAttribute('data-value'))) || '';
             const titleFromSpan = el.querySelector ? (el.querySelector('.title')?.textContent || '') : '';
@@ -1079,24 +1005,17 @@
 
           if (pick) {
             e.preventDefault();
-            // 링크 우선: <a href>가 있으면 그걸, 없으면 데이터에서 조립
             const a = pick.tagName === 'A' ? pick : pick.querySelector('a');
             const href = a?.getAttribute('href');
             if (href) {
-              // 절대경로/상대경로 모두 허용 (/w/제목 형태가 가장 이상적)
               window.location.href = href;
               return;
             } else {
-              // a가 없으면 /w/<제목>로 직접 작성
               window.location.href = '/w/' + encodeURIComponent(q);
               return;
             }
           }
         }
-
-        // 2) 자동완성에서 정확 일치가 없으면, 안전하게 /search로 보낸다
-        //    (서버가 유사매칭/리다이렉트/동음이의 처리)
-        //    → 기본 제출 유지
       });
     });
   </script>
@@ -1149,6 +1068,7 @@
             <a href="https://iscience.riroschool.kr/portfolio.php?db=1551" target="_blank" rel="noopener noreferrer">
               <span class="iconify" data-icon="material-symbols:back-to-tab-rounded" data-inline="true"></span>
               리로스쿨
+            </a>
             <a href="https://logingwak.xyz" target="_blank" rel="noopener noreferrer">
               <span class="iconify" data-icon="material-symbols:desktop-cloud" data-inline="true"></span>
               로그인곽
@@ -1236,7 +1156,6 @@
           <a href="{{menu_href}}">{{menu_data[1]}}</a>
           {% endfor %}
 
-          {# 관리자에게만 보이는 '문서 ACL 설정' 추가 #}
           {% if imp[2][9] != '0' %}
           <a href="/acl/{{ imp[0]|url_pas }}">문서 ACL 설정</a>
           {% endif %}
@@ -1319,7 +1238,6 @@
       <div class="side_card rc_box" style="margin-bottom:16px;">
         <h3 style="margin-top:0;">기여자 순위</h3>
         <div class="rc_wrap" style="min-height:80px;">
-          <!-- 나중에 집계 결과를 넣을 자리 -->
           <ul>
             <li>다음 업데이트 때 추가 예정</li>
           </ul>
