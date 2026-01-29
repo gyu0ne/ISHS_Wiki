@@ -24,6 +24,9 @@ async def main_setting_sitemap(do_type = 0):
             else:
                 domain = load_domain(conn, 'full')
 
+            if domain == 'http://' or domain == 'https://':
+                domain = 'https://ishswiki.xyz'
+
             sql_add = ''
 
             curs.execute(db_change('select data from other where name = "sitemap_auto_exclude_user_page"'))
