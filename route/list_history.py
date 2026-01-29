@@ -65,13 +65,18 @@ async def list_history(tool = 'history', num = 1, set_type = 'normal', doc_name 
             select = ''
 
             for for_a in range(len(data)):
-                if data[for_a][6] != "" and data[for_a][1] == "":
-                    if date_heading != '----':
-                        data_html += '<h2>----</h2>'
-                        date_heading = '----'
-
-                    data_html += await opennamu_make_list('----', '', '', '')
+                # 역사 삭제된 항목은 관리자에게도 완전히 숨김
+                # - 제목이 비어있는 경우
+                # - 또는 시각과 사용자명이 모두 비어있는 경우 (삭제된 항목의 특징)
+                if data[for_a][1] == "" or (data[for_a][2] == "" and data[for_a][7] == ""):
                     continue
+                
+                # 숨김 처리된 항목은 관리자가 아니면 건너뛰기
+                if data[for_a][6] != "":
+                    if not (auth.get("owner") or auth.get("hidel")):
+                        continue
+
+
 
                 # recent 페이지에서 편집요청, ACL 설정 문서 제외
                 if tool == "recent" and 'excluded_pages' in locals():
