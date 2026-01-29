@@ -40,6 +40,14 @@ function do_insert_user_info() {
                 }
             }
             
+            // 성별 표시 변환
+            let gender_display = '-';
+            if(data['data']['gender'] === 'male') {
+                gender_display = '남성';
+            } else if(data['data']['gender'] === 'female') {
+                gender_display = '여성';
+            }
+
             let end_data = '' +
                 '<table class="user_info_table">' +
                     '<tr>' +
@@ -55,8 +63,24 @@ function do_insert_user_info() {
                         '<td>' + ban_state + '</td>' +
                     '</tr>' +
                     '<tr>' +
-                        '<td>' + lang_data['level'] + '</td>' +
-                        '<td>' + data['data']['level'] + ' (' + data['data']['exp'] + ' / ' + data['data']['max_exp'] + ')</td>' +
+                        '<td>학번</td>' +
+                        '<td>' + opennamu_xss_filter(data['data']['student_id']) + '</td>' +
+                    '</tr>' +
+                    '<tr>' +
+                        '<td>이름</td>' +
+                        '<td>' + opennamu_xss_filter(data['data']['real_name']) + '</td>' +
+                    '</tr>' +
+                    '<tr>' +
+                        '<td>생년월일</td>' +
+                        '<td>' + opennamu_xss_filter(data['data']['birth']) + '</td>' +
+                    '</tr>' +
+                    '<tr>' +
+                        '<td>성별</td>' +
+                        '<td>' + gender_display + '</td>' +
+                    '</tr>' +
+                    '<tr>' +
+                        '<td>기수</td>' +
+                        '<td>' + opennamu_xss_filter(data['data']['generation']) + '</td>' +
                     '</tr>' +
                 '</table>' +
             '';

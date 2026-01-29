@@ -86,11 +86,12 @@ async def view_viewlog(name = None):
             date = data[1]
             log_ip = data[2]
             
-            ip_html = ''
-            if is_admin:
-                ip_html = f' <span style="font-size: 0.8em; color: gray;">({log_ip})</span>'
-
-            div += f'<li>{date} | <a href="/w/{url_pas(title)}">{html.escape(title)}</a>{ip_html}</li>'
+            # '문서 ACL 설정' 항목 제외
+            if title == '문서 ACL 설정':
+                continue
+            
+            # 사용자명(IP) 표시 제거
+            div += f'<li>{date} | <a href="/w/{url_pas(title)}">{html.escape(title)}</a></li>'
 
         div += '</ul>'
         

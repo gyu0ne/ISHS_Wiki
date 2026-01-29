@@ -53,6 +53,21 @@ async def api_user_info(user_name = ''):
         else:
             data_result['user_title'] = ''
 
+        # extra info part (학번, 이름, 생년월일, 성별, 기수)
+        def get_extra(name):
+            curs.execute(db_change("select data from user_set where name = ? and id = ?"), [name, user_name])
+            row = curs.fetchone()
+            return row[0] if row else '-'
+
+        data_result['student_id'] = get_extra("student_id")
+        data_result['real_name'] = get_extra("real_name")
+        birth_y = get_extra("birth_year")
+        birth_m = get_extra("birth_month")
+        birth_d = get_extra("birth_day")
+        data_result['birth'] = birth_y + '-' + birth_m + '-' + birth_d
+        data_result['gender'] = get_extra("gender")
+        data_result['generation'] = get_extra("generation")
+
         lang_data_list = [
             'user_name',
             'authority',

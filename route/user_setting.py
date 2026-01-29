@@ -98,49 +98,20 @@ async def user_setting():
                 db_data = curs.fetchall()
                 user_name = db_data[0][0] if db_data else ip
 
-                curs.execute(db_change('select data from user_set where name = "sub_user_name" and id = ?'), [ip])
+                curs.execute(db_change('select data from user_set where name = \"sub_user_name\" and id = ?'), [ip])
                 db_data = curs.fetchall()
                 sub_user_name = db_data[0][0] if db_data else ''
-
-                # ===== 추가: extra 정보 불러오기 =====
-                def get_extra(name):
-                    curs.execute(db_change("select data from user_set where name = ? and id = ?"), [name, ip])
-                    row = curs.fetchone()
-                    return row[0] if row else '-'
-
-                student_id = get_extra("student_id")
-                real_name  = get_extra("real_name")
-                birth_y    = get_extra("birth_year")
-                birth_m    = get_extra("birth_month")
-                birth_d    = get_extra("birth_day")
-                gender     = get_extra("gender")
-                generation = get_extra("generation")
 
                 return easy_minify(conn, flask.render_template(skin_check(conn),
                     imp = [get_lang(conn, 'user_setting'), await wiki_set(), await wiki_custom(conn), wiki_css([0, 0])],
                     data = '''
                         <form method="post">
+                            <h2>''' + get_lang(conn, 'state') + '''</h2>
                             <div id="opennamu_get_user_info">''' + html.escape(user_name) + '''</div>
                             <hr class="main_hr">
-
-                            <h2>사용자 정보</h2>
-                            <table class="user-info">
-                                <tr><td>학번</td><td>''' + html.escape(student_id) + '''</td></tr>
-                                <tr><td>이름</td><td>''' + html.escape(real_name) + '''</td></tr>
-                                <tr><td>생년월일</td><td>''' + html.escape(birth_y + '-' + birth_m + '-' + birth_d) + '''</td></tr>
-                                <tr><td>성별</td><td>''' + ('남성' if gender == 'male' else '여성') + '''</td></tr>
-                                <tr><td>기수</td><td>''' + html.escape(generation) + '''</td></tr>
-                            </table>
-                            <hr class="main_hr">
-
                             <a href="/change/pw">(''' + get_lang(conn, 'password_change') + ''')</a>
                             <hr class="main_hr">
-                            <span>''' + get_lang(conn, 'email') + ''' : ''' + email + '''</span> <a href="/change/email">(''' + get_lang(conn, 'email_change') + ''')</a> <a href="/change/email/delete">(''' + get_lang(conn, 'email_delete') + ''')</a>
-                            <hr class="main_hr">
-                            <span>''' + get_lang(conn, 'password_instead_key') + ''' : ''' + ramdom_key + ''' <a href="/change/key">(''' + get_lang(conn, 'key_change') + ''')</a> <a href="/change/key/delete">(''' + get_lang(conn, 'key_delete') + ''')</a></span>
                             <h2>''' + get_lang(conn, 'main') + '''</h2>
-                            <a href="/change/head">(''' + get_lang(conn, 'user_head') + ''')</a> <a href="/change/top_menu">(''' + get_lang(conn, 'user_added_menu') + ''')</a>
-                            <hr class="main_hr">
                             <span>''' + get_lang(conn, 'skin') + '''</span>
                             <hr class="main_hr">
                             <select name="skin">''' + div2 + '''</select>
