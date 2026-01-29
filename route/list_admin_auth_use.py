@@ -6,6 +6,9 @@ async def list_admin_auth_use(arg_num = 1, arg_search = 'normal'):
 
         sql_num = (arg_num * 50 - 50) if arg_num * 50 > 0 else 0
 
+        if ip_or_user(ip_check()) != 0:
+            return await re_error(conn, 3)
+
         if flask.request.method == 'POST':
             return redirect(conn, '/list/admin/auth_use_page/1/' + url_pas(flask.request.form.get('search', 'normal')))
         else:
