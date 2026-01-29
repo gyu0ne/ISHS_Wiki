@@ -22,12 +22,6 @@ async def login_register_submit():
 
         data_que = sql_data[0][0]
 
-        if do_user_name_check(conn, flask.session['submit_id']) == 1:
-            for for_a in session_reset_list:
-                flask.session.pop(for_a, None)
-        
-            return redirect(conn, '/register')
-
         if flask.request.method == 'POST':
             curs.execute(db_change('select data from other where name = "encode"'))
             data_encode = curs.fetchall()

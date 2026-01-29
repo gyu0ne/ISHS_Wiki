@@ -152,9 +152,6 @@ async def login_register_student():
                 if password_min_length > len(user_pw):
                     return "<h1>DEBUG: Error Code: 40 (Password too short)</h1>"
 
-            if do_user_name_check(conn, user_id) == 1:
-                return "<h1>DEBUG: Error Code: 8 (Duplicate ID)</h1>"
-
             # 생성 & 프로필 저장
             add_user(conn, user_id, user_pw)
             _save_profile_extra(conn, user_id, student_id, real_name,
@@ -384,9 +381,6 @@ async def login_register_teacher():
                 password_min_length = int(number_check(db_data[0][0]))
                 if password_min_length > len(user_pw):
                     return "<h1>DEBUG: Error Code: 40 (Password too short)</h1>"
-
-            if do_user_name_check(conn, user_id) == 1:
-                return "<h1>DEBUG: Error Code: 8 (Duplicate ID)</h1>"
 
             add_user(conn, user_id, user_pw)
             _save_profile_extra(conn, user_id, student_id, real_name,
