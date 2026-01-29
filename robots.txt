@@ -2,3 +2,4 @@ User-agent: *
 Disallow: /
 Allow: /$
 Allow: /w/
+Sitemap: https://ishswiki.xyz/sitemap.xml

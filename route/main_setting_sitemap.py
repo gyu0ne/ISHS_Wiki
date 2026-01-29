@@ -57,16 +57,18 @@ async def main_setting_sitemap(do_type = 0):
             count = int(len_all_data / 30000)
             other_count = len_all_data % 30000
 
+            import datetime
+            today_time = datetime.datetime.now().strftime('%Y-%m-%d')
+
             for i in range(count + 1):
-                data += '<sitemap><loc>' + domain + '/sitemap_' + str(i) + '.xml</loc></sitemap>\n'
+                data += '<sitemap><loc>' + domain + '/sitemap_' + str(i) + '.xml</loc><lastmod>' + today_time + '</lastmod></sitemap>\n'
 
             data += '' + \
                 '</sitemapindex>' + \
             ''
 
-            f = open("sitemap.xml", 'w')
-            f.write(data)
-            f.close()
+            with open("sitemap.xml", 'w', encoding='utf-8') as f:
+                f.write(data)
 
             for i in range(count + 1):
                 data = '' + \
@@ -74,20 +76,15 @@ async def main_setting_sitemap(do_type = 0):
                     '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n' + \
                 ''
 
-                if count == i:
-                    for x in all_data[30000 * i:]:
-                        data += '<url><loc>' + domain + '/w/' + url_pas(x[0]) + '</loc></url>\n'
-                else:
-                    for x in all_data[30000 * i:30000 * (i + 1)]:
-                        data += '<url><loc>' + domain + '/w/' + url_pas(x[0]) + '</loc></url>\n'
+                for x in all_data[30000 * i : 30000 * (i + 1)]:
+                    data += '<url><loc>' + domain + '/w/' + url_pas(x[0]) + '</loc><changefreq>daily</changefreq><priority>0.8</priority></url>\n'
 
                 data += '' + \
                     '</urlset>' + \
                 ''
 
-                f = open("sitemap_" + str(i) + ".xml", 'w')
-                f.write(data)
-                f.close()
+                with open("sitemap_" + str(i) + ".xml", 'w', encoding='utf-8') as f:
+                    f.write(data)
 
             if not do_type == 1:
                 return redirect(conn, '/setting/sitemap')
