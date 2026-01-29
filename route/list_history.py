@@ -55,7 +55,7 @@ async def list_history(tool = 'history', num = 1, set_type = 'normal', doc_name 
                     label = await option_lang(option, lang)
                     data_html += f'<a href="/history_page/1/{option}/{doc_name}">({label})</a> '
             else:
-                option_list = ['normal', 'edit', 'move', 'delete', 'revert', 'r1', 'edit_request', 'user', 'file', 'category']
+                option_list = ['normal', 'edit', 'move', 'delete', 'revert', 'r1', 'user', 'file', 'category']
                 for option in option_list:
                     label = await option_lang(option, lang)
                     data_html += f'<a href="/recent_change/1/{option}">({label})</a> '

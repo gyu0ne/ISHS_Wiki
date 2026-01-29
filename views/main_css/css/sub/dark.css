@@ -126,11 +126,22 @@
     box-shadow: 0 4px 8px rgba(0,0,0,0.3);
 }
 
-.autocomplete-items li a {
+.autocomplete-items li a,
+.autocomplete-items li a.opennamu_not_exist_link,
+.autocomplete-items li a.opennamu_link_out,
+.autocomplete-items li a.opennamu_link_inter,
+.opennamu_main .autocomplete-items li a {
     border-bottom-color: #444;
-    color: #f1f1f1;
+    color: white !important;
+    text-decoration: none !important;
 }
 
-.autocomplete-items li a:hover {
+.autocomplete-items li a:hover,
+.autocomplete-items li a.opennamu_not_exist_link:hover,
+.autocomplete-items li a.opennamu_link_out:hover,
+.autocomplete-items li a.opennamu_link_inter:hover,
+.opennamu_main .autocomplete-items li a:hover {
     background-color: #333333;
+    color: white !important;
+    text-decoration: none !important;
 }

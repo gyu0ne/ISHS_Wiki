@@ -101,7 +101,7 @@ async def view_viewlog(name = None):
             title_html = f'열람 기록({name})'
 
         return easy_minify(conn, flask.render_template(skin_check(conn),
-            imp = [title_html, await wiki_set(), await wiki_custom(conn), wiki_css([('(' + get_lang(conn, 'beta') + ')')])],
+            imp = [title_html, await wiki_set(), await wiki_custom(conn), wiki_css(['', 0, '', '', '', '', '', 0])],
             data = div,
-            menu = 0
+            menu = []
         ))

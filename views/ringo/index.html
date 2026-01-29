@@ -924,6 +924,37 @@
         text-decoration: underline;
     }
 
+    /* Autocomplete 드롭다운 스타일 */
+    .namu .autocomplete-items,
+    .namu #autocomplete_results_not_mobile,
+    .namu #autocomplete_results_mobile {
+      background-color: #1f2023;
+      border-color: #444;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+    }
+
+    .namu .autocomplete-items li a,
+    .namu .autocomplete-items ul li a,
+    .namu #autocomplete_results_not_mobile li a,
+    .namu #autocomplete_results_mobile li a,
+    .namu #autocomplete_results_not_mobile ul li a,
+    .namu #autocomplete_results_mobile ul li a {
+      color: white !important;
+      text-decoration: none !important;
+      border-bottom-color: #444;
+    }
+
+    .namu .autocomplete-items li a:hover,
+    .namu .autocomplete-items ul li a:hover,
+    .namu #autocomplete_results_not_mobile li a:hover,
+    .namu #autocomplete_results_mobile li a:hover,
+    .namu #autocomplete_results_not_mobile ul li a:hover,
+    .namu #autocomplete_results_mobile ul li a:hover {
+      background-color: #333333;
+      color: white !important;
+      text-decoration: none !important;
+    }
+
 {% endif %}
 
     .footnote_tooltip {
