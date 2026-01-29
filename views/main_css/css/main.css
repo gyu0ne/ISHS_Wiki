@@ -910,6 +910,12 @@
     border-bottom: 2px solid gainsboro;
 }
 
+.opennamu_main .opennamu_edit_reason {
+    margin-top: 5px;
+    font-size: 13px;
+    color: #555;
+}
+
 /* 이 부분 이하로는 레거시 */
 .opennamu_main #topic_color {
     background: #bbeabb;

@@ -191,8 +191,9 @@ async def opennamu_make_list(left = '', right = '', bottom = '', class_name = ''
     data_html += '<div style="clear: both;"></div>'
 
     if bottom != '':
-        data_html += '<hr>'
+        data_html += '<div class="opennamu_edit_reason">'
         data_html += bottom
+        data_html += '</div>'
 
     data_html += '</div>'
     data_html += '<hr class="main_hr">'
