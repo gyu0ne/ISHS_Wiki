@@ -208,8 +208,8 @@ with get_db_connect(init_mode = True) as conn:
                 loop.run_until_complete(update(conn, int(ver_set_data[0][0]), data_db_set))
         else:
             set_init(conn)
-            view_log_init(conn)
 
+    view_log_init(conn)
     set_init_always(conn, version_list['c_ver'], run_mode)
 
     # Init-Route
