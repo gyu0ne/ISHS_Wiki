@@ -40,7 +40,7 @@ async def list_history(tool = 'history', num = 1, set_type = 'normal', doc_name 
                 data = await api_list_recent_change(num, set_type, 50, '')
 
                 title = get_lang(conn, 'recent_change')
-                sub = '(' + get_lang(conn, set_type) + ')'
+                sub = '' if set_type == 'normal' else '(' + get_lang(conn, set_type) + ')'
                 menu = [['other', get_lang(conn, 'return')], ['recent_edit_request', get_lang(conn, 'edit_request')]]
 
             lang = data["language"]
@@ -56,6 +56,7 @@ async def list_history(tool = 'history', num = 1, set_type = 'normal', doc_name 
                     data_html += f'<a href="/history_page/1/{option}/{doc_name}">({label})</a> '
             else:
                 option_list = ['normal', 'edit', 'move', 'delete', 'revert', 'r1', 'user', 'file', 'category']
+                excluded_pages = ['편집 요청', 'ACL', '문서 ACL 설정']
                 for option in option_list:
                     label = await option_lang(option, lang)
                     data_html += f'<a href="/recent_change/1/{option}">({label})</a> '
@@ -71,6 +72,16 @@ async def list_history(tool = 'history', num = 1, set_type = 'normal', doc_name 
 
                     data_html += await opennamu_make_list('----', '', '', '')
                     continue
+
+                # recent 페이지에서 편집요청, ACL 설정 문서 제외
+                if tool == "recent" and 'excluded_pages' in locals():
+                    should_skip = False
+                    for excluded in excluded_pages:
+                        if excluded in data[for_a][1]:
+                            should_skip = True
+                            break
+                    if should_skip:
+                        continue
 
                 doc_name = url_pas(data[for_a][1])
 
