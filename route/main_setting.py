@@ -5,15 +5,15 @@ async def main_setting():
         li_list = [
             ['main', get_lang(conn, 'main_setting')],
             ['phrase', get_lang(conn, 'text_setting')],
-            ['robot', 'robots.txt'],
-            ['external', get_lang(conn, 'ext_api_req_set')],
-            ['head', get_lang(conn, 'main_head')],
             ['body/top', get_lang(conn, 'main_body')],
             ['body/bottom', get_lang(conn, 'main_bottom_body')],
-            ['sitemap_set', get_lang(conn, 'sitemap_management')],
             ['top_menu', get_lang(conn, 'top_menu_setting')],
             ['skin_set', get_lang(conn, 'main_skin_set_default')],
-            ['404_page', get_lang(conn, '404_page_setting')]
+            ['404_page', get_lang(conn, '404_page_setting')],
+            ['external', get_lang(conn, 'ext_api_req_set')],
+            ['head', get_lang(conn, 'main_head')],
+            ['sitemap_set', get_lang(conn, 'sitemap_management')],
+            ['robot', 'robots.txt']
         ]
 
         li_data = ''.join(['<li><a href="/setting/' + str(li[0]) + '">' + li[1] + '</a></li>' for li in li_list])

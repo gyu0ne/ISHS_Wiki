@@ -15,11 +15,11 @@ function opennamu_setting_404_page_post() {
         let put_data_content = new FormData();
         put_data_content.append('data', content);
     
-        fetch('/api/v2/setting/manage_404_page_content', {
+        return fetch('/api/v2/setting/manage_404_page_content', {
             method : 'PUT',
             body : put_data_content,
         });
-
+    }).then(function() {
         history.go(0);
     });
 }

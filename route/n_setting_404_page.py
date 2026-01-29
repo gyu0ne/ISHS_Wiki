@@ -2,6 +2,9 @@ from .tool.func import *
 
 async def setting_404_page():
     with get_db_connect() as conn:
+        if await acl_check('', 'owner_auth', '', '') == 1:
+            return await re_error(conn, 0)
+
         return easy_minify(conn, flask.render_template(skin_check(conn),
             imp = [get_lang(conn, '404_page_setting'), await wiki_set(), await wiki_custom(conn), wiki_css([0, 0])],
             data = '' + \
