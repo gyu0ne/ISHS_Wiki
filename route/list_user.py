@@ -8,7 +8,7 @@ async def list_user(arg_num = 1):
 
         list_data = '<ul>'
 
-        curs.execute(db_change("select id, data from user_set where name = 'date' order by data desc limit ?, 50"), [sql_num])
+        curs.execute(db_change("select distinct id, data from user_set where name = 'date' order by data desc limit ?, 50"), [sql_num])
         user_list = curs.fetchall()
         for data in user_list:
             list_data += '<li>'

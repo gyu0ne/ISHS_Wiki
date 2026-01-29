@@ -39,12 +39,7 @@ async def main_tool_admin():
                     <li><a href="/filter/outer_link">''' + get_lang(conn, 'outer_link_filter_list') + '''</a> (''' + get_lang(conn, 'beta') + ''')
                     <li><a href="/filter/template">''' + get_lang(conn, 'template_document_list') + '''</a> (''' + get_lang(conn, 'beta') + ''')
                 </ul>
-                <h3>''' + get_lang(conn, 'server') + '''</h2>
-                <ul>
-                    <li><a href="/restart">''' + get_lang(conn, 'wiki_restart') + '''</a></li>
-                    <li><a href="/shutdown">''' + get_lang(conn, 'wiki_shutdown') + '''</a></li>
-                    <li><a href="/update">''' + get_lang(conn, 'update') + '''</a></li>
-                </ul>
+
                 <h2>''' + get_lang(conn, 'version') + '''</h2>
                 <ul>
                     <li id="ver_send_2">''' + get_lang(conn, 'version') + ''' : </li>

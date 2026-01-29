@@ -9,6 +9,10 @@ async def main_tool_other():
                 <ul>
                     <li><a href="/manager/6">''' + get_lang(conn, 'user_tool') + '''</a></li>
                 </ul>
+                <h2>''' + get_lang(conn, 'admin') + '''</h2>
+                <ul>
+                    <li><a href="/manager/1">''' + get_lang(conn, 'admin_tool') + '''</a></li>
+                </ul>
                 <h2>''' + get_lang(conn, 'list') + '''</h2>
                 <h3>''' + get_lang(conn, 'admin') + '''</h3>
                 <ul>               
@@ -47,10 +51,7 @@ async def main_tool_other():
                     <li><a href="/upload">''' + get_lang(conn, 'upload') + '''</a></li>
                     <li><a href="/manager/10">''' + get_lang(conn, 'search') + '''</a></li>
                 </ul>
-                <h2>''' + get_lang(conn, 'admin') + '''</h2>
-                <ul>
-                    <li><a href="/manager/1">''' + get_lang(conn, 'admin_tool') + '''</a></li>
-                </ul>
+
             '''),
             menu = 0
         ))

@@ -29,7 +29,7 @@ async def user_info(name = ''):
                 tool_menu += '<li><a href="/watch_list">' + get_lang(conn, 'watchlist') + '</a></li>'
                 tool_menu += '<li><a href="/star_doc">' + get_lang(conn, 'star_doc') + '</a></li>'
                 tool_menu += '<li><a href="/challenge">' + get_lang(conn, 'challenge_and_level_manage') + '</a></li>'
-                tool_menu += '<li><a href="/acl/user:' + url_pas(ip) + '">' + get_lang(conn, 'user_document_acl') + '</a></li>'
+
             else:
                 login_menu += '''
                     <li><a href="/login">''' + get_lang(conn, 'login') + '''</a></li>
