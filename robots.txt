@@ -2,4 +2,36 @@ User-agent: *
 Disallow: /
 Allow: /$
 Allow: /w/
+
+Disallow: /user
+Disallow: /member
+Disallow: /register
+Disallow: /login
+Disallow: /logout
+Disallow: /change
+Disallow: /history
+Disallow: /edit
+Disallow: /discuss
+Disallow: /xref
+Disallow: /raw
+Disallow: /diff
+Disallow: /down
+Disallow: /upload
+Disallow: /vote
+Disallow: /search
+Disallow: /random
+Disallow: /license
+Disallow: /admin
+Disallow: /auth
+Disallow: /filter
+Disallow: /list
+Disallow: /recent
+Disallow: /record
+Disallow: /topic
+Disallow: /thread
+Disallow: /bbs
+Disallow: /viewlog
+Disallow: /*%28*기%29
+Disallow: /*(*기)
+
 Sitemap: https://ishswiki.xyz/sitemap.xml
