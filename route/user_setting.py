@@ -106,9 +106,6 @@ async def user_setting():
                     imp = [get_lang(conn, 'user_setting'), await wiki_set(), await wiki_custom(conn), wiki_css([0, 0])],
                     data = '''
                         <form method="post">
-                            <h2>''' + get_lang(conn, 'state') + '''</h2>
-                            <div id="opennamu_get_user_info">''' + html.escape(user_name) + '''</div>
-                            <hr class="main_hr">
                             <a href="/change/pw">(''' + get_lang(conn, 'password_change') + ''')</a>
                             <hr class="main_hr">
                             <h2>''' + get_lang(conn, 'main') + '''</h2>

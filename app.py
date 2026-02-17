@@ -898,7 +898,7 @@ app.route('/login/2fa', methods = ['POST', 'GET'])(login_login_2fa)
 app.route('/register', methods = ['POST', 'GET'])(riro_login_page)
 app.route('/register_form_student', methods = ['POST', 'GET'])(login_register_student)
 app.route('/register_form_teacher', methods = ['POST', 'GET'])(login_register_teacher)
-app.route('/register/submit', methods = ['POST', 'GET'])(login_register_submit)
+# app.route('/register/submit', methods = ['POST', 'GET'])(login_register_submit)  # 기존 가입 경로 차단
 
 app.route('/admin/create_user', methods = ['POST', 'GET'])(admin_create_user)
 app.route('/admin/create_user_submit', methods = ['POST'])(admin_create_user_submit)
