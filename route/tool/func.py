@@ -1006,9 +1006,12 @@ def load_domain(conn, data_type = 'normal'):
         sys_host = ''
     
     if data_type == 'full':
-        curs.execute(db_change("select data from other where name = 'http_select'"))
-        db_data = curs.fetchall()
-        domain += db_data[0][0] if db_data and db_data[0][0] != '' else 'http'
+        try:
+            domain += flask.request.scheme
+        except:
+            curs.execute(db_change("select data from other where name = 'http_select'"))
+            db_data = curs.fetchall()
+            domain += db_data[0][0] if db_data and db_data[0][0] != '' else 'http'
         domain += '://'
 
         curs.execute(db_change("select data from other where name = 'domain'"))
