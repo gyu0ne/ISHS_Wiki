@@ -178,6 +178,7 @@ from route.n_bbs_in import bbs_in
 from route.n_bbs_w_set import bbs_w_set
 
 from route.n_edit_move_all import edit_move_all
+from route.api_move_multiple import api_move_multiple
 
 from route.go_api_func_llm import api_func_llm
 from route.go_api_func_language import api_func_language

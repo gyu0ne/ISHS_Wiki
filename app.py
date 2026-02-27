@@ -821,6 +821,7 @@ app.route('/revert/<int:num>/<everything:name>', methods = ['POST', 'GET'])(edit
 
 app.route('/move/<everything:name>', methods = ['POST', 'GET'])(edit_move)
 app.route('/move_all')(edit_move_all)
+app.route('/api/move_multiple', methods = ['POST'])(api_move_multiple)
 
 # Func-topic
 app.route('/topic/<everything:name>', methods = ['POST', 'GET'])(topic_list)
