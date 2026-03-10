@@ -45,6 +45,7 @@ def _save_profile_extra(conn, user_id, student_id, real_name, birth_y, birth_m, 
     upsert('gender', gender)
     upsert('user_name', user_name)
     upsert('generation', gen)
+    upsert('riro_reauthed', '1')
 
 def add_user(conn, user_id, user_pw):
     curs = conn.cursor()

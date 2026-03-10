@@ -120,7 +120,19 @@ async def list_history(tool = 'history', num = 1, set_type = 'normal', doc_name 
                     right += f'<span style="color: red;">{diff_size}</span>'
 
                 right += ' | '
-                right += f'{data[for_a][7]} | '
+                ip_html = data[for_a][7]
+                
+                # Check if it looks like the Golang IP output but is actually a user
+                # We need to extract the raw IP first. It is usually "username<a href=..."
+                raw_ip = ip_html.split('<a href=')[0].strip() if '<a href=' in ip_html else ip_html.strip()
+                if ip_or_user(raw_ip) == 0 and not ip_html.startswith('<a href='):
+                    ip_html = ip_html.replace(
+                        ip_html.split('<a href=')[0] + '<a href=',
+                        '<a href="/w/' + url_pas('user:' + raw_ip) + '">' + raw_ip + '</a><a href=',
+                        1
+                    )
+                
+                right += f'{ip_html} | '
 
                 edit_type = data[for_a][8] if data[for_a][8] != '' else 'edit'
                 right += f'{await option_lang(edit_type, lang)} | '
