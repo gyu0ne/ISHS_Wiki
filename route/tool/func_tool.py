@@ -88,7 +88,7 @@ def ip_or_user(data = ''):
     if data == '':
         data = ip_check()
 
-    if re.search(r'(\.|:)', data):
+    if re.search(r'^([0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3})$', data) or re.search(r'^([0-9a-fA-F:\.]*:[0-9a-fA-F:\.]*)$', data):
         return 1
     else:
         return 0

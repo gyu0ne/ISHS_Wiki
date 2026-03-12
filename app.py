@@ -598,6 +598,56 @@ def before_request_func():
                 '''
 
 # Init-custom
+@app.before_request
+def check_reauth_global():
+    import flask
+    from route.tool.func import get_db_connect, url_pas
+    
+    path = flask.request.path
+    method = flask.request.method
+    
+    if 'id' not in flask.session:
+        return
+        
+    # 재인증 과정 자체나 프로필 설정 등은 허용
+    if path.startswith('/riro_reauth') or path.startswith('/change/') or path.startswith('/user') or path.startswith('/logout'):
+        return
+        
+    is_blocked = False
+    
+    # 문서 조작/관리자 기능 등은 GET/POST 모두 접근 차단
+    modifying_paths = (
+        '/edit/', '/edit_request/', '/delete/', '/delete_file/', '/move/', '/revert/', '/upload',
+        '/manager/', '/admin/', '/auth/', '/filter/'
+    )
+    for p in modifying_paths:
+        if path.startswith(p):
+            is_blocked = True
+            break
+            
+    # 게시판, 토론 등은 글쓰기/설정변경(POST)만 차단 (열람은 가능하게 함)
+    if not is_blocked and method == 'POST':
+        post_restricted = ('/topic/', '/bbs/', '/thread/', '/topic_page/')
+        for p in post_restricted:
+            if path.startswith(p):
+                is_blocked = True
+                break
+                
+    if is_blocked:
+        user_id = flask.session['id']
+        from route.riro_reauth_target import REAUTH_TARGET_GENERATIONS
+        
+        with get_db_connect() as conn:
+            curs = conn.cursor()
+            curs.execute("select data from user_set where id = ? and name = 'generation'", [user_id])
+            gen_data = curs.fetchone()
+            
+            if gen_data and gen_data[0].isdigit() and int(gen_data[0]) in REAUTH_TARGET_GENERATIONS:
+                curs.execute("select data from user_set where id = ? and name = 'riro_reauthed'", [user_id])
+                reauth_data = curs.fetchone()
+                if not reauth_data or reauth_data[0] != '1':
+                    return flask.redirect('/w/user:' + url_pas(user_id))
+
 app.before_request(check_view_log)
 
 if os.path.exists('custom.py'):
@@ -854,6 +904,7 @@ app.route('/change/skin_set')(user_setting_skin_set)
 app.route('/change/top_menu', methods = ['GET', 'POST'])(user_setting_top_menu)
 app.route('/change/user_name', methods = ['GET', 'POST'])(user_setting_user_name)
 app.route('/change/user_name/<user_name>', methods = ['GET', 'POST'])(user_setting_user_name)
+app.route('/admin/edit_user_info/<user_name>', methods = ['GET', 'POST'])(admin_edit_user_info)
 # 하위 호환용 S
 app.route('/skin_set')(user_setting_skin_set)
 # 하위 호환용 E
@@ -897,6 +948,7 @@ app.route('/star_doc_from/<everything:name>', defaults = { 'tool' : 'star_doc_fr
 app.route('/login', methods = ['POST', 'GET'])(login_login)
 app.route('/login/2fa', methods = ['POST', 'GET'])(login_login_2fa)
 app.route('/register', methods = ['POST', 'GET'])(riro_login_page)
+app.route('/riro_reauth', methods = ['POST', 'GET'])(riro_reauth)
 app.route('/register_form_student', methods = ['POST', 'GET'])(login_register_student)
 app.route('/register_form_teacher', methods = ['POST', 'GET'])(login_register_teacher)
 # app.route('/register/submit', methods = ['POST', 'GET'])(login_register_submit)  # 기존 가입 경로 차단

@@ -1,4 +1,6 @@
 from .riro_login_page import riro_login_page
+from .riro_reauth import riro_reauth
+from .admin_edit_user_info import admin_edit_user_info
 from route.api_image_view import api_image_view
 from route.api_skin_info import api_skin_info
 from route.api_user_info import api_user_info

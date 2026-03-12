@@ -1858,7 +1858,18 @@ async def ip_pas(raw_ip):
         other_set["data_" + str(for_a)] = get_ip[for_a - 1]
 
     data = await python_to_golang('api_func_ip_post', other_set)
-    return data["data"][raw_ip] if return_data == 1 else data["data"]
+    res = data["data"]
+
+    for ip in get_ip:
+        if ip_or_user(ip) == 0:
+            if not res[ip].startswith('<a href='):
+                res[ip] = res[ip].replace(
+                    ip + '<a href=', 
+                    '<a href="/w/' + url_pas('user:' + ip) + '">' + ip + '</a><a href=',
+                    1
+                )
+
+    return res[raw_ip] if return_data == 1 else res
         
 # Func-edit
 def get_edit_text_bottom(conn, tool = '') :

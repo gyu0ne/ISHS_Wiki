@@ -100,15 +100,56 @@ def _get_user_profile_table_html(conn, user_id: str) -> str:
     gen = html.escape(generation or '-')
     aclh = html.escape(acl_kr or '-')
 
+    # 재인증 배너 (본인 문서 열람 시, 대상 기수이고 재인증 안 했을 때)
+    import flask
+    from route.riro_reauth_target import REAUTH_YEAR, REAUTH_TARGET_GENERATIONS
+    
+    viewer_id = flask.session.get('id', '')
+    reauth_banner = ''
+    if viewer_id and viewer_id == user_id:
+        reauthed = _get('riro_reauthed')
+        gen_int = int(generation) if (generation or '').isdigit() else 0
+        if gen_int in REAUTH_TARGET_GENERATIONS and reauthed != '1':
+            reauth_banner = f'''
+            <div style="margin-bottom:12px; padding:10px 14px; border:1px solid #f0b429;
+                        background:#fff8e1; color:#7a5200; border-radius:8px;">
+                ⚠️ <strong>학번 재인증이 필요합니다.</strong>
+                신학기부터 리로스쿨 학번 체계가 변경되었습니다.
+                <a href="/riro_reauth" style="color:#0066cc; font-weight:bold;">지금 재인증하기 →</a>
+            </div>
+            '''
+
+    # 관리자 개별수정 스패너 아이콘 렌더링 준비
+    is_viewer_admin = False
+    if viewer_id:
+        c.execute("select data from user_set where id = ? and name = 'acl'", [viewer_id])
+        arow = c.fetchone()
+        if arow and arow[0] in ['owner', 'admin']:
+            is_viewer_admin = True
+    
+    def get_spanner(field_name):
+        if is_viewer_admin:
+            encoded = url_pas(user_id)
+            return f' <a href="/admin/edit_user_info/{encoded}?field={field_name}" style="text-decoration:none;" title="수정"><span class="opennamu_svg opennamu_svg_tool" style="display:inline-block; vertical-align:middle; width:16px; height:16px;">&nbsp;</span></a>'
+        return ''
+
+    # 각 항목에 스패너 아이콘 결합
+    disp_sid = sid + get_spanner('student_id')
+    disp_rnm = rnm + get_spanner('real_name')
+    disp_bth = bth + get_spanner('birth')
+    disp_gender = gender_kr + get_spanner('gender')
+    disp_gen = gen + get_spanner('generation')
+
     return f"""
     <div class="opennamu-user-profile">
       <h2>사용자 정보</h2>
+      {reauth_banner}
       <table class="user-info" style="width:100%; max-width:720px;">
-        <tr><th style="text-align:left; width:120px;">학번</th><td>{sid}</td></tr>
-        <tr><th style="text-align:left;">이름</th><td>{rnm}</td></tr>
-        <tr><th style="text-align:left;">생년월일</th><td>{bth}</td></tr>
-        <tr><th style="text-align:left;">성별</th><td>{gender_kr}</td></tr>
-        <tr><th style="text-align:left;">기수</th><td>{gen}</td></tr>
+        <tr><th style="text-align:left; width:120px;">학번</th><td>{disp_sid}</td></tr>
+        <tr><th style="text-align:left;">이름</th><td>{disp_rnm}</td></tr>
+        <tr><th style="text-align:left;">생년월일</th><td>{disp_bth}</td></tr>
+        <tr><th style="text-align:left;">성별</th><td>{disp_gender}</td></tr>
+        <tr><th style="text-align:left;">기수</th><td>{disp_gen}</td></tr>
         <tr><th style="text-align:left;">권한</th><td>{aclh}</td></tr>
       </table>
       <hr class="main_hr">

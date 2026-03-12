@@ -155,6 +155,10 @@ async def edit(name = 'Test', section = 0, do_type = ''):
             edit_repeat = 'get'
         
         if edit_repeat == 'post':
+            # POST 시 로그인 상태 재확인
+            if ip_or_user(ip) == 1:
+                return redirect(conn, '/login')
+
             if await captcha_post(conn, flask.request.form.get('g-recaptcha-response', flask.request.form.get('g-recaptcha', ''))) == 1:
                 return await re_error(conn, 13)
     
