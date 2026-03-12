@@ -2,6 +2,8 @@ from .tool.func import *
 import datetime
 import hmac, hashlib, html, unicodedata, re
 
+_USERNAME_RE = re.compile(r'^[a-zA-Z0-9가-힣._@]+$')
+
 # ===== 유틸 =====
 def _valid_date(y, m, d):
     try:
@@ -155,6 +157,10 @@ async def login_register_student():
             if user_pw != user_repeat:
                 return "<h1>DEBUG: Error Code: 20 (Password mismatch)</h1>"
 
+            # 닉네임 허용 문자 검사 (영문·한글·숫자·._@ 만 허용)
+            if not _USERNAME_RE.match(user_name):
+                return "<h1>DEBUG: Error Code: 28 (Invalid characters in username)</h1>"
+
             user_id = user_name
             if user_id == user_pw:
                 return "<h1>DEBUG: Error Code: 49 (ID and password are same)</h1>"
@@ -165,6 +171,11 @@ async def login_register_student():
                 password_min_length = int(number_check(db_data[0][0]))
                 if password_min_length > len(user_pw):
                     return "<h1>DEBUG: Error Code: 40 (Password too short)</h1>"
+
+            # 닉네임(아이디) 중복 확인
+            curs.execute(db_change("select data from user_set where id = ? and name = 'pw'"), [user_id])
+            if curs.fetchall():
+                return "<h1>DEBUG: Error Code: 10 (Username already exists)</h1>"
 
             # 생성 & 프로필 저장
             add_user(conn, user_id, user_pw)
@@ -226,7 +237,7 @@ async def login_register_student():
                     </style>
                     <form method="post">
                         <input placeholder="아이디" name="user_name" type="text" required>
-                        <small style="display:block; margin-top:4px; color:#888; text-align:left;">아이디는 영문, 한글, 숫자만 사용 가능합니다.</small>
+                        <small style="display:block; margin-top:4px; color:#888; text-align:left;">아이디는 영문, 한글, 숫자, 마침표(.), 밑줄(_), 골뱅이(@)만 사용 가능합니다. (공백·이모지·기타 특수문자 불가)</small>
                         <hr class="main_hr">
                         
                         <label>이름</label>
@@ -394,6 +405,10 @@ async def login_register_teacher():
             if user_pw != user_repeat:
                 return "<h1>DEBUG: Error Code: 20 (Password mismatch)</h1>"
 
+            # 닉네임 허용 문자 검사 (영문·한글·숫자·._@ 만 허용)
+            if not _USERNAME_RE.match(user_name):
+                return "<h1>DEBUG: Error Code: 28 (Invalid characters in username)</h1>"
+
             user_id = user_name
             if user_id == user_pw:
                 return "<h1>DEBUG: Error Code: 49 (ID and password are same)</h1>"
@@ -404,6 +419,11 @@ async def login_register_teacher():
                 password_min_length = int(number_check(db_data[0][0]))
                 if password_min_length > len(user_pw):
                     return "<h1>DEBUG: Error Code: 40 (Password too short)</h1>"
+
+            # 닉네임(아이디) 중복 확인
+            curs.execute(db_change("select data from user_set where id = ? and name = 'pw'"), [user_id])
+            if curs.fetchall():
+                return "<h1>DEBUG: Error Code: 10 (Username already exists)</h1>"
 
             add_user(conn, user_id, user_pw)
             _save_profile_extra(conn, user_id, student_id, real_name,
@@ -458,6 +478,7 @@ async def login_register_teacher():
                     </style>
                     <form method="post">
                         <input placeholder="아이디" name="user_name" type="text" required>
+                        <small style="display:block; margin-top:4px; color:#888; text-align:left;">아이디는 영문, 한글, 숫자, 마침표(.), 밑줄(_), 골뱅이(@)만 사용 가능합니다. (공백·이모지·기타 특수문자 불가)</small>
                         <hr class="main_hr">
                         
                         <label>직책</label>
