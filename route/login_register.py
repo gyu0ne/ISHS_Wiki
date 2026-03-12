@@ -1,6 +1,6 @@
 from .tool.func import *
 import datetime
-import hmac, hashlib, html, unicodedata
+import hmac, hashlib, html, unicodedata, re
 
 # ===== 유틸 =====
 def _valid_date(y, m, d):
@@ -12,6 +12,10 @@ def _valid_date(y, m, d):
 
 def _norm(s: str) -> str:
     return unicodedata.normalize('NFKC', (s or '')).strip()
+
+def _valid_user_id(s: str) -> bool:
+    # 아이디는 영문, 한글, 숫자만 사용 가능
+    return bool(re.match(r'^[a-zA-Z0-9가-힣ㄱ-ㅎㅏ-ㅣ]+$', s))
 
 def _valid_student_id(s: str) -> bool:
     """
@@ -120,6 +124,15 @@ async def login_register_student():
             # 필수값
             if not user_name or not real_name or not birth_y or not birth_m or not birth_d or not gender:
                 return "<h1>DEBUG: Error Code: 27 (Missing required fields)</h1>"
+
+            # 아이디 문자 확인
+            if not _valid_user_id(user_name):
+                return easy_minify(conn, flask.render_template(
+                    skin_check(conn),
+                    imp=[get_lang(conn, 'register'), await wiki_set(), await wiki_custom(conn), wiki_css([0, 0])],
+                    data='''<div style="margin-top:12px; padding:10px; border:1px solid #e7c7c7; background:#ffe6e6; color:#a12626; border-radius:6px;">아이디는 영문, 한글, 숫자만 사용 가능합니다.</div>''',
+                    menu=[['login', get_lang(conn, 'return')]]
+                ))
 
             # 학번 검사(졸업생/교사 제외)
             if not _valid_student_id(student_id):
@@ -354,6 +367,15 @@ async def login_register_teacher():
 
             if not user_name or not real_name or not birth_y or not birth_m or not birth_d or not gender:
                 return "<h1>DEBUG: Error Code: 27 (Missing required fields)</h1>"
+
+            # 아이디 문자 확인
+            if not _valid_user_id(user_name):
+                return easy_minify(conn, flask.render_template(
+                    skin_check(conn),
+                    imp=[get_lang(conn, 'register'), await wiki_set(), await wiki_custom(conn), wiki_css([0, 0])],
+                    data='''<div style="margin-top:12px; padding:10px; border:1px solid #e7c7c7; background:#ffe6e6; color:#a12626; border-radius:6px;">아이디는 영문, 한글, 숫자만 사용 가능합니다.</div>''',
+                    menu=[['login', get_lang(conn, 'return')]]
+                ))
 
             if not _valid_student_id(student_id):
                 return "<h1>DEBUG: Error Code: 998 (Invalid student ID)</h1>"

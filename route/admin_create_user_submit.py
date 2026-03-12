@@ -1,6 +1,6 @@
 from .tool.func import *
 import datetime
-import html, unicodedata
+import html, unicodedata, re
 
 # ===== 유틸 =====
 def _valid_date(y, m, d):
@@ -12,6 +12,9 @@ def _valid_date(y, m, d):
 
 def _norm(s: str) -> str:
     return unicodedata.normalize('NFKC', (s or '')).strip()
+
+def _valid_user_id(s: str) -> bool:
+    return bool(re.match(r'^[a-zA-Z0-9가-힣ㄱ-ㅎㅏ-ㅣ]+$', s))
 
 def _valid_student_id(s: str) -> bool:
     """
@@ -91,6 +94,10 @@ async def admin_create_user_submit():
             # 필수항목 체크
             if not user_name or not real_name or not birth_y or not birth_m or not birth_d or not gender or not gen:
                 return await re_error(conn, 27) # 필수 항목 누락
+
+            # 아이디 문자 확인
+            if not _valid_user_id(user_name):
+                return await re_error(conn, "/error/아이디는 영문, 한글, 숫자만 사용 가능합니다.")
 
             # 학번 규칙 검사
             if not _valid_student_id(student_id):

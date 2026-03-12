@@ -1,4 +1,8 @@
 from .tool.func import *
+import re
+
+def _valid_user_id(s: str) -> bool:
+    return bool(re.match(r'^[a-zA-Z0-9가-힣ㄱ-ㅎㅏ-ㅣ]+$', s))
 
 async def user_setting_user_name(user_name = ''):
     with get_db_connect() as conn:
@@ -16,6 +20,8 @@ async def user_setting_user_name(user_name = ''):
                 auto_data = ['user_name', flask.request.form.get('new_user_name', '')]
                 if do_user_name_check(conn, auto_data[1]) == 1:
                     return await re_error(conn, 8)
+                if not _valid_user_id(auto_data[1]):
+                    return await re_error(conn, "/error/아이디는 영문, 한글, 숫자만 사용 가능합니다.")
 
                 curs.execute(db_change('select data from user_set where name = ? and id = ?'), [auto_data[0], ip])
                 if curs.fetchall():
