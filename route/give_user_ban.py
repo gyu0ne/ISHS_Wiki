@@ -73,31 +73,67 @@ async def give_user_ban(name = None, ban_type = ''):
                     final_ban_list.add(item)
             else:
                 type_d = None
-                student_ids_to_ban = set()
+                target_identities = [] # (student_id, real_name)
 
                 for item in initial_user_list:
                     if ip_or_user(item) == 1:
                         final_ban_list.add(item)
                     else:
+                        # 아이템이 사용자 ID인 경우
                         curs.execute(db_change("select data from user_set where id = ? and name = 'student_id'"), [item])
-                        student_id_row = curs.fetchone()
-                        if student_id_row and student_id_row[0]:
-                            student_ids_to_ban.add(student_id_row[0])
-
-                        curs.execute(db_change("select id from user_set where name = 'real_name' and data = ?"), [item])
-                        users_with_real_name = curs.fetchall()
-                        for user in users_with_real_name:
-                            curs.execute(db_change("select data from user_set where id = ? and name = 'student_id'"), [user[0]])
-                            student_id_row = curs.fetchone()
-                            if student_id_row and student_id_row[0]:
-                                student_ids_to_ban.add(student_id_row[0])
+                        sid = curs.fetchone()
+                        curs.execute(db_change("select data from user_set where id = ? and name = 'real_name'"), [item])
+                        rname = curs.fetchone()
+                        
+                        if sid and sid[0] and rname and rname[0]:
+                            target_identities.append((sid[0], rname[0]))
+                            final_ban_list.add(item)
+                        else:
+                            # 아이템이 성명인 경우도 처리 (기존 로직 유지 목적)
+                            curs.execute(db_change("select id from user_set where name = 'real_name' and data = ?"), [item])
+                            for user in curs.fetchall():
+                                curs.execute(db_change("select data from user_set where id = ? and name = 'student_id'"), [user[0]])
+                                sid_row = curs.fetchone()
+                                if sid_row and sid_row[0]:
+                                    target_identities.append((sid_row[0], item))
                 
-                for student_id in student_ids_to_ban:
-                    if student_id == '졸업생': continue
-                    curs.execute(db_change("select id from user_set where name = 'student_id' and data = ?"), [student_id])
-                    associated_users = curs.fetchall()
-                    for user in associated_users:
+                for sid, rname in target_identities:
+                    if sid == '졸업생':
+                        # 졸업생인 경우에는 ID가 겹치지 않으므로 해당 성명을 가진 특정 ID만 차단 루프에서 처리 (이미 target_identities에 들어감)
+                        continue
+                    
+                    # 학번과 성명이 모두 일치하는 모든 계정 찾기
+                    curs.execute(db_change("""
+                        select t1.id from user_set as t1
+                        join user_set as t2 on t1.id = t2.id
+                        where t1.name = 'student_id' and t1.data = ?
+                        and t2.name = 'real_name' and t2.data = ?
+                    """), [sid, rname])
+                    for user in curs.fetchall():
                         final_ban_list.add(user[0])
+
+            # 본인 차단 방지
+            my_id = ip_check()
+            if my_id in final_ban_list:
+                final_ban_list.remove(my_id)
+                
+            # 본인과 동일인(학번+성명 일치)인 계정도 차단 대상에서 제외
+            if ip_or_user(my_id) == 0:
+                curs.execute(db_change("select data from user_set where id = ? and name = 'student_id'"), [my_id])
+                my_sid = curs.fetchone()
+                curs.execute(db_change("select data from user_set where id = ? and name = 'real_name'"), [my_id])
+                my_rname = curs.fetchone()
+                
+                if my_sid and my_sid[0] and my_rname and my_rname[0] and my_sid[0] != '졸업생':
+                    curs.execute(db_change("""
+                        select t1.id from user_set as t1
+                        join user_set as t2 on t1.id = t2.id
+                        where t1.name = 'student_id' and t1.data = ?
+                        and t2.name = 'real_name' and t2.data = ?
+                    """), [my_sid[0], my_rname[0]])
+                    for same_user in curs.fetchall():
+                        if same_user[0] in final_ban_list:
+                            final_ban_list.remove(same_user[0])
 
             for name_to_ban in final_ban_list:
                 if regex_get != 'private':

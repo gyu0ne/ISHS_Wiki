@@ -2123,7 +2123,11 @@ def ban_insert(conn, name, end, why, login, blocker, type_d = None, release = 0)
     now_time = get_time()
     band = type_d if type_d else ''
 
-    curs.execute(db_change("update rb set ongoing = '' where block = ? and band = ? and ongoing = '1'"), [name, band])
+    if release == 1:
+        curs.execute(db_change("update rb set ongoing = '' where block = ? and ongoing = '1'"), [name])
+    else:
+        curs.execute(db_change("update rb set ongoing = '' where block = ? and band = ? and ongoing = '1'"), [name, band])
+
     if release == 1:
         curs.execute(db_change("insert into rb (block, end, today, blocker, why, band, ongoing, login) values (?, ?, ?, ?, ?, ?, '', '')"), [
             name,
@@ -2224,15 +2228,21 @@ async def re_error(conn, data):
     curs = conn.cursor()
 
     if data == 0:
-        if (await ban_check())[0] == 1:
-            end = '<div id="opennamu_get_user_info">' + html.escape(ip_check()) + '</div>'
+        ip = ip_check()
+        if (await ban_check(ip))[0] == 1:
+            end = '<div id="opennamu_get_user_info">' + html.escape(ip) + '</div>'
         else:
             end = '<ul><li>' + get_lang(conn, 'authority_error') + '</li></ul>'
+
+        # 운영자/관리자이면 차단된 상태에서도 메뉴 노출 (자가 해제용)
+        menu_admin = 0
+        if await acl_check(tool = 'all_admin_auth', ip = ip) == 0:
+            menu_admin = [['manager', get_lang(conn, 'return')]]
 
         return easy_minify(conn, flask.render_template(skin_check(conn), 
             imp = [get_lang(conn, 'error'), await wiki_set(), await wiki_custom(conn), wiki_css([0, 0])],
             data = '<h2>' + get_lang(conn, 'error') + '</h2>' + end,
-            menu = 0
+            menu = menu_admin
         )), 401
     else:
         title = get_lang(conn, 'error')
