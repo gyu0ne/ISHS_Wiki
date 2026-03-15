@@ -547,21 +547,29 @@ async def check_auto_login():
     if 'id' not in flask.session:
         token_cookie = flask.request.cookies.get('auto_login')
         if token_cookie:
-            user_id, token = token_cookie.split(':', 1)
+            try:
+                user_id, token = token_cookie.split(':', 1)
+            except ValueError:
+                return
+
             with get_db_connect() as conn:
                 curs = conn.cursor()
                 curs.execute(db_change("SELECT token, expires FROM login_token WHERE user_id = ?"), [user_id])
-                db_token_data = curs.fetchone()
-                if db_token_data:
-                    db_token, db_expires = db_token_data
+                
+                valid_token_found = False
+                for db_token, db_expires in curs.fetchall():
                     if datetime.datetime.now() < datetime.datetime.strptime(db_expires, "%Y-%m-%d %H:%M:%S"):
                         hashed_token = hashlib.sha256(token.encode('utf-8')).hexdigest()
                         if hmac.compare_digest(hashed_token, db_token):
-                            flask.session['id'] = user_id
-                            curs.execute(db_change("select data from user_set where id = ? and name = 'user_name'"), [user_id])
-                            user_name_row = curs.fetchone()
-                            if user_name_row:
-                                flask.session['user_name'] = user_name_row[0]
+                            valid_token_found = True
+                            break
+
+                if valid_token_found:
+                    flask.session['id'] = user_id
+                    curs.execute(db_change("select data from user_set where id = ? and name = 'user_name'"), [user_id])
+                    user_name_row = curs.fetchone()
+                    if user_name_row:
+                        flask.session['user_name'] = user_name_row[0]
 
 @app.before_request
 def before_request_func():

@@ -85,7 +85,7 @@ async def login_login():
                     hashed_token = hashlib.sha256(token.encode('utf-8')).hexdigest()
                     expires = datetime.datetime.now() + datetime.timedelta(days=30)
                     
-                    curs.execute(db_change("DELETE FROM login_token WHERE user_id = ?"), [student_id])
+                    curs.execute(db_change("DELETE FROM login_token WHERE user_id = ? AND expires < ?"), [student_id, datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")])
                     curs.execute(db_change("INSERT INTO login_token (user_id, token, expires) VALUES (?, ?, ?)"), [student_id, hashed_token, expires.strftime("%Y-%m-%d %H:%M:%S")])
 
                     resp.set_cookie('auto_login', f'{student_id}:{token}', expires=expires, httponly=True, samesite='Lax')
