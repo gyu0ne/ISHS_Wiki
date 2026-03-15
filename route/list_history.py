@@ -132,13 +132,13 @@ async def list_history(tool = 'history', num = 1, set_type = 'normal', doc_name 
                         user_part = split_res[0]
                         tool_part = '<a href=' + split_res[1]
                         
-                        # 1. 아이콘 등에 걸린 잘못된 기존 링크 제거 (Unlink)
+                        # 기존 잘못된 링크 제거
                         user_part_text = re.sub(r'<a [^>]*>(.*?)</a>', r'\1', user_part)
                         
-                        # 2. 실제 ID 추출 (태그 제거)
+                        # 실제 ID 추출
                         clean_id = re.sub(r'<[^>]*>', '', raw_ip).strip()
                         
-                        # 3. 툴 링크 태그 안에서 아이콘 추출
+                        # 툴 링크 태그 내 아이콘 추출 및 분리
                         r_tool = re.search(r'^(<a [^>]*>)(.*?)(</a>.*)$', tool_part)
                         if r_tool:
                             tag_start = r_tool.group(1)

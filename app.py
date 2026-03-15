@@ -25,7 +25,7 @@ def _is_safe_redirect(target: str) -> bool:
     return (u_test.scheme in ('http', 'https')) and (u_base.netloc == u_test.netloc)
 
 def _default_after_login_url() -> str:
-    # 1순위: 로그인 직전 referrer에서 뽑아놓은 정확한 문서
+    # 로그인 전 이전 문서 확인
     prev_title = flask.session.pop('__login_prev_title', None)
     if isinstance(prev_title, str) and prev_title.strip():
         try:
@@ -33,7 +33,7 @@ def _default_after_login_url() -> str:
         except:
             pass
 
-    # 2순위: view_w가 쌓아둔 최근 문서 세션(문자열인 첫 항목만 사용)
+    # 최근 방문 문서 확인
     docs = flask.session.get('lastest_document') or []
     for item in docs:
         if isinstance(item, str) and item.strip():

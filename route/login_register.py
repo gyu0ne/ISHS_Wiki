@@ -105,7 +105,7 @@ async def login_register_student():
                 return "<h1>DEBUG: Error Code: 0 (Registration disabled)</h1>"
 
         if flask.request.method == 'POST':
-            # 세션에서 인증된 정보 가져오기 (위변조 방지)
+            # 세션 정보 추출
             real_name = str(flask.session.get('riro_name', ''))
             student_id = str(flask.session.get('riro_student_number', ''))
             gen = str(flask.session.get('riro_generation', ''))
@@ -137,7 +137,7 @@ async def login_register_student():
                     menu=[['login', get_lang(conn, 'return')]]
                 ))
 
-            # 학번 검사(졸업생/교사 제외)
+            # 학번 검사
             if not _valid_student_id(student_id):
                 return "<h1>DEBUG: Error Code: 998 (Invalid student ID)</h1>"
 
@@ -157,7 +157,7 @@ async def login_register_student():
             if user_pw != user_repeat:
                 return "<h1>DEBUG: Error Code: 20 (Password mismatch)</h1>"
 
-            # 닉네임 허용 문자 검사 (영문·한글·숫자·._@ 만 허용)
+            # 닉네임 유효성 검사
             if not _USERNAME_RE.match(user_name):
                 return "<h1>DEBUG: Error Code: 28 (Invalid characters in username)</h1>"
 
@@ -196,7 +196,6 @@ async def login_register_student():
             except Exception as e:
                 print(f"Error creating user document for {user_id}: {e}")
 
-            # 성공
             return easy_minify(conn, flask.render_template(
                 skin_check(conn),
                 imp=[get_lang(conn, 'register'), await wiki_set(),
@@ -405,7 +404,7 @@ async def login_register_teacher():
             if user_pw != user_repeat:
                 return "<h1>DEBUG: Error Code: 20 (Password mismatch)</h1>"
 
-            # 닉네임 허용 문자 검사 (영문·한글·숫자·._@ 만 허용)
+            # 닉네임 유효성 검사
             if not _USERNAME_RE.match(user_name):
                 return "<h1>DEBUG: Error Code: 28 (Invalid characters in username)</h1>"
 
