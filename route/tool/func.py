@@ -1862,12 +1862,20 @@ async def ip_pas(raw_ip):
 
     for ip in get_ip:
         if ip_or_user(ip) == 0:
-            if not res[ip].startswith('<a href='):
-                res[ip] = res[ip].replace(
-                    ip + '<a href=', 
-                    '<a href="/w/' + url_pas('user:' + ip) + '">' + ip + '</a><a href=',
-                    1
-                )
+            # Go 백엔드에서 생성된 결과물에서 ' (툴)' 부분과 그 앞부분(아이콘+닉네임)을 분리
+            if '<a href=' in res[ip]:
+                split_res = res[ip].split('<a href=', 1)
+                user_part = split_res[0] # 아이콘 + 닉네임 (가끔 Go가 여기에 링크를 걸기도 함)
+                tool_part = '<a href=' + split_res[1] # 뒷부분 (툴 링크)
+                
+                # user_part 내부에 이미 존재하는 모든 링크 제거 (아이콘에 걸린 잘못된 링크 등)
+                user_part_clean = re.sub(r'<a [^>]*>(.*?)</a>', r'\1', user_part)
+                
+                # 전체를 하나의 링크로 재구성
+                res[ip] = '<a href="/w/' + url_pas('user:' + ip) + '">' + user_part_clean.strip() + '</a>' + tool_part
+            else:
+                # 링크가 아예 없는 경우 (기본 처리)
+                res[ip] = '<a href="/w/' + url_pas('user:' + ip) + '">' + res[ip] + '</a>'
 
     return res[raw_ip] if return_data == 1 else res
         

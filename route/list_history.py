@@ -125,12 +125,22 @@ async def list_history(tool = 'history', num = 1, set_type = 'normal', doc_name 
                 # Check if it looks like the Golang IP output but is actually a user
                 # We need to extract the raw IP first. It is usually "username<a href=..."
                 raw_ip = ip_html.split('<a href=')[0].strip() if '<a href=' in ip_html else ip_html.strip()
-                if ip_or_user(raw_ip) == 0 and not ip_html.startswith('<a href='):
-                    ip_html = ip_html.replace(
-                        ip_html.split('<a href=')[0] + '<a href=',
-                        '<a href="/w/' + url_pas('user:' + raw_ip) + '">' + raw_ip + '</a><a href=',
-                        1
-                    )
+                if ip_or_user(raw_ip) == 0:
+                    # 아이콘과 닉네임 전체를 하나의 링크로 통합
+                    if '<a href=' in ip_html:
+                        split_res = ip_html.split('<a href=', 1)
+                        user_part = split_res[0]
+                        tool_part = '<a href=' + split_res[1]
+                        
+                        # 아이콘 등에 걸린 잘못된 기존 링크 제거
+                        user_part_clean = re.sub(r'<a [^>]*>(.*?)</a>', r'\1', user_part)
+                        
+                        # 실제 ID 추출 (태그 제거)
+                        clean_id = re.sub(r'<[^>]*>', '', raw_ip).strip()
+                        
+                        ip_html = '<a href="/w/' + url_pas('user:' + clean_id) + '">' + user_part_clean.strip() + '</a>' + tool_part
+                    else:
+                        ip_html = '<a href="/w/' + url_pas('user:' + raw_ip) + '">' + ip_html + '</a>'
                 
                 right += f'{ip_html} | '
 
