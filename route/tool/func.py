@@ -1869,13 +1869,21 @@ async def ip_pas(raw_ip):
                 tool_part = '<a href=' + split_res[1] # 뒷부분 (툴 링크)
                 
                 # user_part 내부에 이미 존재하는 모든 링크 제거 (아이콘에 걸린 잘못된 링크 등)
-                user_part_clean = re.sub(r'<a [^>]*>(.*?)</a>', r'\1', user_part)
+                # "체크표시는 무조건 링크가 안걸려야 한다"는 요청에 따라 텍스트화
+                user_part_text = re.sub(r'<a [^>]*>(.*?)</a>', r'\1', user_part)
                 
-                # 전체를 하나의 링크로 재구성
-                res[ip] = '<a href="/w/' + url_pas('user:' + ip) + '">' + user_part_clean.strip() + '</a>' + tool_part
+                # 아이콘/텍스트 중 'ip'(닉네임) 부분만 찾아서 링크를 걸고 나머지는 그대로 둠
+                # 아이콘이 여러 개일 수 있으므로 정규표현식으로 교체
+                user_part_linked = re.sub(
+                    r'(^|.*?)(' + re.escape(ip) + r')(.*|$)',
+                    r'\1<a href="/w/' + url_pas('user:' + ip) + r'">\2</a>\3',
+                    user_part_text
+                )
+                
+                res[ip] = user_part_linked + tool_part
             else:
-                # 링크가 아예 없는 경우 (기본 처리)
-                res[ip] = '<a href="/w/' + url_pas('user:' + ip) + '">' + res[ip] + '</a>'
+                # 링크가 아예 없는 경우 (기본 처리 - 닉네임에만 링크)
+                res[ip] = res[ip].replace(ip, '<a href="/w/' + url_pas('user:' + ip) + '">' + ip + '</a>')
 
     return res[raw_ip] if return_data == 1 else res
         
