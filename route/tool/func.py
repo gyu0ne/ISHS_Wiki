@@ -1862,28 +1862,51 @@ async def ip_pas(raw_ip):
 
     for ip in get_ip:
         if ip_or_user(ip) == 0:
-            # Go 백엔드에서 생성된 결과물에서 ' (툴)' 부분과 그 앞부분(아이콘+닉네임)을 분리
+            # Go 백엔드에서 생성된 결과물 처리
             if '<a href=' in res[ip]:
                 split_res = res[ip].split('<a href=', 1)
                 user_part = split_res[0] # 아이콘 + 닉네임 (가끔 Go가 여기에 링크를 걸기도 함)
                 tool_part = '<a href=' + split_res[1] # 뒷부분 (툴 링크)
                 
-                # user_part 내부에 이미 존재하는 모든 링크 제거 (아이콘에 걸린 잘못된 링크 등)
-                # "체크표시는 무조건 링크가 안걸려야 한다"는 요청에 따라 텍스트화
+                # 1. user_part 내부에 이미 존재하는 모든 링크 제거 (Unlink)
+                # "체크표시는 무조건 링크가 안걸려야 한다"는 요청 반영
                 user_part_text = re.sub(r'<a [^>]*>(.*?)</a>', r'\1', user_part)
                 
-                # 아이콘/텍스트 중 'ip'(닉네임) 부분만 찾아서 링크를 걸고 나머지는 그대로 둠
-                # 아이콘이 여러 개일 수 있으므로 정규표현식으로 교체
-                user_part_linked = re.sub(
-                    r'(^|.*?)(' + re.escape(ip) + r')(.*|$)',
-                    r'\1<a href="/w/' + url_pas('user:' + ip) + r'">\2</a>\3',
-                    user_part_text
-                )
+                # 2. 만약 tool_part 링크 안에 아이콘이 포함되어 시작된다면 밖으로 끄집어냄
+                # 예: <a href="...">✅ admin</a> -> ✅ <a href="...">admin</a>
+                # Go 백엔드가 <a href="...">✅ admin</a> 형태로 줄 경우를 대비
                 
-                res[ip] = user_part_linked + tool_part
+                # 툴 파트에서 링크 태그와 내부 텍스트 분리
+                # <a href="...">텍스트</a> (툴) -> 그룹1: 태그시작, 그룹2: 텍스트, 그룹3: 나머지
+                r_tool = re.search(r'^(<a [^>]*>)(.*?)(</a>.*)$', tool_part)
+                if r_tool:
+                    tag_start = r_tool.group(1)
+                    inner_text = r_tool.group(2)
+                    tag_end_rest = r_tool.group(3)
+                    
+                    # inner_text 내부에 아이콘이 있다면 밖으로 추출
+                    # 모든 비알파벳/비숫자 문자(이모지 등)를 아이콘으로 간주하여 추출 시도
+                    # 하지만 안전하게 '✅', '☑️' 등 특정 아이콘 위주로 먼저 처리하거나
+                    # 닉네임(ip) 앞부분의 모든 텍스트를 아이콘으로 간주
+                    if ip in inner_text:
+                        inner_split = inner_text.split(ip, 1)
+                        inner_icon = inner_split[0]
+                        inner_nick = ip
+                        inner_suffix = inner_split[1]
+                        
+                        # 아이콘은 링크 밖으로, 닉네임만 링크 안으로
+                        res[ip] = user_part_text + inner_icon + tag_start + inner_nick + tag_end_rest
+                    else:
+                        # 닉네임이 툴 파트에 없는 경우 (예외)
+                        res[ip] = user_part_text + tool_part
+                else:
+                    res[ip] = user_part_text + tool_part
             else:
-                # 링크가 아예 없는 경우 (기본 처리 - 닉네임에만 링크)
-                res[ip] = res[ip].replace(ip, '<a href="/w/' + url_pas('user:' + ip) + '">' + ip + '</a>')
+                # 링크가 아예 없는 경우 (기본 처리)
+                if ip in res[ip]:
+                    res[ip] = res[ip].replace(ip, '<a href="/w/' + url_pas('user:' + ip) + '">' + ip + '</a>')
+                else:
+                    res[ip] = '<a href="/w/' + url_pas('user:' + ip) + '">' + res[ip] + '</a>'
 
     return res[raw_ip] if return_data == 1 else res
         
