@@ -25,7 +25,7 @@ def _is_safe_redirect(target: str) -> bool:
     return (u_test.scheme in ('http', 'https')) and (u_base.netloc == u_test.netloc)
 
 def _default_after_login_url() -> str:
-    # 1순위: 로그인 직전 referrer에서 뽑아놓은 정확한 문서
+    # 로그인 전 이전 문서 확인
     prev_title = flask.session.pop('__login_prev_title', None)
     if isinstance(prev_title, str) and prev_title.strip():
         try:
@@ -33,7 +33,7 @@ def _default_after_login_url() -> str:
         except:
             pass
 
-    # 2순위: view_w가 쌓아둔 최근 문서 세션(문자열인 첫 항목만 사용)
+    # 최근 방문 문서 확인
     docs = flask.session.get('lastest_document') or []
     for item in docs:
         if isinstance(item, str) and item.strip():
@@ -864,12 +864,7 @@ app.route('/edit_section/<int:section>/<everything:name>', methods = ['POST', 'G
 app.route('/edit_request/<everything:name>', methods = ['POST', 'GET'])(edit_request)
 app.route('/edit_request_from/<everything:name>', defaults = { 'do_type' : 'from' }, methods = ['POST', 'GET'])(edit_request)
 
-# app.route('/edit_request_rev/<int:rev>/<everything:name>', methods = ['POST', 'GET'])(edit_request)
-
 app.route('/upload', methods = ['POST', 'GET'])(edit_upload)
-
-# 개편 예정
-app.route('/xref_reset/<everything:name>')(edit_backlink_reset)
 
 app.route('/delete/<everything:name>', methods = ['POST', 'GET'])(edit_delete)
 app.route('/delete_file/<everything:name>', methods = ['POST', 'GET'])(edit_delete_file)
@@ -913,9 +908,6 @@ app.route('/change/top_menu', methods = ['GET', 'POST'])(user_setting_top_menu)
 app.route('/change/user_name', methods = ['GET', 'POST'])(user_setting_user_name)
 app.route('/change/user_name/<user_name>', methods = ['GET', 'POST'])(user_setting_user_name)
 app.route('/admin/edit_user_info/<user_name>', methods = ['GET', 'POST'])(admin_edit_user_info)
-# 하위 호환용 S
-app.route('/skin_set')(user_setting_skin_set)
-# 하위 호환용 E
 app.route('/change/skin_set/main', methods = ['POST', 'GET'])(user_setting_skin_set_main)
 
 app.route('/user')(user_info)
@@ -941,25 +933,12 @@ app.route('/star_doc/<everything:name>', defaults = { 'tool' : 'star_doc' })(use
 app.route('/star_doc_from/<everything:name>', defaults = { 'tool' : 'star_doc_from' })(user_watch_list_name)
 
 # Func-login
-# 개편 예정
-
-# login -> login/2fa -> login/2fa/email with login_id
-# register -> register/email -> regiter/email/check with reg_id
-# pass_find -> pass_find/email with find_id
-
-# 테스트용 TEST MODE 절대 주석 푼 상태로 올리지 마시오올리지마시오올리지마시오
-#@app.route('/register', methods=['GET', 'POST'])
-#def riro_login_redirect():
-#    return flask.redirect('/register_form_student')
-
-
 app.route('/login', methods = ['POST', 'GET'])(login_login)
 app.route('/login/2fa', methods = ['POST', 'GET'])(login_login_2fa)
 app.route('/register', methods = ['POST', 'GET'])(riro_login_page)
 app.route('/riro_reauth', methods = ['POST', 'GET'])(riro_reauth)
 app.route('/register_form_student', methods = ['POST', 'GET'])(login_register_student)
 app.route('/register_form_teacher', methods = ['POST', 'GET'])(login_register_teacher)
-# app.route('/register/submit', methods = ['POST', 'GET'])(login_register_submit)  # 기존 가입 경로 차단
 
 app.route('/admin/create_user', methods = ['POST', 'GET'])(admin_create_user)
 app.route('/admin/create_user_submit', methods = ['POST'])(admin_create_user_submit)
@@ -984,12 +963,10 @@ app.route('/bbs/main')(bbs_main)
 app.route('/bbs/make', methods = ['POST', 'GET'])(bbs_make)
 app.route('/bbs/in/<int:bbs_num>')(bbs_in)
 app.route('/bbs/in/<int:bbs_num>/<int:page>')(bbs_in)
-# app.route('/bbs/blind/<int:bbs_num>', methods = ['POST', 'GET'])(bbs_hide)
 app.route('/bbs/delete/<int:bbs_num>', methods = ['POST', 'GET'])(bbs_delete)
 app.route('/bbs/set/<int:bbs_num>', methods = ['POST', 'GET'])(bbs_w_set)
 app.route('/bbs/edit/<int:bbs_num>', methods = ['POST', 'GET'])(bbs_w_edit)
 app.route('/bbs/w/<int:bbs_num>/<int:post_num>', methods = ['POST', 'GET'])(bbs_w_post)
-# app.route('/bbs/blind/<int:bbs_num>/<int:post_num>', methods = ['POST', 'GET'])(bbs_w_hide)
 app.route('/bbs/pinned/<int:bbs_num>/<int:post_num>', methods = ['POST', 'GET'])(bbs_w_pinned)
 app.route('/bbs/delete/<int:bbs_num>/<int:post_num>', methods = ['POST', 'GET'])(bbs_w_delete)
 app.route('/bbs/raw/<int:bbs_num>/<int:post_num>')(view_raw)
@@ -1146,12 +1123,6 @@ app.route('/siganpyo/<grade>/<class_>/<ymd>')(siganpyo)
 app.route('/view/<path:name>')(main_view)
 app.route('/views/<path:name>')(main_view)
 app.route('/image/<path:name>')(main_view_image)
-# 조정 계획 중
-app.route('/<regex("[^.]+\\.(?:txt|xml|ico)"):data>')(main_view_file)
-
-#app.route('/shutdown', methods = ['POST', 'GET'])(main_sys_shutdown)
-#app.route('/restart', defaults = { 'golang_process' : golang_process }, methods = ['POST', 'GET'])(main_sys_restart)
-#app.route('/update', defaults = { 'golang_process' : golang_process }, methods = ['POST', 'GET'])(main_sys_update)
 
 app.errorhandler(404)(main_func_error_404)
 

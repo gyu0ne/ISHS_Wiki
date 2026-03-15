@@ -1862,12 +1862,40 @@ async def ip_pas(raw_ip):
 
     for ip in get_ip:
         if ip_or_user(ip) == 0:
-            if not res[ip].startswith('<a href='):
-                res[ip] = res[ip].replace(
-                    ip + '<a href=', 
-                    '<a href="/w/' + url_pas('user:' + ip) + '">' + ip + '</a><a href=',
-                    1
-                )
+            # Go 백엔드에서 생성된 결과물 처리
+            if '<a href=' in res[ip]:
+                split_res = res[ip].split('<a href=', 1)
+                user_part = split_res[0] 
+                tool_part = '<a href=' + split_res[1]
+                
+                # 기존 잘못된 링크 제거 (아이콘 등)
+                user_part_text = re.sub(r'<a [^>]*>(.*?)</a>', r'\1', user_part)
+                
+                # 링크 태그와 내부 텍스트 분리 및 아이콘 추출
+                r_tool = re.search(r'^(<a [^>]*>)(.*?)(</a>.*)$', tool_part)
+                if r_tool:
+                    tag_start = r_tool.group(1)
+                    inner_text = r_tool.group(2)
+                    tag_end_rest = r_tool.group(3)
+                    
+                    # 닉네임만 링크 내부에 남기고 아이콘을 밖으로 이동
+                    if ip != '' and ip in inner_text:
+                        inner_split = inner_text.split(ip, 1)
+                        inner_icon = inner_split[0]
+                        inner_nick = ip
+                        inner_suffix = inner_split[1]
+                        
+                        res[ip] = user_part_text + inner_icon + tag_start + inner_nick + tag_end_rest
+                    else:
+                        res[ip] = user_part_text + tool_part
+                else:
+                    res[ip] = user_part_text + tool_part
+            else:
+                # 기본 링크 처리
+                if ip in res[ip]:
+                    res[ip] = res[ip].replace(ip, '<a href="/w/' + url_pas('user:' + ip) + '">' + ip + '</a>')
+                else:
+                    res[ip] = '<a href="/w/' + url_pas('user:' + ip) + '">' + res[ip] + '</a>'
 
     return res[raw_ip] if return_data == 1 else res
         
@@ -2123,7 +2151,11 @@ def ban_insert(conn, name, end, why, login, blocker, type_d = None, release = 0)
     now_time = get_time()
     band = type_d if type_d else ''
 
-    curs.execute(db_change("update rb set ongoing = '' where block = ? and band = ? and ongoing = '1'"), [name, band])
+    if release == 1:
+        curs.execute(db_change("update rb set ongoing = '' where block = ? and ongoing = '1'"), [name])
+    else:
+        curs.execute(db_change("update rb set ongoing = '' where block = ? and band = ? and ongoing = '1'"), [name, band])
+
     if release == 1:
         curs.execute(db_change("insert into rb (block, end, today, blocker, why, band, ongoing, login) values (?, ?, ?, ?, ?, ?, '', '')"), [
             name,
@@ -2224,15 +2256,21 @@ async def re_error(conn, data):
     curs = conn.cursor()
 
     if data == 0:
-        if (await ban_check())[0] == 1:
-            end = '<div id="opennamu_get_user_info">' + html.escape(ip_check()) + '</div>'
+        ip = ip_check()
+        if (await ban_check(ip))[0] == 1:
+            end = '<div id="opennamu_get_user_info">' + html.escape(ip) + '</div>'
         else:
             end = '<ul><li>' + get_lang(conn, 'authority_error') + '</li></ul>'
+
+        # 운영자/관리자이면 차단된 상태에서도 메뉴 노출 (자가 해제용)
+        menu_admin = 0
+        if await acl_check(tool = 'all_admin_auth', ip = ip) == 0:
+            menu_admin = [['manager', get_lang(conn, 'return')]]
 
         return easy_minify(conn, flask.render_template(skin_check(conn), 
             imp = [get_lang(conn, 'error'), await wiki_set(), await wiki_custom(conn), wiki_css([0, 0])],
             data = '<h2>' + get_lang(conn, 'error') + '</h2>' + end,
-            menu = 0
+            menu = menu_admin
         )), 401
     else:
         title = get_lang(conn, 'error')
@@ -2242,6 +2280,11 @@ async def re_error(conn, data):
         num = data
         if num == 1:
             data = get_lang(conn, 'no_login_error')
+            data += '''
+                <div style="margin-top:12px; padding:10px; border:1px solid #c7d7e7; background:#e6f2ff; color:#124b6b; border-radius:6px;">
+                    권한을 사용하려면 로그인 상태여야 합니다. <a href="/login">로그인 하러 가기</a>
+                </div>
+            '''
         elif num == 2:
             data = get_lang(conn, 'no_exist_user_error')
         elif num == 3:

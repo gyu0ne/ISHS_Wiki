@@ -61,7 +61,10 @@ function do_insert_user_info() {
                     '<tr>' +
                         '<td>' + lang_data['state'] + '</td>' +
                         '<td>' + ban_state + '</td>' +
-                    '</tr>' +
+                    '</tr>';
+
+            if(data['data']['auth'] !== 'ip') {
+                end_data += '' +
                     '<tr>' +
                         '<td>학번</td>' +
                         '<td>' + opennamu_xss_filter(data['data']['student_id']) + '</td>' +
@@ -81,9 +84,10 @@ function do_insert_user_info() {
                     '<tr>' +
                         '<td>기수</td>' +
                         '<td>' + opennamu_xss_filter(data['data']['generation']) + '</td>' +
-                    '</tr>' +
-                '</table>' +
-            '';
+                    '</tr>';
+            }
+
+            end_data += '</table>';
             
             document.getElementById('opennamu_get_user_info').innerHTML = end_data;
         });

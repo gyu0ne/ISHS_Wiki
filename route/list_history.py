@@ -125,12 +125,39 @@ async def list_history(tool = 'history', num = 1, set_type = 'normal', doc_name 
                 # Check if it looks like the Golang IP output but is actually a user
                 # We need to extract the raw IP first. It is usually "username<a href=..."
                 raw_ip = ip_html.split('<a href=')[0].strip() if '<a href=' in ip_html else ip_html.strip()
-                if ip_or_user(raw_ip) == 0 and not ip_html.startswith('<a href='):
-                    ip_html = ip_html.replace(
-                        ip_html.split('<a href=')[0] + '<a href=',
-                        '<a href="/w/' + url_pas('user:' + raw_ip) + '">' + raw_ip + '</a><a href=',
-                        1
-                    )
+                if ip_or_user(raw_ip) == 0:
+                    # 아이콘에서 링크를 완전히 제거하고 닉네임에만 링크 부여
+                    if '<a href=' in ip_html:
+                        split_res = ip_html.split('<a href=', 1)
+                        user_part = split_res[0]
+                        tool_part = '<a href=' + split_res[1]
+                        
+                        # 기존 잘못된 링크 제거
+                        user_part_text = re.sub(r'<a [^>]*>(.*?)</a>', r'\1', user_part)
+                        
+                        # 실제 ID 추출
+                        clean_id = re.sub(r'<[^>]*>', '', raw_ip).strip()
+                        
+                        # 툴 링크 태그 내 아이콘 추출 및 분리
+                        r_tool = re.search(r'^(<a [^>]*>)(.*?)(</a>.*)$', tool_part)
+                        if r_tool:
+                            tag_start = r_tool.group(1)
+                            inner_text = r_tool.group(2)
+                            tag_end_rest = r_tool.group(3)
+                            
+                            if clean_id != '' and clean_id in inner_text:
+                                inner_split = inner_text.split(clean_id, 1)
+                                inner_icon = inner_split[0]
+                                inner_nick = clean_id
+                                inner_suffix = inner_split[1]
+                                
+                                ip_html = user_part_text + inner_icon + tag_start + inner_nick + tag_end_rest
+                            else:
+                                ip_html = user_part_text + tool_part
+                        else:
+                            ip_html = user_part_text + tool_part
+                    else:
+                        ip_html = ip_html.replace(raw_ip, '<a href="/w/' + url_pas('user:' + raw_ip) + '">' + raw_ip + '</a>')
                 
                 right += f'{ip_html} | '
 

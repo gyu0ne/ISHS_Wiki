@@ -20,7 +20,7 @@ webdriver-manager
 annotated-types==0.7.0
 ansicon==1.89.0
 anyio==4.10.0
-bambu-cli==0.5.10
+# bambu-cli==0.5.10  # Requires Python 3.12+, removed for Python 3.11 compat
 beautifulsoup4==4.13.5
 blessed==1.21.0
 bs4==0.0.2

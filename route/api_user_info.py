@@ -53,7 +53,7 @@ async def api_user_info(user_name = ''):
         else:
             data_result['user_title'] = ''
 
-        # extra info part (학번, 이름, 생년월일, 성별, 기수)
+        # 신상 정보 (학번, 이름 등)
         def get_extra(name):
             curs.execute(db_change("select data from user_set where name = ? and id = ?"), [name, user_name])
             row = curs.fetchone()
@@ -68,7 +68,7 @@ async def api_user_info(user_name = ''):
         data_result['gender'] = get_extra("gender")
         data_result['generation'] = get_extra("generation")
 
-        # 관리자 여부 (뷰어 기준)
+        # 관리자 여부
         if await acl_check(tool='owner_auth') == 0 or await acl_check(tool='ban_auth') == 0:
             data_result['viewer_is_admin'] = 1
         else:
