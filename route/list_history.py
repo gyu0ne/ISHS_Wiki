@@ -145,7 +145,7 @@ async def list_history(tool = 'history', num = 1, set_type = 'normal', doc_name 
                             inner_text = r_tool.group(2)
                             tag_end_rest = r_tool.group(3)
                             
-                            if clean_id in inner_text:
+                            if clean_id != '' and clean_id in inner_text:
                                 inner_split = inner_text.split(clean_id, 1)
                                 inner_icon = inner_split[0]
                                 inner_nick = clean_id

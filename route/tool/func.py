@@ -1888,7 +1888,7 @@ async def ip_pas(raw_ip):
                     # 모든 비알파벳/비숫자 문자(이모지 등)를 아이콘으로 간주하여 추출 시도
                     # 하지만 안전하게 '✅', '☑️' 등 특정 아이콘 위주로 먼저 처리하거나
                     # 닉네임(ip) 앞부분의 모든 텍스트를 아이콘으로 간주
-                    if ip in inner_text:
+                    if ip != '' and ip in inner_text:
                         inner_split = inner_text.split(ip, 1)
                         inner_icon = inner_split[0]
                         inner_nick = ip
