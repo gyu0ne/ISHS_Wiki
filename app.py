@@ -571,18 +571,31 @@ async def check_auto_login():
                     if user_name_row:
                         flask.session['user_name'] = user_name_row[0]
 
+import functools
+
+@functools.lru_cache(maxsize=1024)
+def _verify_googlebot_ip(ip):
+    try:
+        hostname = socket.gethostbyaddr(ip)[0]
+        if hostname.endswith('.googlebot.com') or hostname.endswith('.google.com'):
+            # 이중 조회 (Forward DNS Lookup) - IPv4/IPv6 모두 검증하기 위해 getaddrinfo 사용
+            ips = [info[4][0] for info in socket.getaddrinfo(hostname, None)]
+            if ip in ips:
+                return True
+    except Exception:
+        pass
+    return False
+
 @app.before_request
 def before_request_func():
     # --- 구글봇 확인 로직 ---
     user_agent = flask.request.headers.get('User-Agent', '').lower()
-    if 'googlebot' in user_agent:
-        try:
-            ip = ip_check()
-            hostname = socket.gethostbyaddr(ip)[0]
-            if hostname.endswith('.googlebot.com') or hostname.endswith('.google.com'):
-                return  # 구글봇이면 암호 확인 건너뛰기
-        except Exception:
-            pass  # DNS 조회 실패 시 구글봇이 아닌 것으로 간주
+    google_bots = ['googlebot', 'adsbot-google', 'mediapartners-google']
+    
+    if any(bot in user_agent for bot in google_bots):
+        ip = ip_check()
+        if _verify_googlebot_ip(ip):
+            return  # 검증된 구글봇/광고봇이면 암호 확인 건너뛰기
     # --- ---
     
     db_data = global_some_set_do('wiki_access_password')
