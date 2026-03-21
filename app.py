@@ -511,17 +511,18 @@ def _capture_login_referer():
                         flask.session['__login_prev_title'] = title
     except Exception:
         pass
-from route.view_w import _recent_changes_sidebar_simple_html
+from route.view_w import _recent_changes_sidebar_simple_html, _trending_sidebar_html
 
 @app.context_processor
 def inject_recent_sidebar():
     try:
         with get_db_connect() as conn:
             html_data = _recent_changes_sidebar_simple_html(conn, limit=10)
-        return dict(recent_sidebar=html_data)
+            trending_data = _trending_sidebar_html(conn, limit=10)
+        return dict(recent_sidebar=html_data, trending_sidebar=trending_data)
     except Exception as e:
         print(f"[WARN] recent_sidebar inject failed: {e}")
-        return dict(recent_sidebar='')
+        return dict(recent_sidebar='', trending_sidebar='')
 
 @app.after_request
 def _redirect_login_to_last_doc(response):

@@ -57,7 +57,47 @@ def _recent_changes_sidebar_simple_html(conn, limit=10):
         items.append(f'<li><a href="/w/{url_pas(_title)}">{safe_title}</a> {r_link} {len_html}</li>')
 
     return '<ul class="opennamu_recent_change">' + ''.join(items) + '</ul>'
+def _trending_sidebar_html(conn, limit=10):
+    """
+    실시간 인기 문서 (최근 7일 조회수 기준)
+    """
+    import datetime
+    c = conn.cursor()
+    
+    # 7일 전 시간 계산
+    time_7_days_ago = (datetime.datetime.now() - datetime.timedelta(days=7)).strftime('%Y-%m-%d %H:%M:%S')
+    
+    # 최근 7일간 viewlog 통계 (title별 count)
+    # 인곽위키:대문 및 공식 문서 틀 포함된 문서는 제외
+    c.execute(db_change(
+        "SELECT title, COUNT(*) as cnt "
+        "FROM viewlog "
+        "WHERE date > ? "
+        "AND title != '인곽위키:대문' "
+        "AND title NOT IN (SELECT title FROM data WHERE data LIKE '%틀:인곽위키/공식문서%') "
+        "GROUP BY title "
+        "ORDER BY cnt DESC "
+        "LIMIT ?"
+    ), [time_7_days_ago, 30])
+    
+    data_list = c.fetchall()
+    items = []
+    rank = 1
+    for title, count in data_list:
+        # 10위까지만 노출
+        if rank > 10:
+            break
 
+        safe_title = html.escape(title)
+        
+        # 순위 숫자와 제목만 표시 (이모지 완전 제거)
+        items.append(f'<li><span style="width: 20px; display: inline-block; font-weight: bold; color: var(--muted);">{rank}</span> <a href="/w/{url_pas(title)}">{safe_title}</a></li>')
+        rank += 1
+        
+    if not items:
+        return '<div style="padding: 10px; color: var(--muted); font-size: 0.9em;">최근 데이터가 없습니다.</div>'
+        
+    return '<ul class="opennamu_trending_sidebar" style="list-style: none; padding: 0; margin: 0;">' + ''.join(items) + '</ul>'
 
 
 

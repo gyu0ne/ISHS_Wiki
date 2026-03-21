@@ -26,34 +26,38 @@ def view_log_init(conn):
 
 def check_view_log():
     if flask.request.path.startswith('/w/'):
+        # 로그인 유무에 상관없이 수집
         if flask.session and 'id' in flask.session:
             user_id = flask.session['id']
-            raw_title = flask.request.path[3:] 
+        else:
+            user_id = 'IP:' + ip_check()
 
-            with get_db_connect() as conn:
-                curs = conn.cursor()
-                
-                curs.execute(db_change("select data from data where title = ?"), [raw_title])
-                db_data = curs.fetchall()
-                if not db_data:
-                    return
-                
-                content = db_data[0][0]
-                
-                if content.startswith('#redirect') or content.startswith('#넘겨주기'):
-                    return
+        raw_title = flask.request.path[3:] 
 
-                curs.execute(db_change("select title from viewlog where user_id = ? order by date desc limit 1"), [user_id])
-                last_log = curs.fetchone()
-                
-                curr_time = get_time()
-                ip = ip_check()
+        with get_db_connect() as conn:
+            curs = conn.cursor()
+            
+            curs.execute(db_change("select data from data where title = ?"), [raw_title])
+            db_data = curs.fetchall()
+            if not db_data:
+                return
+            
+            content = db_data[0][0]
+            
+            if content.startswith('#redirect') or content.startswith('#넘겨주기'):
+                return
 
-                if last_log and last_log[0] == raw_title:
-                    return
+            curs.execute(db_change("select title from viewlog where user_id = ? order by date desc limit 1"), [user_id])
+            last_log = curs.fetchone()
+            
+            curr_time = get_time()
+            ip = ip_check()
 
-                curs.execute(db_change("insert into viewlog (user_id, title, date, ip) values (?, ?, ?, ?)"), [user_id, raw_title, curr_time, ip])
-                conn.commit()
+            if last_log and last_log[0] == raw_title:
+                return
+
+            curs.execute(db_change("insert into viewlog (user_id, title, date, ip) values (?, ?, ?, ?)"), [user_id, raw_title, curr_time, ip])
+            conn.commit()
 
 async def view_viewlog(name = None):
     with get_db_connect() as conn:
