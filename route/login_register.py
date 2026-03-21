@@ -201,7 +201,7 @@ async def login_register_student():
                 imp=[get_lang(conn, 'register'), await wiki_set(),
                      await wiki_custom(conn), wiki_css([0, 0])],
                 data='''
-                    <div style="margin-top:12px; padding:10px; border:1px solid #c7e7c7; background:#eaffe6; color:#126b12; border-radius:6px;">
+                    <div class="opennamu_error_box">
                         회원가입에 성공하였습니다. <a href="/login">로그인 하러 가기</a>
                     </div>
                 ''',
@@ -446,7 +446,7 @@ async def login_register_teacher():
                 imp=[get_lang(conn, 'register'), await wiki_set(),
                      await wiki_custom(conn), wiki_css([0, 0])],
                 data='''
-                    <div style="margin-top:12px; padding:10px; border:1px solid #c7e7c7; background:#eaffe6; color:#126b12; border-radius:6px;">
+                    <div class="opennamu_error_box">
                         회원가입에 성공하였습니다. <a href="/login">로그인 하러 가기</a>
                     </div>
                 ''',

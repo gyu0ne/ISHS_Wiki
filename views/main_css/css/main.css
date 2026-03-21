@@ -1121,3 +1121,18 @@ div#edited_time {
 .autocomplete-items li a:hover {
     background-color: #f0f0f0;
 }
+
+.opennamu_error_box {
+    margin-top: 12px;
+    padding: 10px;
+    border: 1px solid var(--success-border, #c7e7c7);
+    background: var(--success-bg, #eaffe6);
+    color: var(--success-text, #126b12);
+    border-radius: 6px;
+    word-break: keep-all;
+}
+
+.opennamu_error_box a {
+    white-space: nowrap;
+    font-weight: bold;
+}

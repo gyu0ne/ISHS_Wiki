@@ -2281,7 +2281,7 @@ async def re_error(conn, data):
         if num == 1:
             data = get_lang(conn, 'no_login_error')
             data += '''
-                <div style="margin-top:12px; padding:10px; border:1px solid #c7d7e7; background:#e6f2ff; color:#124b6b; border-radius:6px;">
+                <div class="opennamu_error_box">
                     권한을 사용하려면 로그인 상태여야 합니다. <a href="/login">로그인 하러 가기</a>
                 </div>
             '''
