@@ -1133,6 +1133,13 @@ app.route('/bob/<date>')(bob)
 app.route('/siganpyo')(siganpyo)
 app.route('/siganpyo/<grade>/<class_>/<ymd>')(siganpyo)
 
+# root static files
+app.route('/ads.txt', defaults = { 'data' : 'ads.txt' })(main_view_file)
+app.route('/robots.txt', defaults = { 'data' : 'robots.txt' })(main_view_file)
+app.route('/sitemap.xml', defaults = { 'data' : 'sitemap.xml' })(main_view_file)
+app.route('/sitemaps.xml', defaults = { 'data' : 'sitemaps.xml' })(main_view_file)
+app.route('/<regex("sitemap_[0-9]+\\.xml"):data>')(main_view_file)
+
 # views -> view
 app.route('/view/<path:name>')(main_view)
 app.route('/views/<path:name>')(main_view)
