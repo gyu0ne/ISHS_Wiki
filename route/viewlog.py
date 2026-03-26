@@ -34,6 +34,22 @@ def check_view_log():
 
         raw_title = flask.request.path[3:] 
 
+        # 세션을 활용한 문서별 조회수 도배 방지 (최근 3개 문서 기억하여 DB 접근 차단)
+        last_views = flask.session.get('last_viewed_docs', [])
+        if raw_title in last_views:
+            return
+        
+        last_views.append(raw_title)
+        flask.session['last_viewed_docs'] = last_views[-3:]
+
+        # 세션을 활용한 전체 조회수 도배 방지 (1초 연속 요청 무시)
+        import time
+        last_view_time = flask.session.get('last_view_time', 0)
+        curr_time_sec = time.time()
+        if curr_time_sec - last_view_time < 1:
+            return
+        flask.session['last_view_time'] = curr_time_sec
+
         with get_db_connect() as conn:
             curs = conn.cursor()
             
