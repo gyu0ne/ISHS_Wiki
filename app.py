@@ -574,18 +574,30 @@ async def check_auto_login():
 
 import functools
 
-@functools.lru_cache(maxsize=1024)
-def _verify_googlebot_ip(ip):
+from concurrent.futures import ThreadPoolExecutor, TimeoutError
+
+_dns_executor = ThreadPoolExecutor(max_workers=5)
+
+def _do_dns_lookup(ip):
     try:
         hostname = socket.gethostbyaddr(ip)[0]
         if hostname.endswith('.googlebot.com') or hostname.endswith('.google.com'):
-            # 이중 조회 (Forward DNS Lookup) - IPv4/IPv6 모두 검증하기 위해 getaddrinfo 사용
             ips = [info[4][0] for info in socket.getaddrinfo(hostname, None)]
             if ip in ips:
                 return True
     except Exception:
         pass
     return False
+
+@functools.lru_cache(maxsize=1024)
+def _verify_googlebot_ip(ip):
+    try:
+        future = _dns_executor.submit(_do_dns_lookup, ip)
+        return future.result(timeout=1.5)
+    except TimeoutError:
+        return False
+    except Exception:
+        return False
 
 @app.before_request
 def before_request_func():
