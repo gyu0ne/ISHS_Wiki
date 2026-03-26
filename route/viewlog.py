@@ -1,4 +1,6 @@
 from .tool.func import *
+import flask
+import time
 import html
 
 ALLOW_NON_ADMIN_USER_VIEWLOG = False
@@ -24,6 +26,11 @@ def view_log_init(conn):
         curs.execute(db_change("create table viewlog (user_id text, title text, date text, ip text)"))
         curs.execute(db_change("create index viewlog_index on viewlog (user_id)"))
 
+    try:
+        curs.execute(db_change("create index viewlog_date_index on viewlog (date)"))
+    except:
+        pass
+
 def check_view_log():
     if flask.request.path.startswith('/w/'):
         # 로그인 유무에 상관없이 수집
@@ -43,8 +50,11 @@ def check_view_log():
         flask.session['last_viewed_docs'] = last_views[-3:]
 
         # 세션을 활용한 전체 조회수 도배 방지 (1초 연속 요청 무시)
-        import time
-        last_view_time = flask.session.get('last_view_time', 0)
+        try:
+            last_view_time = float(flask.session.get('last_view_time', 0))
+        except:
+            last_view_time = 0.0
+            
         curr_time_sec = time.time()
         if curr_time_sec - last_view_time < 1:
             return

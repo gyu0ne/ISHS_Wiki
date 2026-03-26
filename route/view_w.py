@@ -1,4 +1,7 @@
 from .tool.func import *
+import flask
+import time
+import datetime
 import html
 import re
 
@@ -57,20 +60,20 @@ def _recent_changes_sidebar_simple_html(conn, limit=10):
         items.append(f'<li><a href="/w/{url_pas(_title)}">{safe_title}</a> {r_link} {len_html}</li>')
 
     return '<ul class="opennamu_recent_change">' + ''.join(items) + '</ul>'
-_trending_cache = {"time": 0, "html": ""}
+_trending_cache = {"time": 0.0, "html": ""}
 
 def _trending_sidebar_html(conn, limit=10):
     """
     실시간 인기 문서 (최근 1일 조회수 기준, 캐싱 적용)
     """
-    import datetime
-    import time
-    
     global _trending_cache
     now_time = time.time()
     # 5분(300초) 캐시 적용으로 F5 새로고침 서버 폭주 방지
-    if now_time - _trending_cache["time"] < 300 and _trending_cache["html"]:
-        return _trending_cache["html"]
+    try:
+        if now_time - float(_trending_cache["time"]) < 300 and _trending_cache["html"]:
+            return _trending_cache["html"]
+    except:
+        pass
 
     c = conn.cursor()
     
@@ -84,7 +87,6 @@ def _trending_sidebar_html(conn, limit=10):
         "FROM viewlog "
         "WHERE date > ? "
         "AND title != '인곽위키:대문' "
-        "AND title NOT IN (SELECT title FROM data WHERE data LIKE '%틀:인곽위키/공식문서%') "
         "GROUP BY title "
         "ORDER BY cnt DESC "
         "LIMIT ?"
@@ -97,6 +99,11 @@ def _trending_sidebar_html(conn, limit=10):
         # 10위까지만 노출
         if rank > 10:
             break
+
+        # 고속 index 검색으로 공식 문서 제외 확인
+        c.execute(db_change("SELECT 1 FROM back WHERE link = ? AND title = '틀:인곽위키/공식문서' AND type = 'include' LIMIT 1"), [title])
+        if c.fetchone():
+            continue
 
         safe_title = html.escape(title)
         
