@@ -36,6 +36,14 @@ def view_log_init(conn):
     except:
         pass
 
+    # 핵심 데이터 테이블 인덱스 자동 생성 (서버 가동 시 자동 최적화)
+    try:
+        curs.execute(db_change("create index if not exists data_index on data (title)"))
+        curs.execute(db_change("create index if not exists back_index on back (title)"))
+        curs.execute(db_change("create index if not exists back_link_index on back (link)"))
+    except:
+        pass
+
 def check_view_log():
     if flask.request.path.startswith('/w/'):
         # 로그인 유무에 상관없이 수집
