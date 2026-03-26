@@ -90,7 +90,7 @@ def _trending_sidebar_html(conn, limit=10):
         "GROUP BY title "
         "ORDER BY cnt DESC "
         "LIMIT ?"
-    ), [time_1_day_ago, 30])
+    ), [time_1_day_ago, 100])
     
     data_list = c.fetchall()
     items = []

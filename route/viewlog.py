@@ -31,6 +31,11 @@ def view_log_init(conn):
     except:
         pass
 
+    try:
+        curs.execute(db_change("create index viewlog_user_date_index on viewlog (user_id, date)"))
+    except:
+        pass
+
 def check_view_log():
     if flask.request.path.startswith('/w/'):
         # 로그인 유무에 상관없이 수집
