@@ -148,7 +148,6 @@ with get_db_connect(init_mode = True) as conn:
                         curs.execute(db_change('create table ' + create_table + '(test ' + field_text + ' default (" "))'))
                         db_pass = 1
                     except Exception as e:
-                        # print(e)
                         pass
 
                 if db_pass == 0:
@@ -156,7 +155,6 @@ with get_db_connect(init_mode = True) as conn:
                         curs.execute(db_change('create table ' + create_table + '(test ' + field_text + ' default "")'))
                         db_pass = 1
                     except Exception as e:
-                        # print(e)
                         pass
 
                 if db_pass == 0:
@@ -164,7 +162,6 @@ with get_db_connect(init_mode = True) as conn:
                         curs.execute(db_change('create table ' + create_table + '(test ' + field_text + ')'))
                         db_pass = 1
                     except Exception as e:
-                        # print(e)
                         pass
 
                 if db_pass == 0:
@@ -172,7 +169,6 @@ with get_db_connect(init_mode = True) as conn:
                         curs.execute(db_change("alter table " + create_table + " add column " + create + " " + field_text + " default ('')"))
                         db_pass = 1
                     except Exception as e:
-                        # print(e)
                         pass
 
                 if db_pass == 0:
@@ -180,7 +176,6 @@ with get_db_connect(init_mode = True) as conn:
                         curs.execute(db_change("alter table " + create_table + " add column " + create + " " + field_text + " default ''"))
                         db_pass = 1
                     except Exception as e:
-                        # print(e)
                         pass
 
                 if db_pass == 0:
@@ -188,7 +183,6 @@ with get_db_connect(init_mode = True) as conn:
                         curs.execute(db_change("alter table " + create_table + " add column " + create + " " + field_text))
                         db_pass = 1
                     except Exception as e:
-                        # print(e)
                         pass
 
                 if db_pass == 0:
