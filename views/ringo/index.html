@@ -42,7 +42,7 @@
   <script defer src="/views/ringo/js/main.js.cache_v3"></script>
   <script defer src="/views/ringo/js/sidebar.js.cache_v7"></script>
   <script defer src="/views/ringo/js/skin_set.js.cache_v9"></script>
-  <script defer src="/views/main_css/js/func/autocomplete.js"></script>
+  <script defer src="/views/main_css/js/func/autocomplete.js" charset="UTF-8"></script>
   
   <!-- AdSense - defer로 DOM 로드 후 실행 -->
   <script defer src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-2375716944179194"
@@ -933,39 +933,76 @@
         color: #fd7e14 !important;
         text-decoration: underline;
     }
+    {% endif %}
+  </style>
 
-    /* Autocomplete 드롭다운 스타일 */
-    .namu .autocomplete-items,
-    .namu #autocomplete_results_not_mobile,
-    .namu #autocomplete_results_mobile {
+  <style>
+    /* 자동완성 스타일 시작 - 공용 */
+    .topbar, .search {
+        overflow: visible !important;
+    }
+
+    .autocomplete-items#autocomplete_results_not_mobile,
+    .autocomplete-items#autocomplete_results_mobile,
+    .autocomplete-items {
+      position: absolute;
+      z-index: 10001; /* 툴팁보다 높게 설정 */
+      width: 100%;
+      background-color: #fff;
+      border: 1px solid #ddd;
+      border-radius: 12px;
+      margin-top: 8px;
+      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+      list-style: none;
+      padding: 5px 0;
+      margin: 0;
+      max-height: 400px;
+      overflow-y: auto;
+      left: 0;
+      top: 100%;
+      display: none;
+    }
+
+    .autocomplete-items ul {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+    }
+
+    .autocomplete-items li a {
+      display: block;
+      padding: 12px 18px;
+      color: #111827 !important;
+      text-decoration: none !important;
+      font-size: 14px;
+      font-weight: 500;
+      transition: background 0.2s;
+    }
+
+    .autocomplete-items li a:hover {
+      background-color: #f3f4f6;
+    }
+
+    /* 다크 모드 대응 */
+    {% if request.cookies.get('main_css_darkmode', '') == '1' %}
+    .namu .autocomplete-items#autocomplete_results_not_mobile,
+    .namu .autocomplete-items#autocomplete_results_mobile,
+    .namu .autocomplete-items {
       background-color: #1f2023;
-      border-color: #444;
-      box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+      border-color: #374151;
+      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.4);
     }
 
-    .namu .autocomplete-items li a,
-    .namu .autocomplete-items ul li a,
-    .namu #autocomplete_results_not_mobile li a,
-    .namu #autocomplete_results_mobile li a,
-    .namu #autocomplete_results_not_mobile ul li a,
-    .namu #autocomplete_results_mobile ul li a {
-      color: white !important;
-      text-decoration: none !important;
-      border-bottom-color: #444;
+    .namu .autocomplete-items li a {
+      color: #f3f4f6 !important;
     }
 
-    .namu .autocomplete-items li a:hover,
-    .namu .autocomplete-items ul li a:hover,
-    .namu #autocomplete_results_not_mobile li a:hover,
-    .namu #autocomplete_results_mobile li a:hover,
-    .namu #autocomplete_results_not_mobile ul li a:hover,
-    .namu #autocomplete_results_mobile ul li a:hover {
-      background-color: #333333;
-      color: white !important;
-      text-decoration: none !important;
+    .namu .autocomplete-items li a:hover {
+      background-color: #374151;
     }
+    {% endif %}
+    /* 자동완성 스타일 끝 */
 
-{% endif %}
 
     .footnote_tooltip {
       position: absolute;
