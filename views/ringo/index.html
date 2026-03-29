@@ -527,7 +527,7 @@
       font-size: 13px
     }
 
-    @media (max-width:860px) {
+    @media (max-width:640px) {
       .container {
         grid-template-columns: 1fr;
         column-gap: 0;
@@ -631,26 +631,12 @@
         padding: 6px 10px;
       }
 
-      :root {
-        --bg: #ffffff;
-        --edge-x: 0px;
-      }
-
-      body.namu {
-        background: #ffffff;
-      }
-
+      /* 980px에서는 사이드바가 보일 수 있도록 컨테이너 스타일 유지 */
       .container {
-        margin: 0 !important;
-        padding: 0 !important;
-        max-width: 100% !important;
-        display: block !important;
+        column-gap: 12px;
       }
 
       .main {
-        border-radius: 0 !important;
-        box-shadow: none !important;
-        border: none !important;
         min-height: calc(100vh - 64px);
       }
 
@@ -666,14 +652,32 @@
       }
     }
 
-    @media (orientation: portrait) {
-      .container {
-        grid-template-columns: 1fr;
-        column-gap: 0;
+    /* 스마트폰 등 소형 기기에서만 모바일 UI(화이트 배경, 1열) 적용 */
+    @media (max-width:640px) {
+      :root {
+        --bg: #ffffff;
+        --edge-x: 0px;
       }
 
+      body.namu {
+        background: #ffffff;
+      }
+
+      .container {
+        margin: 0 !important;
+        padding: 0 !important;
+        max-width: 100% !important;
+        display: block !important;
+      }
+      
       aside.do_fixed {
-        display: none;
+        display: none !important;
+      }
+    }
+
+    @media (max-width: 480px) {
+      aside.do_fixed {
+        display: none !important;
       }
     }
 
@@ -947,6 +951,7 @@
     .autocomplete-items {
       position: absolute;
       z-index: 10001; /* 툴팁보다 높게 설정 */
+      min-width: 280px;
       width: 100%;
       background-color: #fff;
       border: 1px solid #ddd;
@@ -958,7 +963,7 @@
       margin: 0;
       max-height: 400px;
       overflow-y: auto;
-      left: 0;
+      right: 0;
       top: 100%;
       display: none;
     }
@@ -1003,6 +1008,16 @@
       text-decoration: none !important;
     }
     {% endif %}
+
+    @media (max-width: 640px) {
+      .autocomplete-items#autocomplete_results_mobile {
+        left: 50% !important;
+        right: auto !important;
+        transform: translateX(-50%) !important;
+        min-width: 280px !important;
+        max-width: 95vw !important;
+      }
+    }
     /* 자동완성 스타일 끝 */
 
 

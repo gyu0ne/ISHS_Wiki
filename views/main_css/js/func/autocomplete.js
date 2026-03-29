@@ -12,8 +12,12 @@ function opennamu_do_autocomplete(search_input_id, result_div_id) {
 
             const query = search_input.value;
             if (query === '') {
-                result_div.innerHTML = '';
-                result_div.style.display = 'none';
+                if (window.innerWidth <= 640) {
+                    showTrendingOnMobile();
+                } else {
+                    result_div.innerHTML = '';
+                    result_div.style.display = 'none';
+                }
                 return;
             }
 
@@ -46,8 +50,34 @@ function opennamu_do_autocomplete(search_input_id, result_div_id) {
             }, 50);
         };
 
+        const showTrendingOnMobile = function() {
+            if (search_input.value === '' && window.innerWidth <= 640) {
+                const trending_sidebar = document.querySelector('.opennamu_trending_sidebar');
+                if (trending_sidebar) {
+                    let html = '<ul style="list-style: none; padding: 0; margin: 0;">';
+                    const items = trending_sidebar.querySelectorAll('li');
+                    items.forEach((item, index) => {
+                        const link = item.querySelector('a');
+                        if (link) {
+                            const title = link.textContent;
+                            const href = link.getAttribute('href');
+                            html += `<li><a href="${href}" style="display: flex; align-items: center; padding: 12px 18px; text-decoration: none; color: var(--text); font-size: 14px;">
+                                <span style="width: 20px; font-weight: 800; color: var(--muted); margin-right: 8px;">${index + 1}</span>
+                                <span style="font-weight: 500; white-space: nowrap;">${opennamu_xss_filter(title)}</span>
+                            </a></li>`;
+                        }
+                    });
+                    html += '</ul>';
+                    result_div.innerHTML = html;
+                    result_div.style.display = 'block';
+                }
+            }
+        };
+
         // 한글 입력을 위해 input 이벤트 하나만 사용 (isComposing 제거)
         search_input.addEventListener('input', fetchResults);
+        search_input.addEventListener('focus', showTrendingOnMobile);
+        search_input.addEventListener('click', showTrendingOnMobile);
 
         document.addEventListener('click', function(event) {
             if (!search_input.contains(event.target) && !result_div.contains(event.target)) {
