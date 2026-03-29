@@ -178,9 +178,23 @@ async def login_register_student():
                 return "<h1>DEBUG: Error Code: 10 (Username already exists)</h1>"
 
             # 생성 & 프로필 저장
-            add_user(conn, user_id, user_pw)
             _save_profile_extra(conn, user_id, student_id, real_name,
                                 birth_y, birth_m, birth_d, gender, user_name, gen)
+
+            # === 자동 밴 체크 (학번 + 실명 기반) ===
+            curs.execute(db_change("""
+                select t2.end, t2.why, t2.login from user_set as t1
+                join rb as t2 on t1.id = t2.block
+                join user_set as t3 on t1.id = t3.id
+                where t1.name = 'student_id' and t1.data = ?
+                and t3.name = 'real_name' and t3.data = ?
+                and t2.ongoing = '1'
+                order by t2.today desc
+                limit 1
+            """), [student_id, real_name])
+            db_ban = curs.fetchone()
+            if db_ban:
+                ban_insert(conn, user_id, db_ban[0], '자동 ban' if db_ban[1] == '' else db_ban[1] + ' (자동 ban)', db_ban[2], '자동 ban', None, 0)
 
             # 사용자 문서
             try:
@@ -424,9 +438,23 @@ async def login_register_teacher():
             if curs.fetchall():
                 return "<h1>DEBUG: Error Code: 10 (Username already exists)</h1>"
 
-            add_user(conn, user_id, user_pw)
             _save_profile_extra(conn, user_id, student_id, real_name,
                                 birth_y, birth_m, birth_d, gender, user_name, gen)
+
+            # === 자동 밴 체크 (학번 + 실명 기반) ===
+            curs.execute(db_change("""
+                select t2.end, t2.why, t2.login from user_set as t1
+                join rb as t2 on t1.id = t2.block
+                join user_set as t3 on t1.id = t3.id
+                where t1.name = 'student_id' and t1.data = ?
+                and t3.name = 'real_name' and t3.data = ?
+                and t2.ongoing = '1'
+                order by t2.today desc
+                limit 1
+            """), [student_id, real_name])
+            db_ban = curs.fetchone()
+            if db_ban:
+                ban_insert(conn, user_id, db_ban[0], '자동 ban' if db_ban[1] == '' else db_ban[1] + ' (자동 ban)', db_ban[2], '자동 ban', None, 0)
 
             try:
                 doc_title = f"{html.escape(real_name)}(교사)"
