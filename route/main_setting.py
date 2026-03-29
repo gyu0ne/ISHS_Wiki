@@ -12,6 +12,7 @@ async def main_setting():
             ['404_page', get_lang(conn, '404_page_setting')],
             ['external', get_lang(conn, 'ext_api_req_set')],
             ['head', get_lang(conn, 'main_head')],
+            ['ads', '광고 관리'],
             ['sitemap_set', get_lang(conn, 'sitemap_management')],
             ['robot', 'robots.txt']
         ]

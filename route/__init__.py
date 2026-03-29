@@ -84,6 +84,7 @@ from route.main_setting_sitemap import main_setting_sitemap
 from route.main_setting_sitemap_set import main_setting_sitemap_set
 from route.main_setting_skin_set import main_setting_skin_set
 from route.main_setting_top_menu import main_setting_top_menu
+from route.main_setting_ads import main_setting_ads
 from route.main_setting_email_test import main_setting_email_test
 
 from route.main_sys_restart import main_sys_restart

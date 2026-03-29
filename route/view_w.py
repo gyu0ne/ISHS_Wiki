@@ -565,14 +565,37 @@ async def view_w(name = '대문', do_type = ''):
             view_count = curs.fetchall()
             view_count = view_count[0][0] if view_count else 0
 
-        ad_banner = '''
-        <div style="text-align:center; margin: 40px 0;">
-            <a href="https://forms.gle/5FmWoxERVCw9hEbo8" target="_blank" rel="noopener noreferrer">
-                <img src="/image/ad1.png" alt="ad1" style="max-width:90%; height:auto; border-radius:12px; box-shadow:0 4px 12px rgba(0,0,0,0.2); transition:transform 0.2s;">
-            </a>
-        </div>
-        <hr class="main_hr">
-        '''
+        # === 광고 노출 (동적 랜덤) ===
+        curs.execute(db_change('select data from other where name = "ads_list"'))
+        db_ads = curs.fetchall()
+        ad_banner = ''
+        if db_ads and db_ads[0]:
+            import random
+            ads = [line.strip() for line in db_ads[0][0].split('\n') if line.strip() and '|' in line]
+            if ads:
+                selected_ad = random.choice(ads)
+                ad_parts = [p.strip() for p in selected_ad.split('|', 1)]
+                ad_img = ad_parts[0]
+                ad_link = ad_parts[1]
+                ad_banner = f'''
+                <div style="text-align:center; margin: 40px 0;">
+                    <a href="{ad_link}" target="_blank" rel="noopener noreferrer">
+                        <img src="{ad_img}" style="max-width:90%; height:auto; border-radius:12px; box-shadow:0 4px 12px rgba(0,0,0,0.2); transition:transform 0.2s;">
+                    </a>
+                </div>
+                <hr class="main_hr">
+                '''
+        
+        if not ad_banner:
+            # 설정이 없거나 오류 시 기본값
+            ad_banner = '''
+            <div style="text-align:center; margin: 40px 0;">
+                <a href="https://forms.gle/5FmWoxERVCw9hEbo8" target="_blank" rel="noopener noreferrer">
+                    <img src="/image/ad1.png" alt="ad1" style="max-width:90%; height:auto; border-radius:12px; box-shadow:0 4px 12px rgba(0,0,0,0.2); transition:transform 0.2s;">
+                </a>
+            </div>
+            <hr class="main_hr">
+            '''
         div = file_data + user_doc + ad_banner + end_data + category_total
          
         if doc_type == '':
