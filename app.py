@@ -472,8 +472,8 @@ async def do_every_day():
                 curs.execute(db_change("update user_set set data = '☑️' where name = 'user_title' and data = '✅' and id = ?"), [for_a[0]])
 
         # === 추가: viewlog 관리 (최신 200개만 남기고 삭제) ===
-        # rowid를 지원하는 SQLite 환경을 고려하여 최신 200개의 rowid를 제외하고 삭제
-        curs.execute(db_change("delete from viewlog where rowid not in (select rowid from viewlog order by date desc limit 200)"))
+        # 인덱스(date)를 활용해 최신 200개를 제외한 과거 기록을 효율적으로 삭제
+        curs.execute(db_change("DELETE FROM viewlog WHERE date < (SELECT date FROM viewlog ORDER BY date DESC LIMIT 1 OFFSET 200)"))
         conn.commit()
         # ===============================================
 

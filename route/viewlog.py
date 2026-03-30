@@ -44,9 +44,12 @@ def view_log_init(conn):
 
     # 핵심 데이터 테이블 인덱스 자동 생성 (서버 가동 시 자동 최적화)
     try:
-        curs.execute(db_change("create index if not exists data_index on data (title)"))
-        curs.execute(db_change("create index if not exists back_index on back (title)"))
-        curs.execute(db_change("create index if not exists back_link_index on back (link)"))
+        curs.execute(db_change("CREATE INDEX IF NOT EXISTS data_index ON data (title)"))
+        curs.execute(db_change("CREATE INDEX IF NOT EXISTS back_index ON back (title)"))
+        curs.execute(db_change("CREATE INDEX IF NOT EXISTS back_link_index ON back (link)"))
+        # viewlog 검색 최적화를 위한 필수 인덱스
+        curs.execute(db_change("CREATE INDEX IF NOT EXISTS viewlog_user_date_idx ON viewlog (user_id, date)"))
+        curs.execute(db_change("CREATE INDEX IF NOT EXISTS viewlog_date_title_idx ON viewlog (date, title)"))
     except:
         pass
 
@@ -82,16 +85,17 @@ def check_view_log():
         with get_db_connect() as conn:
             curs = conn.cursor()
             
-            curs.execute(db_change("select data from data where title = ?"), [raw_title])
-            db_data = curs.fetchall()
+            # 성능 최적화: 문서 전체가 아닌 리다이렉트 여부만 확인 (SUBSTR 활용)
+            curs.execute(db_change("select SUBSTR(data, 1, 100) from data where title = ?"), [raw_title])
+            db_data = curs.fetchone()
             if not db_data:
                 return
             
-            content = db_data[0][0]
-            
-            if content.startswith('#redirect') or content.startswith('#넘겨주기'):
+            head_content = db_data[0].lower()
+            if head_content.startswith('#redirect') or head_content.startswith('#넘겨주기'):
                 return
 
+            # 인덱스를 활용한 최신 기록 조회
             curs.execute(db_change("select title from viewlog where user_id = ? order by date desc limit 1"), [user_id])
             last_log = curs.fetchone()
             

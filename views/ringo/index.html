@@ -537,8 +537,31 @@
         display: none;
       }
 
+      /* 헤더 요소 간 간격 축소 */
+      .topbar, .topbar__left, .nav {
+        gap: 8px !important;
+      }
+      
+      /* 라벨만 숨기고 아이콘은 유지하여 공간 확보 */
+      .nav .label {
+        display: none !important;
+      }
+
+      .topbar__right {
+        flex: 1 !important;
+        gap: 8px !important;
+        margin-left: 8px !important;
+      }
+
+      .search {
+        flex: 1 !important;
+        width: auto !important;
+        max-width: none !important;
+      }
+
       .search input {
-        width: clamp(120px, 40vw, 220px)
+        width: 100% !important;
+        max-width: none !important;
       }
 
       .actions {
@@ -564,7 +587,16 @@
       text-wrap: pretty;
     }
 
-    @media (max-width:980px) {
+    @media (max-width:1024px) {
+      :root {
+        --edge-x: clamp(12px, 3.5vw, 40px); /* 가로 간격 대폭 축소 */
+      }
+      
+      .container {
+        max-width: 96vw; /* 전체 너비 확장 */
+        column-gap: 12px;
+      }
+
       .topbar {
         gap: 12px;
       }
@@ -631,11 +663,7 @@
         padding: 6px 10px;
       }
 
-      /* 980px에서는 사이드바가 보일 수 있도록 컨테이너 스타일 유지 */
-      .container {
-        column-gap: 12px;
-      }
-
+      /* 1024px 이하에서는 사이드바가 보일 수 있도록 컨테이너 스타일 유지 */
       .main {
         min-height: calc(100vh - 64px);
       }
