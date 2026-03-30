@@ -112,7 +112,7 @@ def _trending_sidebar_html(conn, limit=10):
         rank += 1
         
     if not items:
-        res = '<div style="padding: 10px; color: var(--muted); font-size: 0.9em;">최근 데이터가 없습니다.</div>'
+        res = '<div class="opennamu_trending_sidebar" style="padding: 10px; color: var(--muted); font-size: 0.9em;">최근 데이터가 없습니다.</div>'
     else:
         res = '<ul class="opennamu_trending_sidebar" style="list-style: none; padding: 0; margin: 0;">' + ''.join(items) + '</ul>'
 

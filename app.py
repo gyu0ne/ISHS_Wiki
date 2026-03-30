@@ -1175,6 +1175,16 @@ signal.signal(signal.SIGINT, signal_handler)
 
 atexit.register(terminate_golang)
 
+@app.route('/api/trending')
+def api_trending():
+    try:
+        from route.view_w import _trending_sidebar_html
+        with get_db_connect() as conn:
+            data = _trending_sidebar_html(conn, limit=10)
+        return flask.jsonify({'response': 'ok', 'data': data})
+    except Exception as e:
+        return flask.jsonify({'response': 'error', 'data': str(e)})
+
 app.wsgi_app = ProxyFix(app.wsgi_app, x_for = 1, x_proto = 1)
 
 if __name__ == "__main__":
