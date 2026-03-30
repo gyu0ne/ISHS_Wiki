@@ -1120,6 +1120,15 @@ def easy_minify(conn, data, tool = None):
     return data
 
 def get_lang_name(conn, tool = ''):
+    # 요청 단위 캐싱 (flask.g 활용)
+    if flask.has_request_context():
+        if not hasattr(flask.g, 'opennamu_lang_name'):
+            flask.g.opennamu_lang_name = {}
+        
+        cache_key = 'default' if tool != 'inter' else 'inter'
+        if cache_key in flask.g.opennamu_lang_name:
+            return flask.g.opennamu_lang_name[cache_key]
+
     curs = conn.cursor()
 
     if tool != 'inter':
@@ -1143,8 +1152,12 @@ def get_lang_name(conn, tool = ''):
     if rep_data:
         lang_name = rep_data[0][0]
     else:
-        lang_name = 'en-US'
-
+        lang_name = 'ko-KR' # 기본값
+        
+    # 캐시 저장
+    if flask.has_request_context():
+        flask.g.opennamu_lang_name['default' if tool != 'inter' else 'inter'] = lang_name
+        
     return lang_name
 
 def get_lang(conn, data, safe = 0):

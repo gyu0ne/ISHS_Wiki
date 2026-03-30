@@ -36,6 +36,12 @@ def view_log_init(conn):
     except:
         pass
 
+    try:
+        # 인기 문서 집계 속도를 위한 (날짜, 제목) 복합 인덱스
+        curs.execute(db_change("create index viewlog_date_title_index on viewlog (date, title)"))
+    except:
+        pass
+
     # 핵심 데이터 테이블 인덱스 자동 생성 (서버 가동 시 자동 최적화)
     try:
         curs.execute(db_change("create index if not exists data_index on data (title)"))

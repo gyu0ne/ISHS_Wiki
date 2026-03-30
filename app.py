@@ -468,10 +468,14 @@ async def do_every_day():
             print('Make sitemap')
 
         # 칭호 관리
-        curs.execute(db_change("select id from user_set where name = 'user_title' and data = '✅'"))
-        for for_a in curs.fetchall():
             if await acl_check('', 'all_admin_auth', '', for_a[0]) == 1:
                 curs.execute(db_change("update user_set set data = '☑️' where name = 'user_title' and data = '✅' and id = ?"), [for_a[0]])
+
+        # === 추가: viewlog 관리 (최신 200개만 남기고 삭제) ===
+        # rowid를 지원하는 SQLite 환경을 고려하여 최신 200개의 rowid를 제외하고 삭제
+        curs.execute(db_change("delete from viewlog where rowid not in (select rowid from viewlog order by date desc limit 200)"))
+        conn.commit()
+        # ===============================================
 
         threading.Timer(60 * 60 * 24, do_every_day).start()
 
@@ -507,12 +511,36 @@ def _capture_login_referer():
         pass
 from route.view_w import _recent_changes_sidebar_simple_html, _trending_sidebar_html
 
+# 사이드바 전역 캐시 (30초)
+_sidebar_global_cache = {
+    "time": 0.0,
+    "recent": "",
+    "trending": ""
+}
+
 @app.context_processor
 def inject_recent_sidebar():
+    global _sidebar_global_cache
+    now_time = time.time()
+    
+    # 30초 캐시 유효 시 DB 접근 없이 즉시 반환
+    if now_time - _sidebar_global_cache["time"] < 30:
+        if _sidebar_global_cache["recent"] or _sidebar_global_cache["trending"]:
+            return dict(
+                recent_sidebar=_sidebar_global_cache["recent"], 
+                trending_sidebar=_sidebar_global_cache["trending"]
+            )
+
     try:
         with get_db_connect() as conn:
             html_data = _recent_changes_sidebar_simple_html(conn, limit=10)
             trending_data = _trending_sidebar_html(conn, limit=10)
+            
+            # 캐시 업데이트
+            _sidebar_global_cache["time"] = now_time
+            _sidebar_global_cache["recent"] = html_data
+            _sidebar_global_cache["trending"] = trending_data
+            
         return dict(recent_sidebar=html_data, trending_sidebar=trending_data)
     except Exception as e:
         print(f"[WARN] recent_sidebar inject failed: {e}")
@@ -539,6 +567,9 @@ def _redirect_login_to_last_doc(response):
 
 @app.before_request
 async def check_auto_login():
+    if 'id' in flask.session or flask.session.get('auto_login_checked'):
+        return
+    
     if 'id' not in flask.session:
         token_cookie = flask.request.cookies.get('auto_login')
         if token_cookie:
@@ -561,6 +592,7 @@ async def check_auto_login():
 
                 if valid_token_found:
                     flask.session['id'] = user_id
+                    flask.session['auto_login_checked'] = True
                     curs.execute(db_change("select data from user_set where id = ? and name = 'user_name'"), [user_id])
                     user_name_row = curs.fetchone()
                     if user_name_row:
@@ -665,12 +697,17 @@ def check_reauth_global():
         user_id = flask.session['id']
         from route.riro_reauth_target import REAUTH_TARGET_GENERATIONS
         
-        with get_db_connect() as conn:
-            curs = conn.cursor()
-            curs.execute("select data from user_set where id = ? and name = 'generation'", [user_id])
-            gen_data = curs.fetchone()
-            
-            if gen_data and gen_data[0].isdigit() and int(gen_data[0]) in REAUTH_TARGET_GENERATIONS:
+        # 세션 캐시 확인
+        gen = flask.session.get('user_generation')
+        reauthed = flask.session.get('user_riro_reauthed')
+        
+        if gen is None or reauthed is None:
+            with get_db_connect() as conn:
+                curs = conn.cursor()
+                curs.execute("select data from user_set where id = ? and name = 'generation'", [user_id])
+                gen_data = curs.fetchone()
+                gen = gen_data[0] if gen_data else ''
+                
                 curs.execute("select data from user_set where id = ? and name = 'riro_reauthed'", [user_id])
                 reauth_data = curs.fetchone()
                 if not reauth_data or reauth_data[0] != '1':

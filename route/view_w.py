@@ -29,19 +29,18 @@ def _recent_changes_sidebar_simple_html(conn, limit=10):
     """
     최근 변경 '사이드바용' 확장 버전:
     문서명 + r번호 + 글자수 증감(녹색/빨강)
+    JOIN을 사용하여 N+1 쿼리 최적화
     """
     c = conn.cursor()
-    c.execute(db_change('select title, id from rc where type = ? order by date desc limit ?'), ['normal', limit])
+    # rc와 history를 JOIN하여 한 번에 가져옴 (성능 최적화)
+    c.execute(db_change(
+        'SELECT h.id, h.title, h.leng '
+        'FROM rc r JOIN history h ON r.title = h.title AND r.id = h.id '
+        'WHERE r.type = ? ORDER BY r.date DESC LIMIT ?'
+    ), ['normal', limit])
+    
     items = []
-    for title, hid in c.fetchall():
-        # history 정보 불러오기
-        c.execute(db_change('select id, title, date, ip, send, leng, hide, type from history where title = ? and id = ?'),
-                  [title, hid])
-        row = c.fetchone()
-        if not row:
-            continue
-        _id, _title, _date, _ip, _msg, _len, _hide, _type = row
-
+    for _id, _title, _len in c.fetchall():
         # 글자수 증감 색상
         if re.search(r'\+', _len):
             len_html = f'<span style="color:green;">({_len})</span>'
@@ -93,21 +92,19 @@ def _trending_sidebar_html(conn, limit=10):
     ), [time_1_day_ago, 100])
     
     data_list = c.fetchall()
+    
+    # 공식 문서 목록 한 번에 가져와서 필터링 (N+1 방지)
+    c.execute(db_change("SELECT link FROM back WHERE title = '틀:인곽위키/공식문서' AND type = 'include'"))
+    official_docs = {row[0] for row in c.fetchall()}
+    official_docs.add('인곽위키:대문')
+
     items = []
     rank = 1
     for title, count in data_list:
-        # 10위까지만 노출
-        if rank > 10:
-            break
-
-        # 고속 index 검색으로 공식 문서 제외 확인
-        c.execute(db_change("SELECT 1 FROM back WHERE link = ? AND title = '틀:인곽위키/공식문서' AND type = 'include' LIMIT 1"), [title])
-        if c.fetchone():
-            continue
+        if rank > 10: break
+        if title in official_docs: continue
 
         safe_title = html.escape(title)
-        
-        # 순위 숫자와 제목만 표시 (이모지 완전 제거)
         items.append(f'<li><span style="width: 20px; display: inline-block; font-weight: bold; color: var(--muted);">{rank}</span> <a href="/w/{url_pas(title)}">{safe_title}</a></li>')
         rank += 1
         
