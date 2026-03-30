@@ -471,11 +471,15 @@ async def do_every_day():
             if await acl_check('', 'all_admin_auth', '', for_a[0]) == 1:
                 curs.execute(db_change("update user_set set data = '☑️' where name = 'user_title' and data = '✅' and id = ?"), [for_a[0]])
 
-        # === 추가: viewlog 관리 (최신 200개만 남기고 삭제) ===
-        # 인덱스(date)를 활용해 최신 200개를 제외한 과거 기록을 효율적으로 삭제
-        curs.execute(db_change("DELETE FROM viewlog WHERE date < (SELECT date FROM viewlog ORDER BY date DESC LIMIT 1 OFFSET 200)"))
+        # 실시간 검색어 집계/개인 열람 기록 정리
+        time_calc = datetime.date.today() - datetime.timedelta(days = 30)
+        time_calc = time_calc.strftime('%Y-%m-%d 00:00:00')
+        curs.execute(db_change("delete from viewlog where date < ?"), [time_calc])
+
+        time_calc = datetime.date.today() - datetime.timedelta(days = 14)
+        time_calc = time_calc.strftime('%Y-%m-%d')
+        curs.execute(db_change("delete from pageview_daily where view_date < ?"), [time_calc])
         conn.commit()
-        # ===============================================
 
         threading.Timer(60 * 60 * 24, do_every_day).start()
 

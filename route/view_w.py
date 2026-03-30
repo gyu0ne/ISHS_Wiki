@@ -75,16 +75,13 @@ def _trending_sidebar_html(conn, limit=10):
         pass
 
     c = conn.cursor()
-    
-    # 1일 전 시간 계산
-    time_1_day_ago = (datetime.datetime.now() - datetime.timedelta(days=1)).strftime('%Y-%m-%d %H:%M:%S')
 
-    # 최근 1일간 viewlog 통계 (title별 count)
-    # 인곽위키:대문 및 공식 문서 틀 포함된 문서는 제외
+    time_1_day_ago = (datetime.datetime.now() - datetime.timedelta(days=1)).strftime('%Y-%m-%d')
+
     c.execute(db_change(
-        "SELECT title, COUNT(*) as cnt "
-        "FROM viewlog "
-        "WHERE date > ? "
+        "SELECT title, SUM(CAST(view_count AS INTEGER)) as cnt "
+        "FROM pageview_daily "
+        "WHERE view_date >= ? "
         "AND title != '인곽위키:대문' "
         "GROUP BY title "
         "ORDER BY cnt DESC "
@@ -651,13 +648,6 @@ async def view_w(name = '대문', do_type = ''):
         # menu += [['star_doc_from/' + url_pas(name), ('☆' if watch_list == 1 else '★'), watch_list - 1]]
         # menu += [['doc_watch_list/1/' + url_pas(name), get_lang(conn, 'watchlist')]]
 
-        try:
-            recent_sidebar = _recent_changes_sidebar_simple_html(conn, limit = 10)
-            trending_sidebar = _trending_sidebar_html(conn, limit = 10)
-        except Exception as e:
-            print(f"SIDEBAR ERROR: {e}")
-            recent_sidebar = ''  # ← 빈 문자열
-            trending_sidebar = ''
         # 로그인 O: 2(별표됨) / 1(별표안됨), 로그인 X: 0
         if logged_in:
             watch_list = 2 if is_starred else 1
@@ -672,7 +662,5 @@ async def view_w(name = '대문', do_type = ''):
                 wiki_css([sub, r_date, watch_list, description, view_count])
             ],
             data = div,
-            menu = menu,
-            recent_sidebar = recent_sidebar,
-            trending_sidebar = trending_sidebar
+            menu = menu
         )), response_data

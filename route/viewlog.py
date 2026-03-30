@@ -27,6 +27,11 @@ def view_log_init(conn):
         curs.execute(db_change("create index viewlog_index on viewlog (user_id)"))
 
     try:
+        curs.execute(db_change("select view_date from pageview_daily limit 1"))
+    except:
+        curs.execute(db_change("create table pageview_daily (view_date text, title text, view_count text)"))
+
+    try:
         curs.execute(db_change("create index viewlog_date_index on viewlog (date)"))
     except:
         pass
@@ -42,11 +47,22 @@ def view_log_init(conn):
     except:
         pass
 
+    try:
+        curs.execute(db_change("create index pageview_daily_date_title_index on pageview_daily (view_date, title)"))
+    except:
+        pass
+
+    try:
+        curs.execute(db_change("create index pageview_daily_title_date_index on pageview_daily (title, view_date)"))
+    except:
+        pass
+
     # 핵심 데이터 테이블 인덱스 자동 생성 (서버 가동 시 자동 최적화)
     try:
         curs.execute(db_change("CREATE INDEX IF NOT EXISTS data_index ON data (title)"))
         curs.execute(db_change("CREATE INDEX IF NOT EXISTS back_index ON back (title)"))
         curs.execute(db_change("CREATE INDEX IF NOT EXISTS back_link_index ON back (link)"))
+        curs.execute(db_change("CREATE INDEX IF NOT EXISTS back_title_type_index ON back (title, type)"))
         # viewlog 검색 최적화를 위한 필수 인덱스
         curs.execute(db_change("CREATE INDEX IF NOT EXISTS viewlog_user_date_idx ON viewlog (user_id, date)"))
         curs.execute(db_change("CREATE INDEX IF NOT EXISTS viewlog_date_title_idx ON viewlog (date, title)"))
@@ -55,7 +71,7 @@ def view_log_init(conn):
 
 def check_view_log():
     if flask.request.path.startswith('/w/'):
-        # 로그인 유무에 상관없이 수집
+        is_logged_in = bool(flask.session and 'id' in flask.session)
         if flask.session and 'id' in flask.session:
             user_id = flask.session['id']
         else:
@@ -84,28 +100,33 @@ def check_view_log():
 
         with get_db_connect() as conn:
             curs = conn.cursor()
-            
-            # 성능 최적화: 문서 전체가 아닌 리다이렉트 여부만 확인 (SUBSTR 활용)
-            curs.execute(db_change("select SUBSTR(data, 1, 100) from data where title = ?"), [raw_title])
-            db_data = curs.fetchone()
-            if not db_data:
-                return
-            
-            head_content = db_data[0].lower()
-            if head_content.startswith('#redirect') or head_content.startswith('#넘겨주기'):
+
+            curs.execute(db_change("select 1 from data where title = ? limit 1"), [raw_title])
+            if not curs.fetchone():
                 return
 
-            # 인덱스를 활용한 최신 기록 조회
-            curs.execute(db_change("select title from viewlog where user_id = ? order by date desc limit 1"), [user_id])
-            last_log = curs.fetchone()
-            
+            curs.execute(db_change("select 1 from back where title = ? and type = 'redirect' limit 1"), [raw_title])
+            if curs.fetchone():
+                return
+
             curr_time = get_time()
             ip = ip_check()
+            curr_date = curr_time.split()[0]
 
-            if last_log and last_log[0] == raw_title:
-                return
+            curs.execute(db_change("select view_count from pageview_daily where view_date = ? and title = ? limit 1"), [curr_date, raw_title])
+            pageview_row = curs.fetchone()
+            if pageview_row:
+                curr_count = int(number_check(pageview_row[0])) + 1
+                curs.execute(db_change("update pageview_daily set view_count = ? where view_date = ? and title = ?"), [str(curr_count), curr_date, raw_title])
+            else:
+                curs.execute(db_change("insert into pageview_daily (view_date, title, view_count) values (?, ?, ?)"), [curr_date, raw_title, '1'])
 
-            curs.execute(db_change("insert into viewlog (user_id, title, date, ip) values (?, ?, ?, ?)"), [user_id, raw_title, curr_time, ip])
+            if is_logged_in:
+                curs.execute(db_change("select title from viewlog where user_id = ? order by date desc limit 1"), [user_id])
+                last_log = curs.fetchone()
+                if not (last_log and last_log[0] == raw_title):
+                    curs.execute(db_change("insert into viewlog (user_id, title, date, ip) values (?, ?, ?, ?)"), [user_id, raw_title, curr_time, ip])
+
             conn.commit()
 
 async def view_viewlog(name = None):
