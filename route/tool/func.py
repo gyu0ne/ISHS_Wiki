@@ -167,17 +167,38 @@ async def python_to_golang(func_name, other_set = {}):
         other_set["cookie"] = ""
         other_set["ip"] = "127.0.0.1"
 
-    port_data = global_some_set_do("setup_golang_port")
+    port_data = global_some_set_do("golang_port")
+    if not port_data:
+        port_data = '3001'
 
-    async with aiohttp.ClientSession() as session:
-        while 1:
-            async with session.post('http://localhost:' + port_data + '/', data = json_dumps(other_set)) as res:
-                data = await res.json()
+    # 고백엔드(Go) 연결 타임아웃 및 재시도 설정
+    timeout = aiohttp.ClientTimeout(total=10) # 전체 타임아웃 10초
+    retry_count = 0
+    max_retry = 3
 
-                if "response" in data and data["response"] == "error":
-                    raise Exception(f"API returned error: {data}")
-                else:
-                    return data
+    async with aiohttp.ClientSession(timeout=timeout) as session:
+        while retry_count < max_retry:
+            try:
+                async with session.post('http://localhost:' + port_data + '/', data = json_dumps(other_set)) as res:
+                    data = await res.json()
+
+                    if "response" in data and data["response"] == "error":
+                        # 에러가 반환되었지만 연결은 성공한 경우
+                        return data
+                    else:
+                        return data
+            except Exception as e:
+                # 연결 실패, 타임아웃 등의 예외 발생 시
+                retry_count += 1
+                curr_time = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+                print(f"[{curr_time}] [Go-Backend-Error] {func_name} (Retry {retry_count}/{max_retry}): {str(e)}")
+                
+                if retry_count >= max_retry:
+                    # 모든 재시도 실패 시 에러 반환 (전체 시스템 중단 방지)
+                    return {"response": "error", "data": "Go backend connection failed."}
+                
+                # 다음 재시도 전 대기
+                await asyncio.sleep(1)
                 
 async def opennamu_make_list(left = '', right = '', bottom = '', class_name = ''):
     data_html = f'<span class="{class_name}">'
