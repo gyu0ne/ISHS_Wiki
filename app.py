@@ -6,6 +6,7 @@ import logging
 import hmac
 import hashlib
 import socket
+import threading
 
 from route.tool.func import *
 from route import *
@@ -515,40 +516,71 @@ def _capture_login_referer():
         pass
 from route.view_w import _recent_changes_sidebar_simple_html, _trending_sidebar_html
 
-# 사이드바 전역 캐시 (30초)
+# 사이드바 전역 캐시 (백그라운드에서 주기적으로 갱신됨)
 _sidebar_global_cache = {
-    "time": 0.0,
-    "recent": "",
-    "trending": ""
+    "recent": '<div style="padding: 10px; color: var(--muted); font-size: 0.9em;">준비 중...</div>',
+    "trending": '<div style="padding: 10px; color: var(--muted); font-size: 0.9em;">준비 중...</div>',
+    "updating": False
 }
+
+def _sidebar_worker():
+    """
+    백그라운드에서 사이드바 HTML을 미리 계산하는 워커.
+    """
+    global _sidebar_global_cache
+    if _sidebar_global_cache["updating"]:
+        return
+        
+    def _do_update():
+        global _sidebar_global_cache
+        _sidebar_global_cache["updating"] = True
+        try:
+            with get_db_connect() as conn:
+                # 1. 최근 변경 사이드바 계산
+                recent_html = _recent_changes_sidebar_simple_html(conn, limit=10)
+                # 2. 실시간 인기 문서 계산 (무거운 쿼리)
+                trending_html = _trending_sidebar_html(conn, limit=10)
+                
+                # 성공 시 업데이트
+                _sidebar_global_cache["recent"] = recent_html
+                _sidebar_global_cache["trending"] = trending_html
+        except Exception as e:
+            # 오류 발생 시 사용자에게 '오류 발생' 임을 명시 (데이터 없음과 구분)
+            error_msg = f'<div style="padding: 10px; color: #ef4444; font-size: 0.85em;">[오류] 데이터를 갱신할 수 없습니다.</div>'
+            _sidebar_global_cache["recent"] = error_msg
+            _sidebar_global_cache["trending"] = error_msg
+            print(f"[WARN] Sidebar background update failed: {e}")
+        finally:
+            _sidebar_global_cache["updating"] = False
+            # 60초마다 반복 실행
+            threading.Timer(60, _sidebar_worker).start()
+
+    # 별도 스레드에서 실행
+    threading.Thread(target=_do_update, daemon=True).start()
+
+# 서버 시작 시 워커 즉시 가동 후 첫 회는 동기로 실행하여 빈 화면 방지
+try:
+    print("[INFO] Initializing sidebar cache...")
+    with get_db_connect() as conn:
+        _sidebar_global_cache["recent"] = _recent_changes_sidebar_simple_html(conn, limit=10)
+        _sidebar_global_cache["trending"] = _trending_sidebar_html(conn, limit=10)
+    print("[INFO] Sidebar cache initialized.")
+except:
+    pass
+
+_sidebar_worker()
 
 @app.context_processor
 def inject_recent_sidebar():
+    """
+    웹 요청 시 사이드바를 주입하는 프로세서. 
+    DB 접속 없이 미리 계산된 메모리 캐시만 즉시 반환하여 524 에러 방지.
+    """
     global _sidebar_global_cache
-    now_time = time.time()
-    
-    # 30초 캐시 유효 시 DB 접근 없이 즉시 반환
-    if now_time - _sidebar_global_cache["time"] < 30:
-        if _sidebar_global_cache["recent"] or _sidebar_global_cache["trending"]:
-            return dict(
-                recent_sidebar=_sidebar_global_cache["recent"], 
-                trending_sidebar=_sidebar_global_cache["trending"]
-            )
-
-    try:
-        with get_db_connect() as conn:
-            html_data = _recent_changes_sidebar_simple_html(conn, limit=10)
-            trending_data = _trending_sidebar_html(conn, limit=10)
-            
-            # 캐시 업데이트
-            _sidebar_global_cache["time"] = now_time
-            _sidebar_global_cache["recent"] = html_data
-            _sidebar_global_cache["trending"] = trending_data
-            
-        return dict(recent_sidebar=html_data, trending_sidebar=trending_data)
-    except Exception as e:
-        print(f"[WARN] recent_sidebar inject failed: {e}")
-        return dict(recent_sidebar='', trending_sidebar='')
+    return dict(
+        recent_sidebar=_sidebar_global_cache["recent"], 
+        trending_sidebar=_sidebar_global_cache["trending"]
+    )
 
 @app.after_request
 def _redirect_login_to_last_doc(response):
@@ -1218,13 +1250,12 @@ atexit.register(terminate_golang)
 
 @app.route('/api/trending')
 def api_trending():
-    try:
-        from route.view_w import _trending_sidebar_html
-        with get_db_connect() as conn:
-            data = _trending_sidebar_html(conn, limit=10)
-        return flask.jsonify({'response': 'ok', 'data': data})
-    except Exception as e:
-        return flask.jsonify({'response': 'error', 'data': str(e)})
+    # 백그라운드 워커가 이미 계산해둔 HTML을 즉시 반환하여 타임아웃 방지
+    global _sidebar_global_cache
+    return flask.jsonify({
+        'response': 'ok', 
+        'data': _sidebar_global_cache["trending"]
+    })
 
 app.wsgi_app = ProxyFix(app.wsgi_app, x_for = 1, x_proto = 1)
 
