@@ -536,23 +536,19 @@ def _sidebar_worker():
         _sidebar_global_cache["updating"] = True
         try:
             with get_db_connect() as conn:
-                # 1. 최근 변경 사이드바 계산
-                recent_html = _recent_changes_sidebar_simple_html(conn, limit=10)
-                # 2. 실시간 인기 문서 계산 (무거운 쿼리)
+                # 실시간 인기 문서만 백그라운드 갱신
                 trending_html = _trending_sidebar_html(conn, limit=10)
                 
                 # 성공 시 업데이트
-                _sidebar_global_cache["recent"] = recent_html
                 _sidebar_global_cache["trending"] = trending_html
         except Exception as e:
             # 오류 발생 시 사용자에게 '오류 발생' 임을 명시 (데이터 없음과 구분)
             error_msg = f'<div style="padding: 10px; color: #ef4444; font-size: 0.85em;">[오류] 데이터를 갱신할 수 없습니다.</div>'
-            _sidebar_global_cache["recent"] = error_msg
             _sidebar_global_cache["trending"] = error_msg
             print(f"[WARN] Sidebar background update failed: {e}")
         finally:
             _sidebar_global_cache["updating"] = False
-            # 60초마다 반복 실행
+            # 5분마다 반복 실행
             threading.Timer(300, _sidebar_worker).start()
 
     # 별도 스레드에서 실행
@@ -1255,6 +1251,20 @@ def api_trending():
     return flask.jsonify({
         'response': 'ok', 
         'data': _sidebar_global_cache["trending"]
+    })
+
+@app.route('/api/sidebar/recent')
+def api_recent_sidebar():
+    try:
+        with get_db_connect() as conn:
+            recent_html = _recent_changes_sidebar_simple_html(conn, limit=10)
+    except Exception as e:
+        print(f"[WARN] Recent sidebar update failed: {e}")
+        recent_html = '<div style="padding: 10px; color: #ef4444; font-size: 0.85em;">[오류] 최근 변경을 갱신할 수 없습니다.</div>'
+
+    return flask.jsonify({
+        'response': 'ok',
+        'data': recent_html
     })
 
 app.wsgi_app = ProxyFix(app.wsgi_app, x_for = 1, x_proto = 1)

@@ -1,5 +1,7 @@
 "use strict";
 
+const RINGO_RECENT_SIDEBAR_REFRESH_MS = 60000;
+
 // func
 function ringo_do_xss_encode(data) {
     data = data.replace(/'/g, '&#x27;');
@@ -12,6 +14,22 @@ function ringo_do_xss_encode(data) {
 
 function ringo_do_url_encode(data) {
     return encodeURIComponent(data);
+}
+
+function ringo_refresh_recent_sidebar() {
+    const recent_sidebar = document.getElementById('recent_sidebar_wrap');
+    if(!recent_sidebar) {
+        return;
+    }
+
+    fetch('/api/sidebar/recent').then(function(res) {
+        return res.json();
+    }).then(function(data) {
+        if(data && data.response === 'ok' && typeof data.data === 'string') {
+            recent_sidebar.innerHTML = data.data;
+        }
+    }).catch(function(error) {
+    });
 }
 
 // event
@@ -84,6 +102,9 @@ function ringo_do_side_button_3() {
 let temp_save = ['', '', ''];
 
 window.addEventListener('DOMContentLoaded', function() {
+    ringo_refresh_recent_sidebar();
+    window.setInterval(ringo_refresh_recent_sidebar, RINGO_RECENT_SIDEBAR_REFRESH_MS);
+
     if(document.getElementById("side_button_1")) {
         document.getElementById("side_button_1").addEventListener("click", ringo_do_side_button_1);
         document.getElementById("side_button_2").addEventListener("click", ringo_do_side_button_2);
