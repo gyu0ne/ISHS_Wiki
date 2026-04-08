@@ -553,7 +553,7 @@ def _sidebar_worker():
         finally:
             _sidebar_global_cache["updating"] = False
             # 60초마다 반복 실행
-            threading.Timer(60, _sidebar_worker).start()
+            threading.Timer(300, _sidebar_worker).start()
 
     # 별도 스레드에서 실행
     threading.Thread(target=_do_update, daemon=True).start()

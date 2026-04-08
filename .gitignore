@@ -41,3 +41,5 @@ route_go/bin/*
 
 sitemap_*.xml
 !sitemap.xml
+
+.omx
