@@ -33,6 +33,25 @@ async def riro_reauth():
         gen_row = curs.fetchall()
         user_gen = int(gen_row[0][0]) if gen_row and gen_row[0][0].isdigit() else 0
 
+        # 직책/학번 가져오기
+        curs.execute(db_change("select data from user_set where id = ? and name = 'student_id'"), [user_id])
+        std_row = curs.fetchall()
+        user_std = std_row[0][0] if std_row else ''
+
+        # 교직원만 재인증 면제 (0기 졸업생은 포함되지 않도록)
+        if user_std == '교사':
+            def upsert_reauth(name, data):
+                curs.execute(db_change("select data from user_set where id = ? and name = ?"), [user_id, name])
+                if curs.fetchall():
+                    curs.execute(db_change("update user_set set data = ? where id = ? and name = ?"), [data, user_id, name])
+                else:
+                    curs.execute(db_change("insert into user_set (id, name, data) values (?, ?, ?)"), [user_id, name, data])
+            try:
+                upsert_reauth('riro_reauthed', '1')
+            except:
+                pass
+            return redirect(conn, '/user')
+
         error_msg = ''
 
         if flask.request.method == 'POST':
@@ -54,7 +73,19 @@ async def riro_reauth():
                     # 인증 성공 → DB 업데이트
                     new_student_id = result.get('student_number', '')
                     new_real_name  = result.get('name', '')
-                    new_generation = str(result.get('generation', ''))
+                    new_generation = str(result.get('generation', '0'))
+                    role_text      = result.get('student', '')
+
+                    # 졸업생 처리 및 기수 보정
+                    if new_student_id == '0' and '졸업' in role_text:
+                        new_student_id = '졸업생'
+                    
+                    # 기수가 0이면 '졸업생'으로, 아니면 기존 기수 보존 시도
+                    if new_generation == '0':
+                        if user_gen != 0:
+                            new_generation = str(user_gen)
+                        else:
+                            new_generation = '졸업생'
 
                     def upsert(name, data):
                         curs.execute(db_change("select data from user_set where id = ? and name = ?"), [user_id, name])

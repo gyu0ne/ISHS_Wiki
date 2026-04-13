@@ -178,6 +178,7 @@ async def login_register_student():
                 return "<h1>DEBUG: Error Code: 10 (Username already exists)</h1>"
 
             # 생성 & 프로필 저장
+            add_user(conn, user_id, user_pw)
             _save_profile_extra(conn, user_id, student_id, real_name,
                                 birth_y, birth_m, birth_d, gender, user_name, gen)
 
@@ -438,6 +439,7 @@ async def login_register_teacher():
             if curs.fetchall():
                 return "<h1>DEBUG: Error Code: 10 (Username already exists)</h1>"
 
+            add_user(conn, user_id, user_pw)
             _save_profile_extra(conn, user_id, student_id, real_name,
                                 birth_y, birth_m, birth_d, gender, user_name, gen)
 

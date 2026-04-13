@@ -47,9 +47,22 @@ async def riro_login_page():
                     flask.session['riro_student_number'] = result.get('student_number')
                     flask.session['riro_generation'] = result.get('generation')
                     
-                    if result.get('student_number') == '0':
+                    role_text = result.get('student', '')
+                    generation = result.get('generation', 0)
+                    
+                    # 기수가 0이더라도 '학생'이나 '졸업생' 문구가 있으면 학생 폼으로
+                    is_teacher = ('교' in role_text) and ('학' not in role_text) and ('졸' not in role_text)
+                    
+                    if is_teacher:
                         return redirect(conn, '/register_form_teacher')
                     else:
+                        # 기수 보정 (0기 -> 졸업생)
+                        if generation == 0:
+                            flask.session['riro_generation'] = '졸업생'
+                        
+                        if result.get('student_number') == '0' and '졸업' in role_text:
+                            flask.session['riro_student_number'] = '졸업생'
+                            
                         return redirect(conn, '/register_form_student')
             else:
                 # 인증 실패 시, 자바스크립트 alert로 에러 메시지 표시
