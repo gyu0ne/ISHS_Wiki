@@ -121,18 +121,11 @@
 }
 
 .opennamu_main .opennamu_comment_scroll {
-    max-height: 500px;
+    max-height: none;
 
     white-space: pre-wrap;
     
-    overflow: scroll;
-    -ms-overflow-style: none;
-
-    scrollbar-width: none;
-}
-
-.opennamu_main .opennamu_comment_scroll::-webkit-scrollbar {
-    display: none;
+    overflow: visible;
 }
 
 /* render */
@@ -561,18 +554,11 @@
 }
 
 .opennamu_main .opennamu_comment_scroll {
-    max-height: 500px;
+    max-height: none;
 
     white-space: pre-wrap;
     
-    overflow: scroll;
-    -ms-overflow-style: none;
-
-    scrollbar-width: none;
-}
-
-.opennamu_main .opennamu_comment_scroll::-webkit-scrollbar {
-    display: none;
+    overflow: visible;
 }
 
 /* render */

@@ -1793,7 +1793,7 @@ async def captcha_post(conn, re_data):
     return 0
 
 # Func-user
-def do_user_name_check(conn, user_name):
+def do_user_name_check(conn, user_name, current_user_id = ''):
     curs = conn.cursor()
 
     # XSS 필터
@@ -1821,13 +1821,22 @@ def do_user_name_check(conn, user_name):
         return 1
     
     # 중복 확인
-    curs.execute(db_change("select id from user_set where name = 'user_name' and data = ?"), [user_name])
-    if curs.fetchall():
-        return 1
-    
-    curs.execute(db_change("select id from user_set where id = ?"), [user_name])
-    if curs.fetchall():
-        return 1
+    if current_user_id != '':
+        curs.execute(db_change("select id from user_set where name = 'user_name' and data = ? and id != ?"), [user_name, current_user_id])
+        if curs.fetchall():
+            return 1
+        
+        curs.execute(db_change("select id from user_set where id = ? and id != ?"), [user_name, current_user_id])
+        if curs.fetchall():
+            return 1
+    else:
+        curs.execute(db_change("select id from user_set where name = 'user_name' and data = ?"), [user_name])
+        if curs.fetchall():
+            return 1
+        
+        curs.execute(db_change("select id from user_set where id = ?"), [user_name])
+        if curs.fetchall():
+            return 1
     
     return 0
 

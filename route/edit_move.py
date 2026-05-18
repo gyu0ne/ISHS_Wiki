@@ -41,8 +41,7 @@ async def edit_move(name):
 
             # 역링크 관련 패치 해야할 듯
 
-            # 문서 이동 파트 S
-            curs.execute(db_change("select title from history where title = ?"), [move_title])
+            curs.execute(db_change("select title from data where title = ?"), [move_title])
             if curs.fetchall():
                 if move_option == 'merge' and await acl_check(tool = 'owner_auth', memo = 'merge documents (' + name + ') (' + move_title + ')') != 1:
                     curs.execute(db_change("select data from data where title = ?"), [move_title])
@@ -128,6 +127,21 @@ async def edit_move(name):
                 data = curs.fetchall()
                 data_in = data[0][0] if data else ''
 
+                # 역사 합치기/이동 S
+                curs.execute(db_change("select id from history where title = ? order by id + 0 desc limit 1"), [move_title])
+                db_history = curs.fetchall()
+                if db_history:
+                    num = db_history[0][0]
+                    curs.execute(db_change("select id from history where title = ? order by id + 0 asc"), [name])
+                    data = curs.fetchall()
+                    for move in data:
+                        curs.execute(db_change("update rc set title = ?, id = ? where title = ? and id = ?"), [move_title, str(int(num) + int(move[0])), name, move[0]])
+                        curs.execute(db_change("update history set title = ?, id = ? where title = ? and id = ?"), [move_title, str(int(num) + int(move[0])), name, move[0]])
+                else:
+                    curs.execute(db_change("update history set title = ? where title = ?"), [move_title, name])
+                    curs.execute(db_change("update rc set title = ? where title = ?"), [move_title, name])
+                # 역사 합치기/이동 E
+
                 curs.execute(db_change("update data set title = ? where title = ?"), [move_title, name])
                 curs.execute(db_change("update back set link = ? where link = ?"), [move_title, name])
 
@@ -139,17 +153,12 @@ async def edit_move(name):
                 curs.execute(db_change("delete from back where title = ? and type = 'no'"), [move_title])
                 # 역링크 E
 
-                # 역사와 최근 변경 이동 S
-                curs.execute(db_change("update history set title = ? where title = ?"), [move_title, name])
-                curs.execute(db_change("update rc set title = ? where title = ?"), [move_title, name])
-                # 역사와 최근 변경 이동 E
-
                 history_plus(conn, 
                     move_title, 
                     data_in, 
                     time, 
                     ip, 
-                    send,
+                    send, 
                     '0',
                     t_check = '<a>' + name + '</a> → <a>' + move_title + '</a>',
                     mode = 'move'

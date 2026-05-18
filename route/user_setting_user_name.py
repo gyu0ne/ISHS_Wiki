@@ -18,7 +18,7 @@ async def user_setting_user_name(user_name = ''):
         if ip_or_user(ip) == 0:
             if flask.request.method == 'POST':
                 auto_data = ['user_name', flask.request.form.get('new_user_name', '')]
-                if do_user_name_check(conn, auto_data[1]) == 1:
+                if do_user_name_check(conn, auto_data[1], ip) == 1:
                     return await re_error(conn, 8)
                 if not _valid_user_id(auto_data[1]):
                     return await re_error(conn, "/error/아이디는 영문, 한글, 숫자만 사용 가능합니다.")
