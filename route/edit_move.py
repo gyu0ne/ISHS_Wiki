@@ -15,6 +15,9 @@ async def edit_move(name):
             if await acl_check(move_title) == 1:
                 return await re_error(conn, 0)
 
+            if name == move_title:
+                return await re_error(conn, "/error/동일한 이름으로 문서를 이동할 수 없습니다.")
+
             if await captcha_post(conn, flask.request.form.get('g-recaptcha-response', flask.request.form.get('g-recaptcha', ''))) == 1:
                 return await re_error(conn, 13)
 
