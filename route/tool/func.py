@@ -147,7 +147,30 @@ def global_some_set_do(set_name, data = None):
     else:
         return None
 
+def release_expired_bans(conn = None, force = False):
+    if not force and flask.has_request_context():
+        if getattr(flask.g, 'opennamu_expired_ban_cleanup_done', False):
+            return 0
+
+    def do_release(db_conn):
+        curs = db_conn.cursor()
+        curs.execute(db_change("update rb set ongoing = '' where ongoing = '1' and end != '' and end != 'release' and end <= ?"), [get_time()])
+
+        if flask.has_request_context():
+            flask.g.opennamu_expired_ban_cleanup_done = True
+
+        return curs.rowcount if hasattr(curs, 'rowcount') else 0
+
+    if conn:
+        return do_release(conn)
+
+    with get_db_connect() as db_conn:
+        return do_release(db_conn)
+
 async def python_to_golang(func_name, other_set = {}):
+    if func_name in ('api_func_acl', 'api_func_ban', 'api_list_recent_block'):
+        release_expired_bans()
+
     other_set = {
         "url" : func_name,
         "data" : json_dumps(other_set)

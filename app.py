@@ -418,7 +418,7 @@ async def do_every_day():
                     curs.execute(db_change("update vote set type = ? where user = '' and id = ? and type = ?"), ['close' if for_a[1] == 'open' else 'n_close', for_a[0], for_a[1]])
 
         # ban 관리
-        curs.execute(db_change("update rb set ongoing = '' where end < ? and end != '' and ongoing = '1'"), [get_time()])
+        release_expired_bans(conn, force = True)
 
         # auth 관리
         curs.execute(db_change('select id, data from user_set where name = "auth_date"'))
