@@ -2316,7 +2316,7 @@ def history_plus(conn, title, data, date, ip, send, leng, t_check = '', mode = '
     curs.execute(db_change("insert into history (id, title, data, date, ip, send, leng, hide, type) values (?, ?, ?, ?, ?, ?, ?, '', ?)"), [id_data, title, data, date, ip, send, leng, mode])
 
 # Func-error
-async def re_error(conn, data):
+async def re_error(conn, data, adsense_enabled = True):
     curs = conn.cursor()
 
     if data == 0:
@@ -2334,7 +2334,8 @@ async def re_error(conn, data):
         return easy_minify(conn, flask.render_template(skin_check(conn), 
             imp = [get_lang(conn, 'error'), await wiki_set(), await wiki_custom(conn), wiki_css([0, 0])],
             data = '<h2>' + get_lang(conn, 'error') + '</h2>' + end,
-            menu = menu_admin
+            menu = menu_admin,
+            adsense_enabled = adsense_enabled
         )), 401
     else:
         title = get_lang(conn, 'error')
@@ -2486,7 +2487,8 @@ async def re_error(conn, data):
                         '</ul>' + \
                     '</div>' + \
                 '',
-                menu = [['change', get_lang(conn, 'user_setting')], ['change/skin_set/main', get_lang(conn, 'main_skin_set')]]
+                menu = [['change', get_lang(conn, 'user_setting')], ['change/skin_set/main', get_lang(conn, 'main_skin_set')]],
+                adsense_enabled = adsense_enabled
             ))
         else:
             return easy_minify(conn, flask.render_template(skin_check(conn), 
@@ -2497,5 +2499,6 @@ async def re_error(conn, data):
                         '<li>' + data + '</li>' + \
                     '</ul>' + \
                 '',
-                menu = 0
+                menu = 0,
+                adsense_enabled = adsense_enabled
             )), return_code

@@ -9,6 +9,20 @@ from .go_api_w_raw import api_w_raw
 from .go_api_w_render import api_w_render
 from .go_api_w_page_view import api_w_page_view
 
+PERSON_TEMPLATE_RE = re.compile(r'\[include\(\s*틀:인곽위키/인물\s*\)\]', re.I)
+PERSON_CATEGORY_RE = re.compile(r'\[\[\s*(?:분류|category)\s*:\s*(?:재학생|졸업생)\s*(?:\|[^\]]*)?\]\]', re.I)
+USER_DOCUMENT_RE = re.compile(r'^user:', re.I)
+
+def _is_person_document(name, doc_data_raw):
+    if USER_DOCUMENT_RE.search(name):
+        return True
+
+    if doc_data_raw.get("response") != "ok":
+        return False
+
+    doc_data = doc_data_raw.get("data", "")
+    return bool(PERSON_TEMPLATE_RE.search(doc_data) or PERSON_CATEGORY_RE.search(doc_data))
+
 def _recent_changes_sidebar_html(conn, limit=10):
     c = conn.cursor()
     # rc(최근변경 인덱스)에서 최신 id를 가져오고 history에서 상세를 합친다
@@ -232,14 +246,19 @@ async def view_w(name = '대문', do_type = ''):
 
         # 특정 틀 포함 시 비로그인 사용자 접근 제한
         doc_data_raw = await api_w_raw(name)
-        if doc_data_raw["response"] == "ok" and '[include(틀:인곽위키/인물)]' in doc_data_raw["data"]:
+        is_person_document = _is_person_document(name, doc_data_raw)
+        has_person_template = (
+            doc_data_raw.get("response") == "ok"
+            and PERSON_TEMPLATE_RE.search(doc_data_raw.get("data", ""))
+        )
+        if has_person_template:
             if ip_or_user(ip) == 1:
-                return await re_error(conn, 1)
+                return await re_error(conn, 1, adsense_enabled = False)
             
         # ★ user: 문서도 비로그인 접근 제한 (프로필 표 포함 페이지)
-        if re.search(r"^user:([^/]*)", name):
+        if USER_DOCUMENT_RE.search(name):
             if ip_or_user(ip) == 1:
-                return await re_error(conn, 1)
+                return await re_error(conn, 1, adsense_enabled = False)
             
             
         uppage = re.sub(r"/([^/]+)$", '', name)
@@ -560,27 +579,28 @@ async def view_w(name = '대문', do_type = ''):
             view_count = view_count[0][0] if view_count else 0
 
         # === 광고 노출 (동적 랜덤) ===
-        curs.execute(db_change('select data from other where name = "ads_list"'))
-        db_ads = curs.fetchall()
         ad_banner = ''
-        if db_ads and db_ads[0]:
-            import random
-            ads = [line.strip() for line in db_ads[0][0].split('\n') if line.strip() and '|' in line]
-            if ads:
-                selected_ad = random.choice(ads)
-                ad_parts = [p.strip() for p in selected_ad.split('|', 1)]
-                ad_img = ad_parts[0]
-                ad_link = ad_parts[1]
-                ad_banner = f'''
-                <div style="text-align:center; margin: 40px 0;">
-                    <a href="{ad_link}" target="_blank" rel="noopener noreferrer">
-                        <img src="{ad_img}" style="max-width:90%; height:auto; border-radius:12px; box-shadow:0 4px 12px rgba(0,0,0,0.2); transition:transform 0.2s;">
-                    </a>
-                </div>
-                <hr class="main_hr">
-                '''
-        
-        if not ad_banner:
+        if not is_person_document:
+            curs.execute(db_change('select data from other where name = "ads_list"'))
+            db_ads = curs.fetchall()
+            if db_ads and db_ads[0]:
+                import random
+                ads = [line.strip() for line in db_ads[0][0].split('\n') if line.strip() and '|' in line]
+                if ads:
+                    selected_ad = random.choice(ads)
+                    ad_parts = [p.strip() for p in selected_ad.split('|', 1)]
+                    ad_img = ad_parts[0]
+                    ad_link = ad_parts[1]
+                    ad_banner = f'''
+                    <div style="text-align:center; margin: 40px 0;">
+                        <a href="{ad_link}" target="_blank" rel="noopener noreferrer">
+                            <img src="{ad_img}" style="max-width:90%; height:auto; border-radius:12px; box-shadow:0 4px 12px rgba(0,0,0,0.2); transition:transform 0.2s;">
+                        </a>
+                    </div>
+                    <hr class="main_hr">
+                    '''
+
+        if not is_person_document and not ad_banner:
             # 설정이 없거나 오류 시 기본값
             ad_banner = '''
             <div style="text-align:center; margin: 40px 0;">
@@ -662,5 +682,6 @@ async def view_w(name = '대문', do_type = ''):
                 wiki_css([sub, r_date, watch_list, description, view_count])
             ],
             data = div,
-            menu = menu
+            menu = menu,
+            adsense_enabled = not is_person_document
         )), response_data
