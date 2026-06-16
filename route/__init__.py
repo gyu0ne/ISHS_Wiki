@@ -72,6 +72,7 @@ from route.main_func_error_404 import main_func_error_404
 from route.main_search import main_search
 from route.main_search_deep import main_search_deep
 from route.main_search_goto import main_search_goto
+from route.main_privacy import main_privacy
 
 from route.main_setting import main_setting
 from route.main_setting_external import main_setting_external

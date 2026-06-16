@@ -17,7 +17,7 @@
   
   <!-- AdSense 계정 메타 -->
   <meta name="google-adsense-account" content="ca-pub-2375716944179194">
-  {% set adsense_enabled = adsense_enabled|default(true) %}
+  {% set adsense_enabled = adsense_enabled|default(false) %}
   {% if imp[3][0] != 0 %}
   <title>{{imp[0]}} {{imp[3][0]}} - {{imp[1][0]}}</title>
   <meta name="title" content="{{imp[0]}}{{imp[3][0]}} - {{imp[1][0]}}">
@@ -1383,6 +1383,9 @@
       <div class="footer" id="footer">
         <div class="footer-inner">
           {{imp[1][1]|safe}}
+          <div class="license-text">
+            <a href="/privacy">개인정보처리방침</a>
+          </div>
           <div class="license-text">
             이 저작물은
             <a href="https://creativecommons.org/licenses/by-nc-sa/3.0/deed.ko" target="_blank">

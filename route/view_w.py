@@ -23,6 +23,15 @@ def _is_person_document(name, doc_data_raw):
     doc_data = doc_data_raw.get("data", "")
     return bool(PERSON_TEMPLATE_RE.search(doc_data) or PERSON_CATEGORY_RE.search(doc_data))
 
+def _has_guest_restricted_view_acl(conn, name):
+    curs = conn.cursor()
+    curs.execute(db_change("select data from acl where title = ? and type = 'view' limit 1"), [name])
+    db_data = curs.fetchall()
+    if not db_data:
+        return False
+
+    return db_data[0][0] not in ['', 'all']
+
 def _recent_changes_sidebar_html(conn, limit=10):
     c = conn.cursor()
     # rc(최근변경 인덱스)에서 최신 id를 가져오고 history에서 상세를 합친다
@@ -480,6 +489,12 @@ async def view_w(name = '대문', do_type = ''):
             response_data = 200
             description = data[0][0].replace('\r', '').replace('\n', ' ')[0:200]
 
+        monetization_enabled = (
+            response_data == 200
+            and not is_person_document
+            and not _has_guest_restricted_view_acl(conn, name)
+        )
+
         curs.execute(db_change("select title from acl where title = ?"), [name])
         acl = 1 if curs.fetchall() else 0
         menu_acl = 1 if await acl_check(name, 'document_edit') == 1 else 0
@@ -580,7 +595,7 @@ async def view_w(name = '대문', do_type = ''):
 
         # === 광고 노출 (동적 랜덤) ===
         ad_banner = ''
-        if not is_person_document:
+        if monetization_enabled:
             curs.execute(db_change('select data from other where name = "ads_list"'))
             db_ads = curs.fetchall()
             if db_ads and db_ads[0]:
@@ -600,7 +615,7 @@ async def view_w(name = '대문', do_type = ''):
                     <hr class="main_hr">
                     '''
 
-        if not is_person_document and not ad_banner:
+        if monetization_enabled and not ad_banner:
             # 설정이 없거나 오류 시 기본값
             ad_banner = '''
             <div style="text-align:center; margin: 40px 0;">
@@ -683,5 +698,5 @@ async def view_w(name = '대문', do_type = ''):
             ],
             data = div,
             menu = menu,
-            adsense_enabled = not is_person_document
+            adsense_enabled = monetization_enabled
         )), response_data

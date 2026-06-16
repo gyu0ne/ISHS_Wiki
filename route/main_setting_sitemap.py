@@ -1,4 +1,17 @@
 from .tool.func import *
+import re
+
+SITEMAP_PERSON_TEMPLATE_RE = re.compile(r'\[include\(\s*틀:인곽위키/인물\s*\)\]', re.I)
+SITEMAP_USER_DOCUMENT_RE = re.compile(r'^user:', re.I)
+
+def _is_guest_restricted_sitemap_doc(title, data, restricted_acl_titles):
+    if SITEMAP_USER_DOCUMENT_RE.search(title):
+        return True
+
+    if title in restricted_acl_titles:
+        return True
+
+    return bool(SITEMAP_PERSON_TEMPLATE_RE.search(data or ''))
 
 async def main_setting_sitemap(do_type = 0):
     with get_db_connect() as conn:
@@ -53,8 +66,15 @@ async def main_setting_sitemap(do_type = 0):
             if sql_add != '':
                 sql_add = ' where' + sql_add
 
-            curs.execute(db_change("select title from data" + sql_add))
-            all_data = curs.fetchall()
+            curs.execute(db_change("select title from acl where type = 'view' and data != '' and data != 'all'"))
+            restricted_acl_titles = {data[0] for data in curs.fetchall()}
+
+            curs.execute(db_change("select title, data from data" + sql_add))
+            all_data = [
+                [title]
+                for title, data in curs.fetchall()
+                if not _is_guest_restricted_sitemap_doc(title, data, restricted_acl_titles)
+            ]
 
             len_all_data = len(all_data)
             count = int(len_all_data / 30000)

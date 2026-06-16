@@ -1178,6 +1178,8 @@ app.route('/search_data/<everything:name>', defaults = { 'search_type' : 'data' 
 app.route('/search_data_page/<int:num>/<everything:name>', defaults = { 'search_type' : 'data' }, methods = ['POST', 'GET'])(main_search_deep)
 app.route('/goto', methods=['POST'])(main_search_goto)
 app.route('/goto/<everything:name>', methods=['GET', 'POST'])(main_search_goto)
+app.route('/privacy')(main_privacy)
+app.route('/privacy-policy')(main_privacy)
 
 app.route('/setting')(main_setting)
 app.route('/setting/main', methods = ['POST', 'GET'])(main_setting_main)

@@ -2316,7 +2316,7 @@ def history_plus(conn, title, data, date, ip, send, leng, t_check = '', mode = '
     curs.execute(db_change("insert into history (id, title, data, date, ip, send, leng, hide, type) values (?, ?, ?, ?, ?, ?, ?, '', ?)"), [id_data, title, data, date, ip, send, leng, mode])
 
 # Func-error
-async def re_error(conn, data, adsense_enabled = True):
+async def re_error(conn, data, adsense_enabled = False):
     curs = conn.cursor()
 
     if data == 0:
