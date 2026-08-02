@@ -47,11 +47,9 @@ async def riro_login_page():
                     flask.session['riro_student_number'] = result.get('student_number')
                     flask.session['riro_generation'] = result.get('generation')
                     
-                    role_text = result.get('student', '')
+                    # is_teacher 플래그 우선 사용 (riroschoolauth에서 명확히 판별됨)
+                    is_teacher = result.get('is_teacher', False)
                     generation = result.get('generation', 0)
-                    
-                    # 기수가 0이더라도 '학생'이나 '졸업생' 문구가 있으면 학생 폼으로
-                    is_teacher = ('교' in role_text) and ('학' not in role_text) and ('졸' not in role_text)
                     
                     if is_teacher:
                         return redirect(conn, '/register_form_teacher')
@@ -60,7 +58,7 @@ async def riro_login_page():
                         if generation == 0:
                             flask.session['riro_generation'] = '졸업생'
                         
-                        if result.get('student_number') == '0' and '졸업' in role_text:
+                        if result.get('student_number') == '0':
                             flask.session['riro_student_number'] = '졸업생'
                             
                         return redirect(conn, '/register_form_student')

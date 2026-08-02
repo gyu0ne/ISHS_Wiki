@@ -80,32 +80,60 @@ def check_riro_login(user_id: str, user_pw: str):
                 el_student = soup.select_one("span.m_level3")
                 if not el_student:
                     el_student = soup.select_one("span.m_level1")
+                if not el_student:
+                    el_student = soup.select_one("span.m_level2")
                 inputs = soup.select(".input_disabled")
 
-                if not el_student or len(inputs) < 2:
+                if not el_student or len(inputs) < 1:
                     raise RuntimeError("Cannot parse user info")
 
                 student = el_student.get_text(strip=True) or ""
                 name = (inputs[0].get_text(strip=True) or "")
-                student_number_raw = (inputs[1].get_text(strip=True) or "")
 
-                if len(student_number_raw) >= 3:
-                    student_number = student_number_raw[0] + student_number_raw[2:]
+                # 교원 판별: 명확히 교원 키워드가 있어야만 교원으로 처리
+                TEACHER_KEYWORDS = ['교원', '교사', '교직원', '선생']
+                STUDENT_ANTI_KEYWORDS = ['학생', '학부', '졸업']
+                is_teacher_role = (
+                    any(kw in student for kw in TEACHER_KEYWORDS) and
+                    not any(kw in student for kw in STUDENT_ANTI_KEYWORDS)
+                )
+
+                if is_teacher_role:
+                    # 교원이면 학번 없이도 성공 반환
+                    if name:
+                        return {
+                            "status": "success",
+                            "name": name,
+                            "student_number": "교사",
+                            "generation": 0,
+                            "student": student,
+                            "is_teacher": True,
+                        }
                 else:
-                    student_number = student_number_raw
+                    # 학생/졸업생 처리
+                    if len(inputs) < 2:
+                        raise RuntimeError("Cannot parse student number")
 
-                generation = 0
-                if len(user_id) >= 2 and user_id[:2].isdigit():
-                    generation = int("20" + user_id[:2]) - 1994 + 1
+                    student_number_raw = (inputs[1].get_text(strip=True) or "")
 
-                if all([name, student_number, student]) and generation > 0:
-                    return {
-                        "status": "success",
-                        "name": name,
-                        "student_number": student_number,
-                        "generation": generation,
-                        "student": student,
-                    }
+                    if len(student_number_raw) >= 3:
+                        student_number = student_number_raw[0] + student_number_raw[2:]
+                    else:
+                        student_number = student_number_raw
+
+                    generation = 0
+                    if len(user_id) >= 2 and user_id[:2].isdigit():
+                        generation = int("20" + user_id[:2]) - 1994 + 1
+
+                    if all([name, student_number, student]) and generation > 0:
+                        return {
+                            "status": "success",
+                            "name": name,
+                            "student_number": student_number,
+                            "generation": generation,
+                            "student": student,
+                            "is_teacher": False,
+                        }
 
             elif account_type == "integrated":
                 try:
@@ -115,25 +143,46 @@ def check_riro_login(user_id: str, user_pw: str):
                     inputs = soup.select(".input_disabled")
 
                     name = (inputs[0].get_text(strip=True) or "")
-                    student_number_raw = (inputs[1].get_text(strip=True) or "")
 
-                    if len(student_number_raw) >= 3:
-                        student_number = student_number_raw[0] + student_number_raw[2:]
+                    # 교원 판별
+                    TEACHER_KEYWORDS = ['교원', '교사', '교직원', '선생']
+                    STUDENT_ANTI_KEYWORDS = ['학생', '학부', '졸업']
+                    is_teacher_role = (
+                        any(kw in student for kw in TEACHER_KEYWORDS) and
+                        not any(kw in student for kw in STUDENT_ANTI_KEYWORDS)
+                    )
+
+                    if is_teacher_role:
+                        if name:
+                            return {
+                                "status": "success",
+                                "name": name,
+                                "student_number": "교사",
+                                "generation": 0,
+                                "student": student,
+                                "is_teacher": True,
+                            }
                     else:
-                        student_number = student_number_raw
+                        student_number_raw = (inputs[1].get_text(strip=True) or "")
 
-                    generation = 0
-                    if len(riro_id) >= 2 and riro_id[:2].isdigit():
-                        generation = int("20" + riro_id[:2]) - 1994 + 1
+                        if len(student_number_raw) >= 3:
+                            student_number = student_number_raw[0] + student_number_raw[2:]
+                        else:
+                            student_number = student_number_raw
 
-                    if all([name, student_number, student]) and generation > 0:
-                        return {
-                            "status": "success",
-                            "name": name,
-                            "student_number": student_number,
-                            "generation": generation,
-                            "student": student,
-                        }
+                        generation = 0
+                        if len(riro_id) >= 2 and riro_id[:2].isdigit():
+                            generation = int("20" + riro_id[:2]) - 1994 + 1
+
+                        if all([name, student_number, student]) and generation > 0:
+                            return {
+                                "status": "success",
+                                "name": name,
+                                "student_number": student_number,
+                                "generation": generation,
+                                "student": student,
+                                "is_teacher": False,
+                            }
                 except:
                     pass
 
