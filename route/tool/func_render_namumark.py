@@ -928,6 +928,108 @@ class class_do_render_namumark:
                     return date_data
                 else:
                     return '0'
+            elif name_data == 'graph':
+                param_str = match[1]
+                div_id = 'opennamu_graph_view_' + str(self.data_temp_storage_count)
+                html_code = '<div id="' + div_id + '" style="width: 100%; height: 500px; border: 1px solid #ddd; border-radius: 10px; overflow: hidden;"></div>'
+                text_color = "#ffffff" if self.darkmode == '1' else "#333333"
+                
+                arrows_setting = "edges: { color: '#ccc', arrows: 'to' }"
+                if 'arrows=none' in param_str.lower() or 'arrows=false' in param_str.lower() or 'arrows=off' in param_str.lower():
+                    arrows_setting = "edges: { color: '#ccc', arrows: { to: { enabled: false } } }"
+
+                js_code = '''
+                    function render_graph_''' + div_id + '''() {
+                        var container = document.getElementById("''' + div_id + '''");
+                        if(!container) {
+                            setTimeout(render_graph_''' + div_id + ''', 100);
+                            return;
+                        }
+                        
+                        if (typeof window.vis === 'undefined') {
+                            container.innerHTML = "<div style='padding:20px; color:red;'>vis-network 라이브러리를 로드하지 못했습니다.</div>";
+                            return;
+                        }
+
+                        container.innerHTML = "<div style='padding:20px; text-align:center; color:gray;'>그래프 데이터를 불러오는 중...</div>";
+
+                        fetch('/api/graph/''' + url_pas(self.doc_name) + '''')
+                        .then(response => {
+                            if(!response.ok) throw new Error("Network response was not ok");
+                            return response.json();
+                        })
+                        .then(data => {
+                            container.innerHTML = "";
+                            var graph_data = {
+                                nodes: new window.vis.DataSet(data.nodes),
+                                edges: new window.vis.DataSet(data.edges)
+                            };
+                            var options = {
+                                nodes: { shape: "dot", font: { size: 14, color: "''' + text_color + '''" } },
+                                ''' + arrows_setting + ''',
+                                physics: { stabilization: false, barnesHut: { springLength: 150 } },
+                                interaction: { hover: true }
+                            };
+                            var network = new window.vis.Network(container, graph_data, options);
+                            
+                            network.on("hoverNode", function (params) {
+                                network.canvas.body.container.style.cursor = 'pointer';
+                            });
+                            network.on("blurNode", function (params) {
+                                network.canvas.body.container.style.cursor = 'default';
+                            });
+                            
+                            network.on("selectNode", function (params) {
+                                if (params.nodes.length > 0) {
+                                    var nodeId = params.nodes[0];
+                                    window.location.href = '/w/' + encodeURIComponent(nodeId);
+                                }
+                            });
+                        })
+                        .catch(err => {
+                            container.innerHTML = "<div style='padding:20px; color:red;'>그래프를 불러오는 데 실패했습니다: " + err + "</div>";
+                        });
+                    }
+
+                    if (typeof window.vis === 'undefined') {
+                        if (!window.vis_loading) {
+                            window.vis_loading = true;
+                            var _define = window.define;
+                            var _exports = window.exports;
+                            var _module = window.module;
+                            window.define = undefined;
+                            window.exports = undefined;
+                            window.module = undefined;
+
+                            var script = document.createElement('script');
+                            script.src = 'https://cdnjs.cloudflare.com/ajax/libs/vis-network/9.1.2/standalone/umd/vis-network.min.js';
+                            script.onload = function() { 
+                                window.define = _define;
+                                window.exports = _exports;
+                                window.module = _module;
+                                window.vis_loaded = true;
+                                render_graph_''' + div_id + '''(); 
+                            };
+                            script.onerror = function() {
+                                window.vis_loaded = true;
+                                render_graph_''' + div_id + '''();
+                            };
+                            document.head.appendChild(script);
+                        } else {
+                            var check_vis = setInterval(function() {
+                                if (window.vis_loaded) {
+                                    clearInterval(check_vis);
+                                    render_graph_''' + div_id + '''();
+                                }
+                            }, 100);
+                        }
+                    } else {
+                        render_graph_''' + div_id + '''();
+                    }
+                '''
+                self.render_data_js += js_code
+                data_name = self.get_tool_data_storage(html_code, '', match_org.group(0))
+                return '<' + data_name + '></' + data_name + '>'
             else:
                 return '<macro>' + match[0] + '(' + match[1] + ')' + '</macro>'
 
@@ -962,6 +1064,102 @@ class class_do_render_namumark:
                     return db_data[0][0]
                 else:
                     return '0'
+            elif match == 'graph':
+                div_id = 'opennamu_graph_view_' + str(self.data_temp_storage_count)
+                html_code = '<div id="' + div_id + '" style="width: 100%; height: 500px; border: 1px solid #ddd; border-radius: 10px; overflow: hidden;"></div>'
+                text_color = "#ffffff" if self.darkmode == '1' else "#333333"
+                js_code = '''
+                    function render_graph_''' + div_id + '''() {
+                        var container = document.getElementById("''' + div_id + '''");
+                        if(!container) {
+                            setTimeout(render_graph_''' + div_id + ''', 100);
+                            return;
+                        }
+                        
+                        if (typeof window.vis === 'undefined') {
+                            container.innerHTML = "<div style='padding:20px; color:red;'>vis-network 라이브러리를 로드하지 못했습니다.</div>";
+                            return;
+                        }
+
+                        container.innerHTML = "<div style='padding:20px; text-align:center; color:gray;'>그래프 데이터를 불러오는 중...</div>";
+
+                        fetch('/api/graph/''' + url_pas(self.doc_name) + '''')
+                        .then(response => {
+                            if(!response.ok) throw new Error("Network response was not ok");
+                            return response.json();
+                        })
+                        .then(data => {
+                            container.innerHTML = "";
+                            var graph_data = {
+                                nodes: new window.vis.DataSet(data.nodes),
+                                edges: new window.vis.DataSet(data.edges)
+                            };
+                            var options = {
+                                nodes: { shape: "dot", font: { size: 14, color: "''' + text_color + '''" } },
+                                edges: { color: "#ccc", arrows: "to" },
+                                physics: { stabilization: false, barnesHut: { springLength: 150 } },
+                                interaction: { hover: true }
+                            };
+                            var network = new window.vis.Network(container, graph_data, options);
+                            
+                            network.on("hoverNode", function (params) {
+                                network.canvas.body.container.style.cursor = 'pointer';
+                            });
+                            network.on("blurNode", function (params) {
+                                network.canvas.body.container.style.cursor = 'default';
+                            });
+                            
+                            network.on("selectNode", function (params) {
+                                if (params.nodes.length > 0) {
+                                    var nodeId = params.nodes[0];
+                                    window.location.href = '/w/' + encodeURIComponent(nodeId);
+                                }
+                            });
+                        })
+                        .catch(err => {
+                            container.innerHTML = "<div style='padding:20px; color:red;'>그래프를 불러오는 데 실패했습니다: " + err + "</div>";
+                        });
+                    }
+
+                    if (typeof window.vis === 'undefined') {
+                        if (!window.vis_loading) {
+                            window.vis_loading = true;
+                            var _define = window.define;
+                            var _exports = window.exports;
+                            var _module = window.module;
+                            window.define = undefined;
+                            window.exports = undefined;
+                            window.module = undefined;
+
+                            var script = document.createElement('script');
+                            script.src = 'https://cdnjs.cloudflare.com/ajax/libs/vis-network/9.1.2/standalone/umd/vis-network.min.js';
+                            script.onload = function() { 
+                                window.define = _define;
+                                window.exports = _exports;
+                                window.module = _module;
+                                window.vis_loaded = true;
+                                render_graph_''' + div_id + '''(); 
+                            };
+                            script.onerror = function() {
+                                window.vis_loaded = true;
+                                render_graph_''' + div_id + '''();
+                            };
+                            document.head.appendChild(script);
+                        } else {
+                            var check_vis = setInterval(function() {
+                                if (window.vis_loaded) {
+                                    clearInterval(check_vis);
+                                    render_graph_''' + div_id + '''();
+                                }
+                            }, 100);
+                        }
+                    } else {
+                        render_graph_''' + div_id + '''();
+                    }
+                '''
+                self.render_data_js += js_code
+                data_name = self.get_tool_data_storage(html_code, '', match_org.group(0))
+                return '<' + data_name + '></' + data_name + '>'
             else:
                 return '<macro>' + match_org.group(1) + '</macro>'
 

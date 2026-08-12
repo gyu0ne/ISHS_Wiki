@@ -1117,6 +1117,7 @@ app.route('/api/ip/<everything:data>')(api_func_ip)
 
 app.route('/api/image/<everything:name>')(api_image_view)
 app.route('/api/search_title/<everything:name>')(api_search_title)
+app.route('/api/graph/<everything:name>')(api_graph)
 
 ## v2 API
 app.route('/api/v2/recent_edit_request/<set_type>/<int:num>', defaults = { 'limit' : 50 })(api_list_recent_edit_request)

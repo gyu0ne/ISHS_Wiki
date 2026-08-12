@@ -6,6 +6,7 @@ from route.api_skin_info import api_skin_info
 from route.api_user_info import api_user_info
 from route.api_version import api_version
 from route.api_search_title import api_search_title
+from route.api_graph import api_graph
 
 from route.bbs_w_edit import bbs_w_edit
 from route.bbs_make import bbs_make
