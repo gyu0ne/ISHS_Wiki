@@ -514,12 +514,13 @@ def _capture_login_referer():
                         flask.session['__login_prev_title'] = title
     except Exception:
         pass
-from route.view_w import _recent_changes_sidebar_simple_html, _trending_sidebar_html
+from route.view_w import _recent_changes_sidebar_simple_html, _trending_sidebar_html, _open_discussions_sidebar_html
 
 # 사이드바 전역 캐시 (백그라운드에서 주기적으로 갱신됨)
 _sidebar_global_cache = {
     "recent": '<div style="padding: 10px; color: var(--muted); font-size: 0.9em;">준비 중...</div>',
     "trending": '<div style="padding: 10px; color: var(--muted); font-size: 0.9em;">준비 중...</div>',
+    "discussions": '<div style="padding: 10px; color: var(--muted); font-size: 0.9em;">준비 중...</div>',
     "updating": False
 }
 
@@ -536,15 +537,18 @@ def _sidebar_worker():
         _sidebar_global_cache["updating"] = True
         try:
             with get_db_connect() as conn:
-                # 실시간 인기 문서만 백그라운드 갱신
+                # 실시간 인기 문서 및 최근 토론 백그라운드 갱신
                 trending_html = _trending_sidebar_html(conn, limit=10)
+                discussion_html = _open_discussions_sidebar_html(conn, limit=5)
                 
                 # 성공 시 업데이트
                 _sidebar_global_cache["trending"] = trending_html
+                _sidebar_global_cache["discussions"] = discussion_html
         except Exception as e:
             # 오류 발생 시 사용자에게 '오류 발생' 임을 명시 (데이터 없음과 구분)
             error_msg = f'<div style="padding: 10px; color: #ef4444; font-size: 0.85em;">[오류] 데이터를 갱신할 수 없습니다.</div>'
             _sidebar_global_cache["trending"] = error_msg
+            _sidebar_global_cache["discussions"] = error_msg
             print(f"[WARN] Sidebar background update failed: {e}")
         finally:
             _sidebar_global_cache["updating"] = False
@@ -560,6 +564,7 @@ try:
     with get_db_connect() as conn:
         _sidebar_global_cache["recent"] = _recent_changes_sidebar_simple_html(conn, limit=10)
         _sidebar_global_cache["trending"] = _trending_sidebar_html(conn, limit=10)
+        _sidebar_global_cache["discussions"] = _open_discussions_sidebar_html(conn, limit=5)
     print("[INFO] Sidebar cache initialized.")
 except:
     pass
@@ -575,7 +580,8 @@ def inject_recent_sidebar():
     global _sidebar_global_cache
     return dict(
         recent_sidebar=_sidebar_global_cache["recent"], 
-        trending_sidebar=_sidebar_global_cache["trending"]
+        trending_sidebar=_sidebar_global_cache["trending"],
+        discussion_sidebar=_sidebar_global_cache["discussions"]
     )
 
 @app.after_request

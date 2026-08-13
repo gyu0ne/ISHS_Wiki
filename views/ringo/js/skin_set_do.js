@@ -63,6 +63,38 @@ function ringo_do_skin_set() {
             `;
         }
     }
+
+    let dynamic_css = "";
+
+    if(cookies.match(ringo_do_regex_data('main_css_recent_changes_hide')) && cookies.match(ringo_do_regex_data('main_css_recent_changes_hide'))[1] === '1') {
+        dynamic_css += `
+            .do_fixed > div:nth-of-type(1), #sidebar_recent_changes {
+                display: none !important;
+            }
+        `;
+    }
+
+    if(cookies.match(ringo_do_regex_data('main_css_trending_hide')) && cookies.match(ringo_do_regex_data('main_css_trending_hide'))[1] === '1') {
+        dynamic_css += `
+            .do_fixed > div:nth-of-type(2), #sidebar_trending {
+                display: none !important;
+            }
+        `;
+    }
+
+    if(cookies.match(ringo_do_regex_data('main_css_discussions_hide')) && cookies.match(ringo_do_regex_data('main_css_discussions_hide'))[1] === '1') {
+        dynamic_css += `
+            .do_fixed > div:nth-of-type(3), #sidebar_discussions {
+                display: none !important;
+            }
+        `;
+    }
+
+    if (dynamic_css) {
+        let style = document.createElement('style');
+        style.innerHTML = dynamic_css;
+        document.head.appendChild(style);
+    }
 }
 
 ringo_do_skin_set();

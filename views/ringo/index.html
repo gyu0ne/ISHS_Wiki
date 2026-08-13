@@ -42,7 +42,7 @@
   <script defer src="https://code.iconify.design/1/1.0.3/iconify.min.js"></script>
   <script defer src="/views/ringo/js/main.js.cache_v3"></script>
   <script defer src="/views/ringo/js/sidebar.js.cache_v7"></script>
-  <script defer src="/views/ringo/js/skin_set.js.cache_v9"></script>
+  <script defer src="/views/ringo/js/skin_set.js.cache_v12"></script>
   <script defer src="/views/main_css/js/func/autocomplete.js" charset="UTF-8"></script>
   
   {% if adsense_enabled %}
@@ -51,7 +51,8 @@
     crossorigin="anonymous"></script>
   {% endif %}
   
-  <script src="/views/ringo/js/skin_set_do.js.cache_v4"></script>
+  <style id="ringo_add_style"></style>
+  <script src="/views/ringo/js/skin_set_do.js.cache_v9"></script>
 
   {% if request.cookies.get('main_css_darkmode', '') == '1' %}
   {{imp[3][5]|safe}}
@@ -1406,17 +1407,24 @@
     </main>
 
     <aside class="do_fixed">
-      <div class="side_card rc_box" style="margin-bottom:16px;">
+      <div class="side_card rc_box" id="sidebar_recent_changes" style="margin-bottom:16px;">
         <h3 style="margin-top:0;"><a href="/recent_changes" style="color: inherit; text-decoration: none;">최근 변경</a></h3>
         <div class="rc_wrap" id="recent_sidebar_wrap">
           {{ recent_sidebar|safe }}
         </div>
       </div>
 
-      <div class="side_card rc_box" style="margin-bottom:16px;">
+      <div class="side_card rc_box" id="sidebar_trending" style="margin-bottom:16px;">
         <h3 style="margin-top:0;">실시간 인기 문서</h3>
         <div class="rc_wrap">
           {{ trending_sidebar|safe }}
+        </div>
+      </div>
+
+      <div class="side_card rc_box" id="sidebar_discussions" style="margin-bottom:16px;">
+        <h3 style="margin-top:0;"><a href="/recent_discuss" style="color: inherit; text-decoration: none;">열린 토론</a></h3>
+        <div class="rc_wrap">
+          {{ discussion_sidebar|safe }}
         </div>
       </div>
 

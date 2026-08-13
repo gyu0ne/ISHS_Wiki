@@ -138,6 +138,34 @@ def _trending_sidebar_html(conn, limit=10):
     return res
 
 
+def _open_discussions_sidebar_html(conn, limit=5):
+    """
+    최근 토론 중 '열려 있는(닫히지 않은)' 토론만 선별해서 최근순으로 가져옴
+    """
+    c = conn.cursor()
+    c.execute(db_change(
+        'SELECT title, sub, code FROM rd '
+        'WHERE stop != ? ORDER BY date DESC LIMIT ?'
+    ), ['O', limit])
+    
+    items = []
+    for _title, _sub, _code in c.fetchall():
+        safe_title = html.escape(_title)
+        safe_sub = html.escape(_sub)
+        
+        # 토론 링크
+        link = f'<a href="/thread/{_code}">{safe_sub}</a>'
+        # 대상 문서 링크
+        doc_link = f'<a href="/w/{url_pas(_title)}" style="font-size: 0.85em; color: var(--muted); margin-left: 4px;">({safe_title})</a>'
+        
+        items.append(f'<li style="margin-bottom: 8px;"><div style="display: flex; flex-direction: column;"><div>{link}</div><div>{doc_link}</div></div></li>')
+        
+    if not items:
+        return '<div style="padding: 10px; color: var(--muted); font-size: 0.9em;">열린 토론이 없습니다.</div>'
+        
+    return '<ul style="list-style: none; padding: 0; margin: 0;">' + ''.join(items) + '</ul>'
+
+
 
 def _get_user_profile_table_html(conn, user_id: str) -> str:
     """
