@@ -25,10 +25,7 @@ function ringo_get_post() {
         document.cookie = check_tr.checked ? 'main_css_trending_hide=1; path=/' : 'main_css_trending_hide=0; path=/';
     }
 
-    const check_di = document.getElementById('discussions_hide');
-    if(check_di) {
-        document.cookie = check_di.checked ? 'main_css_discussions_hide=1; path=/' : 'main_css_discussions_hide=0; path=/';
-    }
+
 
     history.go(0);
 }
@@ -43,15 +40,13 @@ function ringo_load_skin_set() {
                 "darkmode" : "Darkmode",
                 "use_sys_darkmode" : "Use system darkmode set",
                 "recent_changes_hide" : "Hide Recent Changes in Sidebar",
-                "trending_hide" : "Hide Trending Documents in Sidebar",
-                "discussions_hide" : "Hide Open Discussions in Sidebar"
+                "trending_hide" : "Hide Trending Documents in Sidebar"
             }, "ko-KR" : {
                 "save" : "저장",
                 "darkmode" : "다크모드",
                 "use_sys_darkmode" : "시스템 다크모드 설정 사용",
                 "recent_changes_hide" : "우측 사이드바: 최근 변경 숨기기",
-                "trending_hide" : "우측 사이드바: 실시간 인기 문서 숨기기",
-                "discussions_hide" : "우측 사이드바: 열린 토론 숨기기"
+                "trending_hide" : "우측 사이드바: 실시간 인기 문서 숨기기"
             }
         }
 
@@ -91,11 +86,7 @@ function ringo_load_skin_set() {
             set_data["trending_hide"] = "";
         }
 
-        if(cookies.match(ringo_do_regex_data('main_css_discussions_hide')) && cookies.match(ringo_do_regex_data('main_css_discussions_hide'))[1] === '1') {
-            set_data["discussions_hide"] = "checked";
-        } else {
-            set_data["discussions_hide"] = "";
-        }
+
 
 
 
@@ -107,8 +98,6 @@ function ringo_load_skin_set() {
             <label><input ' + set_data["recent_changes_hide"] + ' type="checkbox" id="recent_changes_hide" name="recent_changes_hide" value="recent_changes_hide"> ' + set_language[language]['recent_changes_hide'] + '</label> \
             <hr class="main_hr"> \
             <label><input ' + set_data["trending_hide"] + ' type="checkbox" id="trending_hide" name="trending_hide" value="trending_hide"> ' + set_language[language]['trending_hide'] + '</label> \
-            <hr class="main_hr"> \
-            <label><input ' + set_data["discussions_hide"] + ' type="checkbox" id="discussions_hide" name="discussions_hide" value="discussions_hide"> ' + set_language[language]['discussions_hide'] + '</label> \
             <hr class="main_hr"> \
             <button onclick="ringo_get_post();">' + set_language[language]['save'] + '</button> \
         ';

@@ -70,13 +70,7 @@ function ringo_do_skin_set() {
         `;
     }
 
-    if(cookies.match(ringo_do_regex_data('main_css_discussions_hide')) && cookies.match(ringo_do_regex_data('main_css_discussions_hide'))[1] === '1') {
-        dynamic_css += `
-            .do_fixed > div:nth-of-type(3), #sidebar_discussions {
-                display: none !important;
-            }
-        `;
-    }
+
 
     if (dynamic_css) {
         let style = document.createElement('style');
