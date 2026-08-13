@@ -23,22 +23,10 @@ function ringo_do_skin_set() {
         }
     }
 
-    if(window.localStorage.getItem('main_css_off_sidebar') && window.localStorage.getItem('main_css_off_sidebar') === '0') {
-    } else {
-        let style_target = document.getElementById('ringo_add_style');
-        if (style_target) {
-            style_target.innerHTML += `
-                section {
-                    width: auto !important;
-                    display: block !important;
-                    margin: auto !important;
-                }
-
-                .do_fixed {
-                    display: none !important;
-                }
-            `;
-        }
+    // Removed main_css_off_sidebar since it causes confusion.
+    // Ensure it is always 0 for Ringo skin.
+    if (window.localStorage.getItem('main_css_off_sidebar') === '1') {
+        window.localStorage.setItem('main_css_off_sidebar', '0');
     }
 
     if(window.localStorage.getItem('main_css_fixed_width') && window.localStorage.getItem('main_css_fixed_width') !== '') {

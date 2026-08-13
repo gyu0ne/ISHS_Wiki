@@ -6,38 +6,28 @@ function ringo_do_regex_data(data) {
 
 function ringo_get_post() {
     const check = document.getElementById('invert');
-    if(check.checked === true) {
-        document.cookie = 'main_css_darkmode=1; path=/';
-    } else {
-        document.cookie = 'main_css_darkmode=0; path=/';
+    if(check) {
+        document.cookie = check.checked ? 'main_css_darkmode=1; path=/' : 'main_css_darkmode=0; path=/';
     }
 
     const check_2 = document.getElementById('use_sys_darkmode');
-    if(check_2.checked === true) {
-        window.localStorage.setItem('main_css_use_sys_darkmode', '1');
-    } else {
-        window.localStorage.setItem('main_css_use_sys_darkmode', '0');
+    if(check_2) {
+        window.localStorage.setItem('main_css_use_sys_darkmode', check_2.checked ? '1' : '0');
     }
 
     const check_rc = document.getElementById('recent_changes_hide');
-    if(check_rc.checked === true) {
-        document.cookie = 'main_css_recent_changes_hide=1; path=/';
-    } else {
-        document.cookie = 'main_css_recent_changes_hide=0; path=/';
+    if(check_rc) {
+        document.cookie = check_rc.checked ? 'main_css_recent_changes_hide=1; path=/' : 'main_css_recent_changes_hide=0; path=/';
     }
 
     const check_tr = document.getElementById('trending_hide');
-    if(check_tr.checked === true) {
-        document.cookie = 'main_css_trending_hide=1; path=/';
-    } else {
-        document.cookie = 'main_css_trending_hide=0; path=/';
+    if(check_tr) {
+        document.cookie = check_tr.checked ? 'main_css_trending_hide=1; path=/' : 'main_css_trending_hide=0; path=/';
     }
 
     const check_di = document.getElementById('discussions_hide');
-    if(check_di.checked === true) {
-        document.cookie = 'main_css_discussions_hide=1; path=/';
-    } else {
-        document.cookie = 'main_css_discussions_hide=0; path=/';
+    if(check_di) {
+        document.cookie = check_di.checked ? 'main_css_discussions_hide=1; path=/' : 'main_css_discussions_hide=0; path=/';
     }
 
     history.go(0);
@@ -106,6 +96,8 @@ function ringo_load_skin_set() {
         } else {
             set_data["discussions_hide"] = "";
         }
+
+
 
         document.getElementById("main_skin_set").innerHTML = ' \
             <label><input ' + set_data["use_sys_darkmode"] + ' type="checkbox" id="use_sys_darkmode" name="use_sys_darkmode" value="use_sys_darkmode"> ' + set_language[language]['use_sys_darkmode'] + '</label> \

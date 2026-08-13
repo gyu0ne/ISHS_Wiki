@@ -32,6 +32,7 @@ function ringo_refresh_recent_sidebar() {
     });
 }
 
+
 // event
 function ringo_do_side_button_1() {
     if(temp_save[0] === '') {
@@ -110,8 +111,6 @@ window.addEventListener('DOMContentLoaded', function() {
         document.getElementById("side_button_2").addEventListener("click", ringo_do_side_button_2);
         document.getElementById("side_button_3").addEventListener("click", ringo_do_side_button_3);
 
-        if(window.localStorage.getItem('main_css_off_sidebar') && window.localStorage.getItem('main_css_off_sidebar') === '0') {
-            ringo_do_side_button_1();
-        }
+        ringo_do_side_button_1();
     }
 });
