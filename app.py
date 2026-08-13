@@ -1278,5 +1278,10 @@ if __name__ == "__main__":
     else:
         config = Config()
         config.bind = [server_set['host'] + ":" + server_set['port']]
+        import logging, sys
+        config.error_logger = logging.getLogger('hypercorn.error')
+        config.error_logger.setLevel(logging.DEBUG)
+        config.error_logger.addHandler(logging.StreamHandler(sys.stderr))
 
-        asyncio.run(serve(app, config))
+        from asgiref.wsgi import WsgiToAsgi
+        asyncio.run(serve(WsgiToAsgi(app), config))

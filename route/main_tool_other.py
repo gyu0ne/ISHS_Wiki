@@ -17,7 +17,7 @@ async def main_tool_other():
                 <h3>''' + get_lang(conn, 'admin') + '''</h3>
                 <ul>               
                     <li><a href="/list/admin">''' + get_lang(conn, 'admin_list') + '''</a></li>
-                    <li><a href="/list/admin/auth_use">''' + get_lang(conn, 'authority_use_list') + '''</a></li>
+
                 </ul>
                 <h3>''' + get_lang(conn, 'discussion') + '''</h3>
                 <ul>

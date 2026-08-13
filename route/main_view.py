@@ -32,4 +32,10 @@ async def main_view(name = ''):
                 else:
                     mime_type = 'text/' + mime_type
 
-            return flask.send_from_directory(dir_name, file_name, mimetype = mime_type)
+            import sys, traceback
+            try:
+                return flask.send_from_directory(dir_name, file_name, mimetype = mime_type)
+            except Exception as e:
+                print("main_view exception:", type(e), e, file=sys.stderr)
+                traceback.print_exc()
+                raise
