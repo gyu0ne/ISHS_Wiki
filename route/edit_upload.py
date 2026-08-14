@@ -88,7 +88,7 @@ async def edit_upload():
                 if db_data and db_data[0][0] == 'namumark':
                     file_d = '' + \
                         flask.request.form.get('f_lice_sel', 'direct_input') + '\n' + \
-                        '[[category:' + re.sub(r'\]', '_', flask.request.form.get('f_lice_sel', '')) + ']]\n' + \
+                        '[[분류:' + re.sub(r'\]', '_', flask.request.form.get('f_lice_sel', '')) + ']]\n' + \
                         (g_lice if g_lice != '' else '') + \
                     ''
                 else:
