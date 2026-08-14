@@ -2257,7 +2257,7 @@ class class_do_render_namumark:
                             if_state = if_data_get_data[1]
                             parameter = if_data_get_data[2].strip()
 
-                            if_data = re.sub(if_regex, '', if_data)
+                            if_data = re.sub(if_regex, '', if_data, count = 1)
                             # 조건문 뒤의 줄바꿈 제거 (여러 줄 형식 지원)
                             if_data = re.sub(r'^\n+', '', if_data)
 
@@ -2287,12 +2287,12 @@ class class_do_render_namumark:
                                 if parameter != var_data:
                                     result_data = True
 
-                        # AND 연산자 처리 (&&, &)
-                        and_match = re.search(r'^\s*&\s*&?\s*(.+)', if_data)
+                        # AND 연산자 처리 (&&, &, &amp;&amp;, &amp;)
+                        and_match = re.search(r'^\s*(?:&amp;|&)\s*(?:&amp;|&)?\s*(.+)', if_data, flags = re.S)
                         if and_match:
                             # 두 번째 조건 파싱
                             second_condition = and_match.group(1)
-                            if_regex_2 = r"([^ ]+)(?: *)(!=|==)(?: *)([^\n\u0026]+)"
+                            if_regex_2 = r"([^ ]+)(?: *)(!=|==)(?: *)([^\n&]+)"
                             if_data_get_2 = re.search(if_regex_2, second_condition)
                             
                             if if_data_get_2:
@@ -2308,7 +2308,7 @@ class class_do_render_namumark:
                                     if parameter_2 == "null" and var_data_2 == None:
                                         result_data_2 = True
                                     else:
-                                        parameter_2 = re.sub(r'^\u0026quot;|\u0026quot;$', '', parameter_2)
+                                        parameter_2 = re.sub(r'^&quot;|&quot;$', '', parameter_2)
                                         if parameter_2 == var_data_2:
                                             result_data_2 = True
                                 else:
@@ -2317,7 +2317,7 @@ class class_do_render_namumark:
                                     elif parameter_2 == "null" and var_data_2 == None:
                                         result_data_2 = False
                                     else:
-                                        parameter_2 = re.sub(r'^\u0026quot;|\u0026quot;$', '', parameter_2)
+                                        parameter_2 = re.sub(r'^&quot;|&quot;$', '', parameter_2)
                                         if parameter_2 != var_data_2:
                                             result_data_2 = True
                                 
@@ -2325,7 +2325,7 @@ class class_do_render_namumark:
                                 result_data = result_data and result_data_2
                                 
                                 # second_condition에서 두 번째 조건 제거하여 남은 내용 추출
-                                if_data = re.sub(if_regex_2, '', second_condition)
+                                if_data = re.sub(if_regex_2, '', second_condition, count = 1)
                                 if_data = re.sub(r'^\n+', '', if_data)
 
                         if result_data:
