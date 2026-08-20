@@ -10,6 +10,7 @@ from .go_api_w_render import api_w_render
 from .go_api_w_page_view import api_w_page_view
 
 PERSON_TEMPLATE_RE = re.compile(r'\[include\(\s*틀:인곽위키/인물\s*\)\]', re.I)
+INCIDENT_TEMPLATE_RE = re.compile(r'\[include\(\s*틀:사건사고\s*\)\]', re.I)
 PERSON_CATEGORY_RE = re.compile(r'\[\[\s*(?:분류|category)\s*:\s*(?:재학생|졸업생)\s*(?:\|[^\]]*)?\]\]', re.I)
 USER_DOCUMENT_RE = re.compile(r'^user:', re.I)
 
@@ -21,7 +22,7 @@ def _is_person_document(name, doc_data_raw):
         return False
 
     doc_data = doc_data_raw.get("data", "")
-    return bool(PERSON_TEMPLATE_RE.search(doc_data) or PERSON_CATEGORY_RE.search(doc_data))
+    return bool(PERSON_TEMPLATE_RE.search(doc_data) or INCIDENT_TEMPLATE_RE.search(doc_data) or PERSON_CATEGORY_RE.search(doc_data))
 
 def _has_guest_restricted_view_acl(conn, name):
     curs = conn.cursor()
@@ -286,7 +287,10 @@ async def view_w(name = '대문', do_type = ''):
         is_person_document = _is_person_document(name, doc_data_raw)
         has_person_template = (
             doc_data_raw.get("response") == "ok"
-            and PERSON_TEMPLATE_RE.search(doc_data_raw.get("data", ""))
+            and (
+                PERSON_TEMPLATE_RE.search(doc_data_raw.get("data", ""))
+                or INCIDENT_TEMPLATE_RE.search(doc_data_raw.get("data", ""))
+            )
         )
         if has_person_template:
             if ip_or_user(ip) == 1:

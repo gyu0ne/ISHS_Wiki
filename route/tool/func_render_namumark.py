@@ -2861,11 +2861,15 @@ class class_do_render_namumark:
         
         def do_render_last_toc_filter(match):
             data = match.group(1).split(' ')
-            if data[0] == 'a' or data[0] == '/a':
+            if data[0] == 'a':
                 if len(data) > 3 and data[3] != 'href="javascript:void(0);"':
                     return '<' + match[1] + '>'
                 else:
                     return ''
+            elif data[0] == '/a':
+                # 닫는 태그는 속성이 없어 항상 len(data) == 1이라 위와 같은 길이 조건을
+                # 적용하면 여는 <a>만 남고 </a>가 사라져 뒤 내용이 통째로 링크에 갇힌다.
+                return '<' + match[1] + '>'
             else:
                 return ''
 

@@ -20,7 +20,7 @@ async def api_list_recent_change_exter(num = 1, set_type = 'normal', limit = 10,
             for item in data["data"]:
                 doc_name = item[0]
                 doc_raw_data = await api_w_raw(doc_name)
-                if doc_raw_data["response"] == "ok" and '[include(틀:인곽위키/인물)]' in doc_raw_data["data"]:
+                if doc_raw_data["response"] == "ok" and ('[include(틀:인곽위키/인물)]' in doc_raw_data["data"] or '[include(틀:사건사고)]' in doc_raw_data["data"]):
                     continue
 
                 new_data.append(item)

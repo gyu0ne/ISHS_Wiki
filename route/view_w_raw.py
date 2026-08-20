@@ -21,7 +21,7 @@ async def view_w_raw(name = '', rev = '', doc_acl = ''):
         else:
             data_in = ''
 
-        if data_in and '[include(틀:인곽위키/인물)]' in data_in:
+        if data_in and ('[include(틀:인곽위키/인물)]' in data_in or '[include(틀:사건사고)]' in data_in):
             if ip_or_user(ip) == 1:
                 return await re_error(conn, 1)
 

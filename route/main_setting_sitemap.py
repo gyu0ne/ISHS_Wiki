@@ -2,6 +2,7 @@ from .tool.func import *
 import re
 
 SITEMAP_PERSON_TEMPLATE_RE = re.compile(r'\[include\(\s*틀:인곽위키/인물\s*\)\]', re.I)
+SITEMAP_INCIDENT_TEMPLATE_RE = re.compile(r'\[include\(\s*틀:사건사고\s*\)\]', re.I)
 SITEMAP_USER_DOCUMENT_RE = re.compile(r'^user:', re.I)
 
 def _is_guest_restricted_sitemap_doc(title, data, restricted_acl_titles):
@@ -11,7 +12,7 @@ def _is_guest_restricted_sitemap_doc(title, data, restricted_acl_titles):
     if title in restricted_acl_titles:
         return True
 
-    return bool(SITEMAP_PERSON_TEMPLATE_RE.search(data or ''))
+    return bool(SITEMAP_PERSON_TEMPLATE_RE.search(data or '') or SITEMAP_INCIDENT_TEMPLATE_RE.search(data or ''))
 
 async def main_setting_sitemap(do_type = 0):
     with get_db_connect() as conn:

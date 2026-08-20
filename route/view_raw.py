@@ -46,7 +46,7 @@ async def view_raw(name = '', topic_num = '', num = '', doc_acl = 0, bbs_num = '
             curs.execute(db_change("select data from history where title = ? and id = ?"), [name, num])
 
             history_data = curs.fetchall()
-            if history_data and '[include(틀:인곽위키/인물)]' in history_data[0][0]:
+            if history_data and ('[include(틀:인곽위키/인물)]' in history_data[0][0] or '[include(틀:사건사고)]' in history_data[0][0]):
                 if ip_or_user(ip) == 1:
                     return await re_error(conn, 1)
                 

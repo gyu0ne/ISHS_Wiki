@@ -79,13 +79,13 @@ async def view_diff(name = 'Test', num_a = 1, num_b = 1):
 
         curs.execute(db_change("select data from history where title = ? and id = ?"), [name, first])
         data = curs.fetchall()
-        if data and '[include(틀:인곽위키/인물)]' in data[0][0]:
+        if data and ('[include(틀:인곽위키/인물)]' in data[0][0] or '[include(틀:사건사고)]' in data[0][0]):
             if ip_or_user(ip) == 1:
                 return await re_error(conn, 1)
 
         curs.execute(db_change("select data from history where title = ? and id = ?"), [name, second])
         data = curs.fetchall()
-        if data and '[include(틀:인곽위키/인물)]' in data[0][0]:
+        if data and ('[include(틀:인곽위키/인물)]' in data[0][0] or '[include(틀:사건사고)]' in data[0][0]):
             if ip_or_user(ip) == 1:
                 return await re_error(conn, 1)
 
