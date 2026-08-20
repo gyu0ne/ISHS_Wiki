@@ -1442,25 +1442,32 @@
   <script>
     (function() {
       // adsbygoogle 스크립트가 로드될 때까지 대기 후 초기화
+      function pushAd(ad) {
+        // 슬롯 하나씩만 개별로 시도 : 하나가 실패해도 나머지 슬롯은 계속 초기화되게 함
+        try {
+          if (!ad.getAttribute('data-adsbygoogle-status')) {
+            (window.adsbygoogle = window.adsbygoogle || []).push({});
+          }
+        } catch (e) {
+          console.log('AdSense 초기화 오류:', e);
+        }
+      }
+
       function initAds() {
         // adsbygoogle 객체가 준비되지 않으면 재시도
         if (typeof adsbygoogle === 'undefined') {
           setTimeout(initAds, 100);
           return;
         }
-        
-        try {
-          var adElements = document.querySelectorAll('.adsbygoogle');
-          for (var i = 0; i < adElements.length; i++) {
-            var ad = adElements[i];
-            // 이미 초기화된 광고는 건너뛰기
-            if (!ad.getAttribute('data-adsbygoogle-status')) {
-              (adsbygoogle = window.adsbygoogle || []).push({});
-            }
-          }
-        } catch (e) {
-          console.log('AdSense 초기화 오류:', e);
-        }
+
+        var adElements = document.querySelectorAll('.adsbygoogle');
+        adElements.forEach(function(ad, i) {
+          // 슬롯 사이에 다음 프레임까지 텀을 둬서, 레이아웃이 잡히기 전(availableWidth=0)에
+          // 연달아 push()해서 생기는 "No slot size" 에러를 피한다.
+          setTimeout(function() {
+            pushAd(ad);
+          }, i * 100);
+        });
       }
       
       // DOM이 완전히 로드된 후 실행
