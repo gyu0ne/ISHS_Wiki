@@ -12,7 +12,9 @@ async def edit_move(name):
 
         if flask.request.method == 'POST':
             move_title = flask.request.form.get('title', 'test')
-            if await acl_check(move_title) == 1:
+            # 이동 대상 자리의 기존 내용을 덮어쓰게 되므로, 대상 문서의 편집 권한도 확인해야 한다.
+            # (툴 없이 acl_check(move_title)만 하면 편집 잠금이 걸린 문서도 교체 이동으로 덮어쓸 수 있었다)
+            if await acl_check(move_title, 'document_edit') == 1:
                 return await re_error(conn, 0)
 
             if name == move_title:

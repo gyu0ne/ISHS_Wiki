@@ -46,9 +46,15 @@ async def api_move_multiple():
                     results.append({'title': name, 'result': 'error', 'msg': 'no_auth'})
                     continue
 
-                # 대상 문서 존재 여부
+                # 대상 문서 존재 여부 (존재하면 교체/스왑되어 기존 내용이 덮어써짐)
                 curs.execute(db_change("select title from data where title = ? limit 1"), [move_title])
                 target_exists = bool(curs.fetchall())
+
+                # 대상 문서가 이미 있으면 그 내용을 덮어쓰게 되므로, 대상 문서의 편집 권한도 확인한다.
+                # (이 체크가 없으면 편집이 잠긴 문서도 자기 소유 문서와 스왑시켜 덮어쓸 수 있었다)
+                if target_exists and await acl_check(move_title, 'document_edit') == 1:
+                    results.append({'title': name, 'result': 'error', 'msg': 'no_auth'})
+                    continue
 
                 # 원본 문서 존재 여부
                 curs.execute(db_change("select title from history where title = ? limit 1"), [name])
