@@ -1,4 +1,5 @@
 from .tool.func import *
+from .tool.password_attempt import password_attempt_limit
 
 async def login_login_2fa():
     with get_db_connect() as conn:
@@ -18,6 +19,10 @@ async def login_login_2fa():
             return await re_error(conn, 0)
 
         if flask.request.method == 'POST':
+            limited = await password_attempt_limit(conn, 'user:' + flask.session['login_id'], scope='second-factor')
+            if limited is not None:
+                return limited
+
             if await captcha_post(conn, flask.request.form.get('g-recaptcha-response', flask.request.form.get('g-recaptcha', ''))) == 1:
                 return await re_error(conn, 13)
 

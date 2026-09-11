@@ -1,4 +1,5 @@
 from .tool.func import *
+from .tool.password_attempt import password_attempt_limit
 
 async def user_setting_pw():
     with get_db_connect() as conn:
@@ -12,6 +13,10 @@ async def user_setting_pw():
             return redirect(conn, '/login')
 
         if flask.request.method == 'POST':
+            limited = await password_attempt_limit(conn, 'user:' + ip)
+            if limited is not None:
+                return limited
+
             user_pw_now = flask.request.form.get('password_now', '')
             user_pw = flask.request.form.get('password_new', '')
             user_repeat = flask.request.form.get('password_new_repeat', '')

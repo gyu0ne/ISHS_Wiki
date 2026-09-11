@@ -11,6 +11,7 @@ import threading
 from route.tool.func import *
 from route import *
 from route.riro_login_page import riro_login_page
+from route.tool.password_rate_limit import initialize_password_rate_limit
 from hypercorn.asyncio import serve
 from hypercorn.config import Config
 from flask import g
@@ -129,6 +130,8 @@ with get_db_connect(init_mode = True) as conn:
         conn.select_db(data_db_set['name'])
     else:
         conn.execute('pragma journal_mode = WAL')
+
+    initialize_password_rate_limit(conn, data_db_set['type'])
 
     if setup_tool != 'normal':
         create_data = get_db_table_list()

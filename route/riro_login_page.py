@@ -1,4 +1,5 @@
 from .tool.func import *
+from .tool.password_attempt import password_attempt_limit
 from .riroschoolauth import check_riro_login
 import requests
 import asyncio
@@ -15,6 +16,10 @@ async def riro_login_page():
         if flask.request.method == 'POST':
             riro_id = flask.request.form.get('riro_id', '')
             riro_pw = flask.request.form.get('riro_pw', '')
+
+            limited = await password_attempt_limit(conn, 'riro:' + riro_id.strip().casefold(), scope='riro')
+            if limited is not None:
+                return limited
 
             try:
                 loop = asyncio.get_running_loop()
