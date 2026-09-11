@@ -1,4 +1,5 @@
 from .tool.func import *
+from .tool.password_attempt import password_attempt_limit
 from .riroschoolauth import check_riro_login
 import asyncio
 import html as _html
@@ -57,6 +58,10 @@ async def riro_reauth():
         if flask.request.method == 'POST':
             riro_id = flask.request.form.get('riro_id', '').strip()
             riro_pw = flask.request.form.get('riro_pw', '')
+
+            limited = await password_attempt_limit(conn, 'riro:' + riro_id.casefold(), scope='riro')
+            if limited is not None:
+                return limited
 
             if not riro_id or not riro_pw:
                 error_msg = '아이디와 비밀번호를 모두 입력해 주세요.'

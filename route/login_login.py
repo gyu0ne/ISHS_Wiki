@@ -1,4 +1,5 @@
 from .tool.func import *
+from .tool.password_attempt import password_attempt_limit
 import hashlib
 import hmac
 
@@ -14,9 +15,6 @@ async def login_login():
             return await re_error(conn, 0)
 
         if flask.request.method == 'POST':
-            if await captcha_post(conn, flask.request.form.get('g-recaptcha-response', flask.request.form.get('g-recaptcha', ''))) == 1:
-                return await re_error(conn, 13)
-
             user_agent = flask.request.headers.get('User-Agent', '')
             user_name = flask.request.form.get('id', '')
             user_pw = flask.request.form.get('pw', '')
@@ -25,6 +23,15 @@ async def login_login():
             # user_name으로 student_id 찾기
             curs.execute(db_change("select id from user_set where name = 'user_name' and data = ?"), [user_name])
             row = curs.fetchone()
+            # 같은 계정의 이름 표기가 달라도 동일한 시도 횟수를 적용합니다.
+            account = 'user:' + row[0] if row else 'name:' + user_name.casefold()
+            limited = await password_attempt_limit(conn, account)
+            if limited is not None:
+                return limited
+
+            if await captcha_post(conn, flask.request.form.get('g-recaptcha-response', flask.request.form.get('g-recaptcha', ''))) == 1:
+                return await re_error(conn, 13)
+
             if not row:
                 return await re_error(conn, 2)   # 계정이 존재하지 않습니다
 
@@ -54,9 +61,6 @@ async def login_login():
             if not student_id_data or not student_id_data[0][0]:
                 flask.session['pending_riro_verification_for_user'] = student_id
                 return redirect(conn, '/riro_login')
-
-            if pw_check(conn, user_pw, db_user_pw, db_user_encode, student_id) != 1:
-                return await re_error(conn, 10)
 
             # Owner 계정은 학생 인증 검사에서 제외
             if (await acl_check(tool = 'owner_auth', ip = student_id)) != 0:
