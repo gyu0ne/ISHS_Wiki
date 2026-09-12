@@ -268,6 +268,7 @@ function opennamu_do_render(to_obj, data, name = '', do_type = '', option = '', 
                 if (text["data"]) {
                     document.getElementById(to_obj).innerHTML = text["data"];
                     eval(text["js_data"]);
+                    opennamu_render_math(document.getElementById(to_obj));
                 } else {
                     document.getElementById(to_obj).innerHTML = '';
                 }

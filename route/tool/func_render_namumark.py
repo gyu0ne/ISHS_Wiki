@@ -51,7 +51,6 @@ class class_do_render_namumark:
 
         self.data_backlink : dict[str, Any] = {}
 
-        self.data_math_count = 0
         self.data_redirect = 0
         self.link_count = 0
 
@@ -223,6 +222,7 @@ class class_do_render_namumark:
                                 tip.className = "footnote_tooltip";
                                 tip.innerHTML = '{foot_text_js}';
                                 document.body.appendChild(tip);
+                                opennamu_render_math(tip);
 
                                 tip.style.position = "absolute";
                                 tip.style.pointerEvents = "auto";
@@ -1176,27 +1176,14 @@ class class_do_render_namumark:
 
             data = data.replace('\n', '')
             data = self.get_tool_data_revert(data)
-
-            data_html = self.get_tool_js_safe(data)
-
             data = html.unescape(data)
-            data = self.get_tool_js_safe(data)
+            data_html = html.escape(data, quote = True)
 
-            name_ob = self.doc_set['doc_include'] + 'opennamu_math_' + str(self.data_math_count)
-
-            data_name = self.get_tool_data_storage('<span id="' + name_ob + '">' + data_html, '</span>', match.group(0))
-
-            self.render_data_js += '' + \
-                'try {\n' + \
-                    'katex.render("' + data + '", document.getElementById(\"' + name_ob + '\"));\n' + \
-                '} catch {\n' + \
-                    'if(document.getElementById(\"' + name_ob + '\")) {\n' + \
-                        'document.getElementById(\"' + name_ob + '\").innerHTML = "<span style=\'color: red;\'>' + data_html + '</span>";\n' + \
-                    '}\n' + \
-                '}\n' + \
-            ''
-
-            self.data_math_count += 1
+            data_name = self.get_tool_data_storage(
+                '<span class="opennamu-math" data-tex="' + data_html + '">' + data_html,
+                '</span>',
+                match.group(0)
+            )
 
             return '<' + data_name + '></' + data_name + '>'
 
