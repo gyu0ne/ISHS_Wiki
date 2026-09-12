@@ -1176,25 +1176,15 @@ class class_do_render_namumark:
 
             data = data.replace('\n', '')
             data = self.get_tool_data_revert(data)
-
-            data_html = self.get_tool_js_safe(data)
-
             data = html.unescape(data)
-            data = self.get_tool_js_safe(data)
 
             name_ob = self.doc_set['doc_include'] + 'opennamu_math_' + str(self.data_math_count)
 
-            data_name = self.get_tool_data_storage('<span id="' + name_ob + '">' + data_html, '</span>', match.group(0))
-
-            self.render_data_js += '' + \
-                'try {\n' + \
-                    'katex.render("' + data + '", document.getElementById(\"' + name_ob + '\"));\n' + \
-                '} catch {\n' + \
-                    'if(document.getElementById(\"' + name_ob + '\")) {\n' + \
-                        'document.getElementById(\"' + name_ob + '\").innerHTML = "<span style=\'color: red;\'>' + data_html + '</span>";\n' + \
-                    '}\n' + \
-                '}\n' + \
-            ''
+            data_name = self.get_tool_data_storage(
+                '<span class="opennamu-math" id="' + name_ob + '" data-tex="' + html.escape(data, quote = True) + '">',
+                '</span>',
+                match.group(0)
+            )
 
             self.data_math_count += 1
 

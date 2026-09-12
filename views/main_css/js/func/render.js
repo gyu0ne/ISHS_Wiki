@@ -211,6 +211,36 @@ function opennamu_do_render_html(name = '') {
     }
 }
 
+function opennamu_render_math(root = document) {
+    if(typeof window.katex === 'undefined' && document.readyState !== 'complete') {
+        window.addEventListener('load', function() {
+            opennamu_render_math(root);
+        }, { once: true });
+
+        return;
+    }
+
+    root.querySelectorAll('.opennamu-math').forEach(function(el) {
+        if(el.dataset.mathRendered === '1') {
+            return;
+        }
+        el.dataset.mathRendered = '1';
+
+        let tex = el.dataset.tex ?? '';
+        if(typeof window.katex === 'undefined') {
+            el.textContent = tex;
+            return;
+        }
+
+        try {
+            window.katex.render(tex, el);
+        } catch (err) {
+            el.textContent = tex;
+            el.style.color = 'red';
+        }
+    });
+}
+
 function opennamu_do_footnote_spread(set_name, load_name) {
     if(document.getElementById(set_name + '_load').style.display === 'none') {
         document.getElementById(set_name).title = '';
@@ -319,3 +349,7 @@ function opennamu_do_toc() {
         return '<div class="opennamu_TOC" id="toc"><div class="opennamu_TOC_title">TOC</div><br>' + toc_html + '</div>';
     });
 }
+
+document.addEventListener('DOMContentLoaded', function() {
+    opennamu_render_math();
+});
