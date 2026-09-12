@@ -51,7 +51,6 @@ class class_do_render_namumark:
 
         self.data_backlink : dict[str, Any] = {}
 
-        self.data_math_count = 0
         self.data_redirect = 0
         self.link_count = 0
 
@@ -1180,15 +1179,11 @@ class class_do_render_namumark:
             data = html.unescape(data)
             data_html = html.escape(data, quote = True)
 
-            name_ob = self.doc_set['doc_include'] + 'opennamu_math_' + str(self.data_math_count)
-
             data_name = self.get_tool_data_storage(
-                '<span class="opennamu-math" id="' + name_ob + '" data-tex="' + data_html + '">' + data_html,
+                '<span class="opennamu-math" data-tex="' + data_html + '">' + data_html,
                 '</span>',
                 match.group(0)
             )
-
-            self.data_math_count += 1
 
             return '<' + data_name + '></' + data_name + '>'
 

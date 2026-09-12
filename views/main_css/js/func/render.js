@@ -212,14 +212,6 @@ function opennamu_do_render_html(name = '') {
 }
 
 function opennamu_render_math(root = document) {
-    if(typeof window.katex === 'undefined' && document.readyState !== 'complete') {
-        window.addEventListener('load', function() {
-            opennamu_render_math(root);
-        }, { once: true });
-
-        return;
-    }
-
     root.querySelectorAll('.opennamu-math').forEach(function(el) {
         if(el.dataset.mathRendered === '1') {
             return;
