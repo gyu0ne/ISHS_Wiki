@@ -223,6 +223,7 @@ class class_do_render_namumark:
                                 tip.className = "footnote_tooltip";
                                 tip.innerHTML = '{foot_text_js}';
                                 document.body.appendChild(tip);
+                                opennamu_render_math(tip);
 
                                 tip.style.position = "absolute";
                                 tip.style.pointerEvents = "auto";
@@ -1177,11 +1178,12 @@ class class_do_render_namumark:
             data = data.replace('\n', '')
             data = self.get_tool_data_revert(data)
             data = html.unescape(data)
+            data_html = html.escape(data, quote = True)
 
             name_ob = self.doc_set['doc_include'] + 'opennamu_math_' + str(self.data_math_count)
 
             data_name = self.get_tool_data_storage(
-                '<span class="opennamu-math" id="' + name_ob + '" data-tex="' + html.escape(data, quote = True) + '">',
+                '<span class="opennamu-math" id="' + name_ob + '" data-tex="' + data_html + '">' + data_html,
                 '</span>',
                 match.group(0)
             )
