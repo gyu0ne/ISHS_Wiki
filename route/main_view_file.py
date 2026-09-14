@@ -23,6 +23,8 @@ async def main_view_file(data = ''):
         elif os.path.exists(data):
             if re.search(r'\.txt$', data, flags = re.I):
                 return flask.send_from_directory('./', data, mimetype = 'text/plain')
+            elif re.search(r'\.html?$', data, flags = re.I):
+                return flask.send_from_directory('./', data, mimetype = 'text/html')
             else:
                 return flask.send_from_directory('./', data, mimetype = 'text/xml')
         else:
