@@ -167,3 +167,15 @@ docker run -p 3000:3000 -v data:/app/data --name ishs-wiki ishs-wiki
 * Fixed AdSense layout
 * Changed the default category syntax on file upload
 * Fixed a related-documents display syntax error
+## 1.4.1 - 2026.08.20
+* Blocked non-logged-in users from incident-report (사건사고) documents the same way as person documents (across view/history/diff/raw/recent-changes/sitemap)
+* Fixed a table-of-contents bug where a heading containing a footnote or link would swallow the rest of the heading text into an unclosed link
+* Fixed one ad slot's initialization failure from blocking the other slot's initialization
+## 1.4.2 - 2026.09.11
+* Fixed a security bug where moving (swapping) a document did not verify edit permission on the destination document
+## 1.5.0 - 2026.09.12
+* Overhauled math rendering from a script-injection-prone approach to a safe one (security fix)
+* Fixed math rendering breaking in heading and footnote previews
+## 1.5.1 - 2026.09.14
+* Added a per-IP request rate limit (guards against refresh floods and similar overload)
+* Added a retry so ad slots no longer stay permanently empty when their container width is still 0 at initialization time

@@ -1442,12 +1442,26 @@
   <script>
     (function() {
       // adsbygoogle 스크립트가 로드될 때까지 대기 후 초기화
-      function pushAd(ad) {
+      function pushAd(ad, attempt) {
+        attempt = attempt || 0;
+        if (ad.getAttribute('data-adsbygoogle-status')) {
+          return;
+        }
+
+        // 컨테이너 너비가 아직 0이면(레이아웃 미확정) push()가 "No slot size for
+        // availableWidth=0" 에러로 실패하고 재시도가 없어 그대로 빈 슬롯이 되므로,
+        // 너비가 잡힐 때까지 최대 10회(약 1.5초) 재시도한다.
+        var container = ad.parentElement || ad;
+        if (container.offsetWidth === 0 && attempt < 10) {
+          setTimeout(function() {
+            pushAd(ad, attempt + 1);
+          }, 150);
+          return;
+        }
+
         // 슬롯 하나씩만 개별로 시도 : 하나가 실패해도 나머지 슬롯은 계속 초기화되게 함
         try {
-          if (!ad.getAttribute('data-adsbygoogle-status')) {
-            (window.adsbygoogle = window.adsbygoogle || []).push({});
-          }
+          (window.adsbygoogle = window.adsbygoogle || []).push({});
         } catch (e) {
           console.log('AdSense 초기화 오류:', e);
         }
