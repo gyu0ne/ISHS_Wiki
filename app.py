@@ -11,6 +11,7 @@ import threading
 from route.tool.func import *
 from route import *
 from route.riro_login_page import riro_login_page
+from route.tool.request_rate_limit import check_request_rate_limit
 from hypercorn.asyncio import serve
 from hypercorn.config import Config
 from flask import g
@@ -499,6 +500,23 @@ def auto_do_something(data_db_set):
 auto_do_something(data_db_set)
 
 print('Now running... http://localhost:' + server_set['port'])
+
+_RATE_LIMIT_EXEMPT_PREFIXES = ('/views/', '/image/', '/file/', '/robots.txt', '/ads.txt', '/sitemap')
+
+@app.before_request
+def _general_flood_guard():
+    # 새로고침 도배/봇 트래픽으로 인한 과부하를 막기 위한 요청 단위 제한.
+    # 정적 자산(views/image/file)은 한 페이지 로드에서 여러 개를 한꺼번에 불러오므로 제외한다.
+    path = flask.request.path
+    if path.startswith(_RATE_LIMIT_EXEMPT_PREFIXES):
+        return
+
+    client_ip = ip_check(1)
+    retry_after = check_request_rate_limit(client_ip)
+    if retry_after:
+        response = flask.Response('Too Many Requests', status = 429)
+        response.headers['Retry-After'] = str(retry_after)
+        return response
 
 @app.before_request
 def _capture_login_referer():
