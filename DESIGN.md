@@ -93,3 +93,36 @@ keeps its own score. No person-identity matching or new settings are introduced.
 The sidebar's full-list link uses `--text` for readable light/dark contrast.
 Pager keyboard outlines sit 3px inside their targets because the inherited
 article wrapper clips outside overflow; sidebar links retain 2px offset outlines.
+
+## Period selection and personal document scores
+
+Keep the heading `기여자 순위`. Above the table, `ringo_rank_period` provides
+native `전체` and `월별` links with a visible active text-token border and
+`aria-current="page"`; switching period resets pagination to page1. Monthly
+mode opens the current KST calendar month and offers a labelled native month
+input and `보기` submit button. Calendar months use original contribution
+dates after full-history attribution, so restoration never renews the month. The sidebar retains the
+all-time top5 and its existing all-time full-list link.
+
+Use existing surface/background/text/accent/border/radius tokens. The period
+control wraps, has4px internal spacing and44px minimum link height, and sits
+20px above the table. No new colors, animations or client-side routing.
+The month form uses a wrapping flex row,8px gap,44px minimum input/button
+height and existing surface/text/border tokens. Month selection submits a
+native GET request with YYYY-MM and resets to page1. Keep period on all pagination links. Preserve the centered44px pager.
+
+The own-rank label and `내 기여 내역` link form a wrapping title group with12px
+gap; selected-period rank/score stays opposite. The link leads to the
+session owner's `/rankings/me` page, with the same period links and a
+`기여자 순위` back link. Other accounts' private identifiers never appear.
+
+Use a neutral two-column `ringo_document_table`: `문서` and `기여 점수`.
+Reuse table typography,12px/16px cell spacing,header surface and row separators.
+Document links wrap at Korean word boundaries where possible, then anywhere
+for long uninterrupted identifiers; scores stay right-aligned and unbroken.
+Show20 documents perpage. A simple empty state replaces an empty table.
+Every detail request checks current public visibility before exposing titles,
+links, counts or totals. Preserve loading/error and no-contribution states.
+Document-detail rows use four decimal places so small contributions remain
+inspectable; the existing leaderboard and summary retain two decimal places.
+Totals derive from unrounded scores, without rounding individual rows first.

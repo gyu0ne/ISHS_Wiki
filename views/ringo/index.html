@@ -334,7 +334,9 @@
       line-height: 1;
     }
 
-    .opennamu_main #main_table_set.ringo_contributor_table {
+    .opennamu_main #main_table_set.ringo_contributor_table,
+    .opennamu_main .ringo_document_table {
+      width: 100%;
       border: 0;
       border-collapse: separate;
       border-spacing: 0;
@@ -342,14 +344,17 @@
     }
 
     .opennamu_main .ringo_contributor_table th,
-    .opennamu_main .ringo_contributor_table td {
+    .opennamu_main .ringo_contributor_table td,
+    .opennamu_main .ringo_document_table th,
+    .opennamu_main .ringo_document_table td {
       padding: 12px 16px;
       border: 0;
       border-bottom: 1px solid var(--hr);
       vertical-align: middle;
     }
 
-    .ringo_contributor_table th {
+    .ringo_contributor_table th,
+    .ringo_document_table th {
       color: var(--rank-neutral);
       background: var(--bg);
       font-size: 14px;
@@ -401,6 +406,134 @@
 
     .ringo_my_rank_values > * {
       white-space: nowrap;
+    }
+
+    .ringo_rank_period {
+      display: flex;
+      flex-wrap: wrap;
+      width: fit-content;
+      max-width: 100%;
+      gap: 4px;
+      margin-bottom: 20px;
+      padding: 4px;
+      border: 1px solid var(--hr);
+      border-radius: var(--radius);
+      background: var(--bg);
+    }
+
+    .ringo_rank_period a {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      box-sizing: border-box;
+      min-height: 44px;
+      padding: 8px 16px;
+      border: 1px solid transparent;
+      border-radius: calc(var(--radius) - 4px);
+      color: var(--text);
+      font-weight: 700;
+      word-break: keep-all;
+    }
+
+    .ringo_rank_period a[aria-current="page"] {
+      border-color: var(--text);
+      background: var(--surface);
+    }
+
+    .ringo_rank_period a:focus-visible,
+    .ringo_my_contributions:focus-visible,
+    .ringo_rank_back:focus-visible,
+    .ringo_document_table a:focus-visible {
+      outline: 2px solid var(--text);
+      outline-offset: -2px;
+    }
+
+    .ringo_rank_month {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 20px;
+    }
+
+    .ringo_rank_month label {
+      font-weight: 700;
+      word-break: keep-all;
+    }
+
+    .ringo_rank_month input,
+    .ringo_rank_month button {
+      box-sizing: border-box;
+      min-height: 44px;
+      max-width: 100%;
+      padding: 8px 12px;
+      border: 1px solid var(--hr);
+      border-radius: 10px;
+      background: var(--surface);
+      color: var(--text);
+      font: inherit;
+    }
+
+    .opennamu_main .ringo_rank_month input {
+      width: auto;
+      min-width: 0;
+    }
+
+    .ringo_rank_month button {
+      cursor: pointer;
+      font-weight: 700;
+    }
+
+    .ringo_rank_month input:focus-visible,
+    .ringo_rank_month button:focus-visible {
+      outline: 2px solid var(--text);
+      outline-offset: -2px;
+    }
+
+    .ringo_my_rank_title {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .ringo_my_contributions,
+    .ringo_rank_back {
+      display: inline-flex;
+      align-items: center;
+      min-height: 44px;
+      color: var(--text);
+      font-size: 14px;
+      text-decoration: underline;
+      text-underline-offset: 3px;
+    }
+
+    .ringo_rank_back {
+      margin-bottom: 8px;
+    }
+
+    .ringo_document_table td:first-child {
+      overflow-wrap: anywhere;
+      word-break: keep-all;
+    }
+
+    .ringo_document_table th:last-child,
+    .ringo_document_table td:last-child {
+      width: 100px;
+      text-align: right;
+      white-space: nowrap;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .ringo_contribution_summary {
+      margin-bottom: 16px;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .ringo_ranking_empty {
+      margin: 24px 0;
+      color: var(--muted);
+      word-break: keep-all;
     }
 
     .ringo_rank_pagination {
@@ -969,6 +1102,10 @@
       --rank-neutral: #aab3bf;
       background: var(--bg);
       color: var(--text);
+    }
+
+    .ringo_rank_month input {
+      color-scheme: dark;
     }
 
     /* Dark Mode User Info Header */
