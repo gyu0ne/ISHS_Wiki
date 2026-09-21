@@ -24,6 +24,7 @@ class ContributorCache:
         self.refresh_seconds = refresh_seconds
         self.lock = threading.Lock()
         self.items: tuple[dict[str, str | float], ...] = ()
+        self.member_ranks: dict[str, dict[str, int | float]] = {}
         self.generated_at = 0
         self.state = "loading"
         self.ready = threading.Event()
@@ -31,9 +32,11 @@ class ContributorCache:
     def start(self) -> None:
         threading.Thread(target=self._run, daemon=True).start()
 
-    def snapshot(self) -> tuple[tuple[dict[str, str | float], ...], int, str]:
+    def snapshot(
+        self, member_id: str
+    ) -> tuple[tuple[dict[str, str | float], ...], int, str, dict[str, int | float] | None]:
         with self.lock:
-            return self.items, self.generated_at, self.state
+            return self.items, self.generated_at, self.state, self.member_ranks.get(member_id)
 
     def _run(self) -> None:
         succeeded = False
@@ -54,9 +57,10 @@ class ContributorCache:
         now_epoch = int(self.clock())
         with self.connect() as connection:
             documents = self._documents(connection)
-            items = self._compute(connection, documents, now_epoch)
+            items, member_ranks = self._compute(connection, documents, now_epoch)
         with self.lock:
             self.items = items
+            self.member_ranks = member_ranks
             self.generated_at = now_epoch
             self.state = "ready"
 
@@ -76,7 +80,7 @@ class ContributorCache:
 
     def _compute(
         self, connection, documents: dict[str, str], now_epoch: int
-    ) -> tuple[dict[str, str | float], ...]:
+    ) -> tuple[tuple[dict[str, str | float], ...], dict[str, dict[str, int | float]]]:
         cursor = connection.cursor()
         cursor.execute(self.db_change("select id from user_set where name = 'pw'"))
         members = {row[0] for row in cursor.fetchall()}
@@ -98,10 +102,13 @@ class ContributorCache:
             revisions, documents, members, datetime.fromtimestamp(now_epoch, tz=timezone.utc)
         )
         items: list[dict[str, str | float]] = []
+        member_ranks: dict[str, dict[str, int | float]] = {}
         for entry in entries:
             name = self.get_display_name(connection, entry.user_id).strip()
             if not name or (name == entry.user_id and name.isdigit()):
                 continue
             url = "/w/user:" + quote(entry.user_id, safe="") if name == entry.user_id else ""
-            items.append({"name": name, "url": url, "score": round(entry.score, 2)})
-        return tuple(items)
+            score = round(entry.score, 2)
+            items.append({"name": name, "url": url, "score": score})
+            member_ranks[entry.user_id] = {"rank": len(items), "score": score}
+        return tuple(items), member_ranks

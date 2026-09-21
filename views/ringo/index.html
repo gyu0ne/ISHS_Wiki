@@ -76,6 +76,16 @@
       --success-bg: #eaffe6;
       --success-border: #c7e7c7;
       --success-text: #126b12;
+      --rank-gold-bg: #fff0bd;
+      --rank-gold-text: #744600;
+      --rank-gold-border: #dfb34c;
+      --rank-silver-bg: #edf1f6;
+      --rank-silver-text: #45566c;
+      --rank-silver-border: #b7c3d3;
+      --rank-bronze-bg: #f9e7db;
+      --rank-bronze-text: #80451f;
+      --rank-bronze-border: #d5a37e;
+      --rank-neutral: var(--muted);
     }
 
     html,
@@ -284,8 +294,112 @@
       display: inline-block;
       min-width: 2em;
       margin-right: 8px;
-      color: var(--bar-a);
+      color: var(--rank-neutral);
       font-weight: 700;
+    }
+
+    .ringo_ranked:nth-child(1) {
+      --rank-bg: var(--rank-gold-bg);
+      --rank-text: var(--rank-gold-text);
+      --rank-border: var(--rank-gold-border);
+    }
+
+    .ringo_ranked:nth-child(2) {
+      --rank-bg: var(--rank-silver-bg);
+      --rank-text: var(--rank-silver-text);
+      --rank-border: var(--rank-silver-border);
+    }
+
+    .ringo_ranked:nth-child(3) {
+      --rank-bg: var(--rank-bronze-bg);
+      --rank-text: var(--rank-bronze-text);
+      --rank-border: var(--rank-bronze-border);
+    }
+
+    .ringo_rank_badge {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      box-sizing: border-box;
+      width: 32px;
+      height: 32px;
+      flex-shrink: 0;
+      border-radius: 50%;
+      border: 1px solid var(--rank-border, transparent);
+      background: var(--rank-bg, transparent);
+      color: var(--rank-text, var(--rank-neutral));
+      font-weight: 700;
+      font-variant-numeric: tabular-nums;
+      line-height: 1;
+    }
+
+    .opennamu_main #main_table_set.ringo_contributor_table {
+      border: 0;
+      border-collapse: separate;
+      border-spacing: 0;
+      text-align: left;
+    }
+
+    .opennamu_main .ringo_contributor_table th,
+    .opennamu_main .ringo_contributor_table td {
+      padding: 12px 16px;
+      border: 0;
+      border-bottom: 1px solid var(--hr);
+      vertical-align: middle;
+    }
+
+    .ringo_contributor_table th {
+      color: var(--rank-neutral);
+      background: var(--bg);
+      font-size: 14px;
+    }
+
+    .ringo_contributor_table th:first-child,
+    .ringo_contributor_table td:first-child {
+      width: 48px;
+      text-align: center;
+    }
+
+    .ringo_contributor_table th:last-child,
+    .ringo_contributor_table .ringo_contributor_score {
+      width: 80px;
+      text-align: right;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .ringo_contributor_table .ringo_ranked:nth-child(-n+3) {
+      background: color-mix(in srgb, var(--rank-bg) 40%, var(--surface));
+      font-weight: 700;
+    }
+
+    .ringo_contributor_name {
+      overflow-wrap: anywhere;
+    }
+
+    .ringo_my_rank {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      margin-top: 20px;
+      padding: 16px;
+      border: 1px solid var(--hr);
+      border-radius: var(--radius);
+      background: var(--bg);
+      color: var(--text);
+      word-break: keep-all;
+    }
+
+    .ringo_my_rank_values {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 16px;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .ringo_my_rank_values > * {
+      white-space: nowrap;
     }
 
     .ringo_trending_message {
@@ -764,6 +878,16 @@
       --success-bg: #143314;
       --success-border: #2e4d2e;
       --success-text: #a8e6a8;
+      --rank-gold-bg: #493a19;
+      --rank-gold-text: #ffdc82;
+      --rank-gold-border: #8e7131;
+      --rank-silver-bg: #303b49;
+      --rank-silver-text: #d4deeb;
+      --rank-silver-border: #65758c;
+      --rank-bronze-bg: #493226;
+      --rank-bronze-text: #f1bf9f;
+      --rank-bronze-border: #93694c;
+      --rank-neutral: #aab3bf;
       background: var(--bg);
       color: var(--text);
     }

@@ -260,6 +260,37 @@ def test_rankings_page_redirects_guests_to_existing_login_flow(tmp_path):
     assert response.headers["Location"] == "/login"
 
 
+def test_personal_rank_uses_account_identity_and_handles_unranked_members(tmp_path):
+    def seed_members(db_path):
+        with sqlite3.connect(db_path) as connection:
+            connection.execute("update user_set set data = '같은 이름' where name = 'user_name'")
+            connection.executemany(
+                "insert into user_set values (?, 'new-member', ?)",
+                (("pw", "hash"), ("user_name", "새 편집자")),
+            )
+
+    test_app = build_test_app(tmp_path, seed_extra=seed_members)
+    client = test_app.app.test_client()
+    for user_id, rank, score in (("20261234", 1, 54.55), ("20265678", 2, 47.37), ("new-member", None, None)):
+        client.get(f"/__test/login/{user_id}")
+        api_response = client.get("/api/rankings/contributors")
+        page_response = client.get("/rankings")
+        page = page_response.get_data(as_text=True)
+        personal = page.split('aria-label="내 순위">', 1)[1].split("</section>", 1)[0]
+        assert page.index('aria-label="내 순위"') > page.index("</table>")
+        assert api_response.headers["Cache-Control"] == "private, no-store"
+        assert page_response.headers["Cache-Control"] == "private, no-store"
+        assert "20261234" not in api_response.get_data(as_text=True)
+        assert "20265678" not in api_response.get_data(as_text=True)
+        if rank is None:
+            assert api_response.get_json()["me"] is None
+            assert "아직 순위가 없습니다." in personal
+        else:
+            assert api_response.get_json()["me"] == {"rank": rank, "score": score}
+            assert f"<strong>{rank}위</strong>" in personal
+            assert f"{score:.2f}점" in personal
+
+
 def test_rankings_page_refreshes_while_background_snapshot_is_loading(tmp_path):
     # Given: a ranking cache whose initial background replay has not completed.
     test_app = build_test_app(tmp_path)

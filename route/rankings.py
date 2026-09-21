@@ -167,25 +167,29 @@ async def trending():
 async def contributors():
     service = _service()
     with service.dependencies.connect() as connection:
-        if not _member_id(connection, service.dependencies):
+        member_id = _member_id(connection, service.dependencies)
+        if not member_id:
             return _error(401)
     if await service.dependencies.acl_check("", "render") != 0:
         return _error(403)
-    items, generated_at, state = service.contributors.snapshot()
-    return jsonify(
-        {"response": "ok", "items": items, "generated_at": generated_at, "stale": state != "ready"}
+    items, generated_at, state, my_rank = service.contributors.snapshot(member_id)
+    response = jsonify(
+        {"response": "ok", "items": items, "me": my_rank, "generated_at": generated_at, "stale": state != "ready"}
     )
+    response.headers["Cache-Control"] = "private, no-store"
+    return response
 
 
 @ranking_blueprint.get("/rankings")
 async def rankings_page():
     service = _service()
     with service.dependencies.connect() as connection:
-        if not _member_id(connection, service.dependencies):
+        member_id = _member_id(connection, service.dependencies)
+        if not member_id:
             return redirect("/login")
     if await service.dependencies.acl_check("", "render") != 0:
         return _error(403)
-    items, _, state = service.contributors.snapshot()
+    items, _, state, my_rank = service.contributors.snapshot(member_id)
     if state == "loading":
         response = make_response(await service.dependencies.render_page("기여자 순위", "<p>불러오는 중입니다.</p>"))
         response.headers["Refresh"] = "5"
@@ -193,11 +197,21 @@ async def rankings_page():
     if state == "error":
         return await service.dependencies.render_page("기여자 순위", "<p>불러오지 못했습니다.</p>")
     rows = "".join(
-        f'<tr><td>{rank}</td><td>{_contributor_name_html(item)}</td><td>{item["score"]:.2f}</td></tr>'
+        f'<tr class="ringo_ranked"><td><span class="ringo_rank_badge">{rank}</span></td><td class="ringo_contributor_name">{_contributor_name_html(item)}</td><td class="ringo_contributor_score">{item["score"]:.2f}</td></tr>'
         for rank, item in enumerate(items, 1)
     )
-    body = '<div class="opennamu_main"><table id="main_table_set"><thead><tr><th scope="col">순위</th><th scope="col">이름</th><th scope="col">점수</th></tr></thead><tbody>' + rows + "</tbody></table></div>"
-    return await service.dependencies.render_page("기여자 순위", body)
+    personal = (
+        f'<span class="ringo_my_rank_values"><strong>{my_rank["rank"]}위</strong><span>{my_rank["score"]:.2f}점</span></span>'
+        if my_rank is not None else '<span>아직 순위가 없습니다.</span>'
+    )
+    body = (
+        '<div class="opennamu_main"><table id="main_table_set" class="ringo_contributor_table"><thead><tr><th scope="col">순위</th><th scope="col">이름</th><th scope="col">점수</th></tr></thead><tbody>'
+        + rows + '</tbody></table><section class="ringo_my_rank" aria-label="내 순위"><strong>내 순위</strong>'
+        + personal + '</section></div>'
+    )
+    response = make_response(await service.dependencies.render_page("기여자 순위", body))
+    response.headers["Cache-Control"] = "private, no-store"
+    return response
 
 
 @ranking_blueprint.post("/api/ranking/view")
