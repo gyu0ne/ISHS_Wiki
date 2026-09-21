@@ -42,6 +42,7 @@
   <script defer src="https://code.iconify.design/1/1.0.3/iconify.min.js"></script>
   <script defer src="/views/ringo/js/main.js.cache_v3"></script>
   <script defer src="/views/ringo/js/sidebar.js.cache_v9"></script>
+  <script defer src="/views/ringo/js/contributors.js.cache_v1"></script>
   <script defer src="/views/ringo/js/skin_set.js.cache_v15"></script>
   <script defer src="/views/main_css/js/func/autocomplete.js.cache_v1" charset="UTF-8"></script>
   
@@ -298,19 +299,19 @@
       font-weight: 700;
     }
 
-    .ringo_ranked:nth-child(1) {
+    .ringo_ranked[data-rank="1"] {
       --rank-bg: var(--rank-gold-bg);
       --rank-text: var(--rank-gold-text);
       --rank-border: var(--rank-gold-border);
     }
 
-    .ringo_ranked:nth-child(2) {
+    .ringo_ranked[data-rank="2"] {
       --rank-bg: var(--rank-silver-bg);
       --rank-text: var(--rank-silver-text);
       --rank-border: var(--rank-silver-border);
     }
 
-    .ringo_ranked:nth-child(3) {
+    .ringo_ranked[data-rank="3"] {
       --rank-bg: var(--rank-bronze-bg);
       --rank-text: var(--rank-bronze-text);
       --rank-border: var(--rank-bronze-border);
@@ -367,7 +368,7 @@
       font-variant-numeric: tabular-nums;
     }
 
-    .ringo_contributor_table .ringo_ranked:nth-child(-n+3) {
+    .ringo_contributor_table .ringo_ranked:is([data-rank="1"], [data-rank="2"], [data-rank="3"]) {
       background: color-mix(in srgb, var(--rank-bg) 40%, var(--surface));
       font-weight: 700;
     }
@@ -399,6 +400,83 @@
     }
 
     .ringo_my_rank_values > * {
+      white-space: nowrap;
+    }
+
+    .ringo_rank_pagination {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 20px;
+    }
+
+    .ringo_rank_pagination a {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      box-sizing: border-box;
+      min-width: 44px;
+      min-height: 44px;
+      padding: 8px 12px;
+      border: 1px solid var(--hr);
+      border-radius: var(--radius);
+      background: var(--surface);
+      color: var(--text);
+      font-variant-numeric: tabular-nums;
+    }
+
+    .ringo_rank_pagination a[aria-current="page"] {
+      border-color: var(--bar-a);
+      background: var(--bg);
+      font-weight: 700;
+    }
+
+    .ringo_rank_pagination a:focus-visible,
+    #sidebar_contributors a:focus-visible {
+      outline: 2px solid var(--text);
+      outline-offset: 2px;
+    }
+
+    .ringo_rank_pagination a:focus-visible {
+      outline-offset: -3px;
+    }
+
+    #sidebar_contributors {
+      margin-bottom: 16px;
+    }
+
+    .ringo_contributor_heading {
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+      gap: 8px;
+    }
+
+    .ringo_contributor_heading h3 {
+      margin: 0;
+    }
+
+    .ringo_contributor_heading > a {
+      flex-shrink: 0;
+      font-size: 14px;
+      color: var(--text);
+    }
+
+    .ringo_contributor_list li {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .ringo_contributor_list .ringo_contributor_name {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .ringo_contributor_list .ringo_contributor_score {
+      flex-shrink: 0;
+      text-align: right;
+      font-variant-numeric: tabular-nums;
       white-space: nowrap;
     }
 
@@ -1589,6 +1667,16 @@
           {{ trending_sidebar|safe }}
         </div>
       </div>
+
+      <section class="side_card rc_box" id="sidebar_contributors" aria-labelledby="sidebar_contributors_heading">
+        <div class="ringo_contributor_heading">
+          <h3 id="sidebar_contributors_heading">기여자 순위</h3>
+          <a href="/rankings">전체 보기</a>
+        </div>
+        <div class="rc_wrap" id="contributors_sidebar_wrap" aria-live="polite">
+          <p class="ringo_trending_message">불러오는 중입니다.</p>
+        </div>
+      </section>
 
 
 

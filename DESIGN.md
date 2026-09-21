@@ -70,3 +70,26 @@ The summary uses existing `--bg`, `--hr`, `--text`, and `--radius` tokens,
 16px padding, 20px top spacing, and a wrapping flex row with a 12px gap.
 Keep the label and each value intact on narrow screens. It has no medal tint,
 hover treatment, or motion. Private account IDs never enter the page or API.
+
+## Pagination and contributor sidebar
+
+The full contributor list uses 20 rows per page with native links in a labelled
+pagination nav after the personal rank summary. Keep the current member's global
+rank visible on every page. Only global ranks 1, 2 and 3 receive medal colors;
+page position never controls accents. Use previous/next and at most five nearby
+page numbers, `aria-current="page"`, 44px minimum targets, wrapping flex layout,
+8px gaps, existing surface/text/border/radius tokens and visible keyboard focus.
+Invalid page inputs resolve to page 1; out-of-range pages clamp to the last page.
+An empty list has one logical page and no pagination controls.
+
+Below recent changes and popular documents, reuse the sidebar card for
+`기여자 순위`, five compact rows, and a text-labelled `전체 보기` link.
+Use the same 32px rank badge and global rank tokens as the table; nickname text
+wraps safely, and a right-aligned tabular score stays intact. Refresh every
+300 seconds only while visible, retaining the inherited mobile sidebar behavior.
+Loading, empty and unavailable states are plain readable text; unauthorized
+sessions hide the contributor card. Nicknames are display labels; each account
+keeps its own score. No person-identity matching or new settings are introduced.
+The sidebar's full-list link uses `--text` for readable light/dark contrast.
+Pager keyboard outlines sit 3px inside their targets because the inherited
+article wrapper clips outside overflow; sidebar links retain 2px offset outlines.

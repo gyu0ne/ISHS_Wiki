@@ -16,6 +16,7 @@ from itsdangerous import BadSignature, URLSafeSerializer
 from pymysql import MySQLError
 
 from .tool.ranking_contributor_cache import ContributorCache
+from .tool.ranking_presentation import PAGE_SIZE, contributor_page, contributor_rows_html, pagination_html
 from .tool.ranking_views import Connection, ensure_schema, get_popular, record_view
 
 
@@ -126,12 +127,6 @@ def _member_token(member_id: str) -> str:
     return hmac.new(secret, member_id.encode(), sha256).hexdigest()
 
 
-def _contributor_name_html(item: dict[str, str | float]) -> str:
-    name = html.escape(str(item["name"]))
-    url = str(item["url"])
-    return f'<a href="{html.escape(url, quote=True)}">{name}</a>' if url else name
-
-
 @ranking_blueprint.get("/api/trending")
 async def trending():
     service = _service()
@@ -183,8 +178,13 @@ async def contributors():
     if await service.dependencies.acl_check("", "render") != 0:
         return _error(403)
     items, generated_at, state, my_rank = service.contributors.snapshot(member_id)
+    page, total_pages, start = contributor_page(request.args.get("page", "1"), len(items))
     response = jsonify(
-        {"response": "ok", "items": items, "me": my_rank, "generated_at": generated_at, "stale": state != "ready"}
+        {
+            "response": "ok", "items": items[start:start + PAGE_SIZE], "me": my_rank,
+            "generated_at": generated_at, "stale": state != "ready", "page": page,
+            "page_size": PAGE_SIZE, "total": len(items), "total_pages": total_pages,
+        }
     )
     response.headers["Cache-Control"] = "private, no-store"
     return response
@@ -208,10 +208,8 @@ async def rankings_page():
         return response
     if state == "error":
         return await service.dependencies.render_page("기여자 순위", "<p>불러오지 못했습니다.</p>")
-    rows = "".join(
-        f'<tr class="ringo_ranked"><td><span class="ringo_rank_badge">{rank}</span></td><td class="ringo_contributor_name">{_contributor_name_html(item)}</td><td class="ringo_contributor_score">{item["score"]:.2f}</td></tr>'
-        for rank, item in enumerate(items, 1)
-    )
+    page, total_pages, start = contributor_page(request.args.get("page", "1"), len(items))
+    rows = contributor_rows_html(items[start:start + PAGE_SIZE], start)
     personal = (
         f'<span class="ringo_my_rank_values"><strong>{my_rank["rank"]}위</strong><span>{my_rank["score"]:.2f}점</span></span>'
         if my_rank is not None else '<span>아직 순위가 없습니다.</span>'
@@ -219,7 +217,7 @@ async def rankings_page():
     body = (
         '<div class="opennamu_main"><table id="main_table_set" class="ringo_contributor_table"><thead><tr><th scope="col">순위</th><th scope="col">이름</th><th scope="col">점수</th></tr></thead><tbody>'
         + rows + '</tbody></table><section class="ringo_my_rank" aria-label="내 순위"><strong>내 순위</strong>'
-        + personal + '</section></div>'
+        + personal + '</section>' + pagination_html(page, total_pages) + '</div>'
     )
     response = make_response(await service.dependencies.render_page("기여자 순위", body))
     response.headers["Cache-Control"] = "private, no-store"
