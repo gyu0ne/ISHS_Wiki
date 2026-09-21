@@ -143,25 +143,60 @@ function ringo_start_ranking_view() {
     let foreground_started_at = document.hidden ? null : performance.now();
     let foreground_ms = 0;
     let sent = false;
+    let stopped = false;
+    let request = null;
+    let retryable = false;
+    let retries = 0;
+    const max_retries = 2; // ponytail: short recovery window; add ticket refresh only for longer outages.
     let timer = null;
 
     const send_view = function() {
-        if(sent) {
+        if(sent || stopped || request || document.hidden) {
             return;
         }
-        sent = true;
-        fetch('/api/ranking/view', {
+        if(retryable) {
+            retries += 1;
+        }
+        request = fetch('/api/ranking/view', {
             method: 'POST',
             credentials: 'same-origin',
             headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
             body: JSON.stringify({ ticket: ticket })
+        }).then(function(res) {
+            if(!res.ok) {
+                const error = new Error('Ranking view request failed');
+                error.status = res.status;
+                throw error;
+            }
+            sent = true;
+            retryable = false;
         }).catch(function(error) {
+            retryable = !error.status || error.status === 429 || error.status >= 500;
+            if(!retryable) {
+                stopped = true;
+            }
             console.warn('Ranking view request failed:', error);
+        }).finally(function() {
+            request = null;
+            if(retryable && !sent) {
+                schedule_retry();
+            }
         });
     };
 
+    const schedule_retry = function() {
+        if(sent || stopped || request || document.hidden) {
+            return;
+        }
+        if(retries >= max_retries) {
+            stopped = true;
+            return;
+        }
+        timer = window.setTimeout(send_view, 1000);
+    };
+
     const schedule_view = function() {
-        if(sent || foreground_started_at === null) {
+        if(sent || stopped || request || foreground_started_at === null) {
             return;
         }
         const remaining_ms = Math.max(0, 5000 - foreground_ms - (performance.now() - foreground_started_at));
@@ -182,6 +217,14 @@ function ringo_start_ranking_view() {
         }
 
         foreground_started_at = performance.now();
+        if(foreground_ms >= 5000) {
+            if(retryable) {
+                schedule_retry();
+            } else {
+                send_view();
+            }
+            return;
+        }
         schedule_view();
     });
     schedule_view();

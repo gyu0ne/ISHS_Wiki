@@ -179,6 +179,179 @@ async function verifyTicketDelay() {
     assert.strictEqual(viewCalls[0].options.body, JSON.stringify({ ticket: "signed-ticket" }), "view event sends only the opaque ticket");
 }
 
+function createTicketViewHarness(viewFetch, hidden) {
+    const documentListeners = {};
+    const windowListeners = {};
+    const timers = [];
+    const calls = [];
+    let now = 0;
+    const document = {
+        hidden,
+        createElement: makeElement,
+        querySelector: () => makeElement("div"),
+        getElementById(id) {
+            return id === "ranking_ticket" ? { dataset: { rankingTicket: "signed-ticket" } } : null;
+        },
+        addEventListener(name, callback) {
+            documentListeners[name] = documentListeners[name] || [];
+            documentListeners[name].push(callback);
+        }
+    };
+    const window = {
+        location: { origin: "https://ishswiki.xyz" },
+        addEventListener(name, callback) {
+            windowListeners[name] = callback;
+        },
+        setInterval() {},
+        setTimeout(callback, delay) {
+            const timer = { delay, cleared: false, fired: false };
+            timer.callback = () => {
+                timer.fired = true;
+                callback();
+            };
+            timers.push(timer);
+            return timer;
+        },
+        clearTimeout(timer) {
+            if(timer) {
+                timer.cleared = true;
+            }
+        }
+    };
+    const context = {
+        URL,
+        console: { warn() {} },
+        document,
+        fetch(url, options) {
+            if(url === "/api/trending") {
+                return Promise.resolve({ ok: true, json: () => Promise.resolve({ response: "ok", items: [] }) });
+            }
+            calls.push({ url, options });
+            return viewFetch(calls.length);
+        },
+        performance: { now: () => now },
+        window
+    };
+    const emitVisibility = () => documentListeners.visibilitychange.forEach((callback) => callback());
+
+    vm.runInNewContext(sidebar, context);
+    windowListeners.DOMContentLoaded();
+    return {
+        calls,
+        document,
+        emitVisibility,
+        setNow(value) {
+            now = value;
+        },
+        runTimer(delay) {
+            const timer = timers.filter((item) => !item.cleared && !item.fired && item.delay === delay).pop();
+            assert.ok(timer, "expected an active " + delay + "ms timer");
+            timer.callback();
+            return timer;
+        },
+        hasTimer(delay) {
+            return timers.some((item) => !item.cleared && !item.fired && item.delay === delay);
+        },
+        lastTimer(delay) {
+            return timers.filter((item) => item.delay === delay).pop();
+        }
+    };
+}
+
+function flushPromises() {
+    return new Promise((resolve) => setImmediate(resolve));
+}
+
+async function verifyTicketDeliveryRetries() {
+    let rejectFirst;
+    const network = createTicketViewHarness((attempt) => {
+        if(attempt === 1) {
+            return new Promise((resolve, reject) => {
+                rejectFirst = reject;
+            });
+        }
+        return Promise.resolve({ ok: true, status: 200 });
+    }, false);
+    const initialTimer = network.runTimer(5000);
+    initialTimer.callback();
+    assert.strictEqual(network.calls.length, 1, "repeated timer callbacks while a request is pending do not send parallel views");
+    rejectFirst(new Error("offline"));
+    await flushPromises();
+    network.runTimer(1000);
+    await flushPromises();
+    assert.strictEqual(network.calls.length, 2, "a network rejection retries after a bounded delay");
+    assert.strictEqual(network.hasTimer(1000), false, "acknowledged retry success stops further sends");
+    initialTimer.callback();
+    assert.strictEqual(network.calls.length, 2, "acknowledged success cannot send a duplicate view");
+
+    const serverError = createTicketViewHarness((attempt) => Promise.resolve(
+        attempt === 1 ? { ok: false, status: 503 } : { ok: true, status: 200 }
+    ), false);
+    serverError.runTimer(5000);
+    await flushPromises();
+    serverError.runTimer(1000);
+    await flushPromises();
+    assert.strictEqual(serverError.calls.length, 2, "a 5xx response retries and records only the acknowledged success");
+
+    const bounded = createTicketViewHarness(() => Promise.resolve({ ok: false, status: 503 }), false);
+    bounded.runTimer(5000);
+    await flushPromises();
+    bounded.runTimer(1000);
+    await flushPromises();
+    bounded.runTimer(1000);
+    await flushPromises();
+    assert.strictEqual(bounded.calls.length, 3, "recoverable failures stop after two delayed retries");
+    assert.strictEqual(bounded.hasTimer(1000), false, "retry exhaustion cannot create an immediate loop");
+
+    const interrupted = createTicketViewHarness((attempt) => Promise.resolve(
+        attempt === 1 ? { ok: false, status: 503 } : { ok: true, status: 200 }
+    ), false);
+    interrupted.runTimer(5000);
+    await flushPromises();
+    for(let cycle = 0; cycle < 2; cycle++) {
+        assert.strictEqual(interrupted.hasTimer(1000), true, "a recoverable retry is pending before visibility changes");
+        interrupted.document.hidden = true;
+        interrupted.emitVisibility();
+        interrupted.document.hidden = false;
+        interrupted.emitVisibility();
+    }
+    interrupted.runTimer(1000);
+    await flushPromises();
+    assert.strictEqual(interrupted.calls.length, 2, "canceled retry timers do not exhaust the retry budget before dispatch");
+
+    const stalled = createTicketViewHarness(() => Promise.resolve({ ok: true, status: 200 }), true);
+    stalled.document.hidden = false;
+    stalled.emitVisibility();
+    const staleTimer = stalled.lastTimer(5000);
+    stalled.document.hidden = true;
+    stalled.emitVisibility();
+    staleTimer.callback();
+    stalled.document.hidden = false;
+    stalled.emitVisibility();
+    assert.strictEqual(stalled.calls.length, 1, "a visible resume sends a qualified view after a hidden timer callback was guarded");
+
+    for(const status of [403, 400]) {
+        const permanentError = createTicketViewHarness(() => Promise.resolve({ ok: false, status }), false);
+        permanentError.runTimer(5000);
+        await flushPromises();
+        permanentError.document.hidden = true;
+        permanentError.emitVisibility();
+        permanentError.document.hidden = false;
+        permanentError.emitVisibility();
+        assert.strictEqual(permanentError.calls.length, 1, "permanent " + status + " responses do not retry after visibility changes");
+        assert.strictEqual(permanentError.hasTimer(1000), false, "permanent " + status + " responses do not schedule retries");
+    }
+
+    const hidden = createTicketViewHarness(() => Promise.resolve({ ok: true, status: 200 }), true);
+    assert.strictEqual(hidden.calls.length, 0, "hidden documents do not schedule a qualified view");
+    hidden.document.hidden = false;
+    hidden.emitVisibility();
+    hidden.document.hidden = true;
+    hidden.emitVisibility();
+    assert.strictEqual(hidden.calls.length, 0, "hidden documents do not send a qualified view");
+    assert.strictEqual(hidden.hasTimer(5000), false, "hiding clears the pending qualification timer");
+}
+
 async function verifyRefreshDeduplication() {
     const target = makeElement("div");
     let resolveResponse;
@@ -217,7 +390,7 @@ async function verifyRefreshDeduplication() {
     await first;
 }
 
-Promise.all([verifyTrendingStates(), verifyTicketDelay(), verifyRefreshDeduplication()]).then(() => {
+Promise.all([verifyTrendingStates(), verifyTicketDelay(), verifyTicketDeliveryRetries(), verifyRefreshDeduplication()]).then(() => {
     console.log("rankings UI contract checks passed");
 }).catch((error) => {
     console.error(error);
