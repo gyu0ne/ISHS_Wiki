@@ -331,7 +331,7 @@ def test_personal_rank_uses_account_identity_and_handles_unranked_members(tmp_pa
 
     test_app = build_test_app(tmp_path, seed_extra=seed_members)
     client = test_app.app.test_client()
-    for user_id, rank, score in (("20261234", 1, 54.55), ("20265678", 2, 47.37), ("new-member", None, None)):
+    for user_id, rank, score in (("20261234", 1, 11.56), ("20265678", 2, 9.63), ("new-member", None, None)):
         client.get(f"/__test/login/{user_id}")
         api_response = client.get("/api/rankings/contributors")
         page_response = client.get("/rankings")

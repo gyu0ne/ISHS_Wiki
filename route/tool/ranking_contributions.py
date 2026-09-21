@@ -5,6 +5,7 @@ from collections.abc import Iterable, Mapping, Set
 from dataclasses import dataclass
 from datetime import date, datetime, timedelta, timezone
 from heapq import heappop, heappush
+from math import expm1, log1p
 from typing import Final
 from unicodedata import normalize
 
@@ -12,7 +13,7 @@ from diff_match_patch import diff_match_patch
 
 
 KST: Final = timezone(timedelta(hours=9))
-MATURITY: Final = timedelta(hours=72)
+MATURITY: Final = timedelta(hours=24)
 REMOVAL_GRACE: Final = timedelta(hours=24)
 
 
@@ -44,22 +45,49 @@ class _Document:
 
 
 class _Token:
-    __slots__ = ("active_count", "author", "continuous_since", "day", "grace_until", "matured")
+    __slots__ = (
+        "active_count",
+        "author",
+        "continuous_since",
+        "day",
+        "grace_until",
+        "lineage",
+        "matured",
+        "removal_active",
+        "removal_author",
+        "removal_day",
+        "removal_lineage",
+        "removed_since",
+    )
 
     active_count: int
     author: str | None
     continuous_since: datetime
     day: date | None
     grace_until: datetime | None
+    lineage: str
     matured: bool
+    removal_active: bool
+    removal_author: str | None
+    removal_day: date | None
+    removal_lineage: str | None
+    removed_since: datetime | None
 
-    def __init__(self, author: str | None, day: date | None, since: datetime) -> None:
+    def __init__(
+        self, author: str | None, day: date | None, lineage: str, since: datetime
+    ) -> None:
         self.active_count = 1
         self.author = author
         self.continuous_since = since
         self.day = day
         self.grace_until = None
+        self.lineage = lineage
         self.matured = False
+        self.removal_active = False
+        self.removal_author = None
+        self.removal_day = None
+        self.removal_lineage = None
+        self.removed_since = None
 
 
 def _kst(value: datetime) -> datetime:
@@ -73,7 +101,10 @@ def _can_own(revision: HistoryRevision, members: Set[str], contiguous: bool) -> 
         and revision.hide != "O"
         and "회원가입" not in revision.send
         and not revision.title.lower().startswith(("user:", "file:"))
-        and (revision.type in {"", "r1", "direct"} or revision.type == "edit_request" and revision.leng != 0)
+        and (
+            revision.type in {"", "r1", "direct", "delete"}
+            or revision.type == "edit_request" and revision.leng != 0
+        )
     )
 
 
@@ -96,6 +127,8 @@ def compute_contributors(
         placements: tuple[int, ...],
         at: datetime,
         remover: str | None,
+        editor: str | None,
+        editor_day: date | None,
         allow_grace: bool,
     ) -> None:
         for token_id in placements:
@@ -104,6 +137,16 @@ def compute_contributors(
             token.active_count -= 1
             if token.active_count != 0:
                 continue
+            token.removed_since = at
+            token.removal_active = False
+            if editor is not None:
+                if token.removal_author is not None:
+                    token.removal_active = True
+                elif token.author is not None and token.author != editor:
+                    token.removal_active = True
+                    token.removal_author = editor
+                    token.removal_day = editor_day
+                    token.removal_lineage = token.lineage
             if allow_grace and token.author is not None and token.matured and remover != token.author:
                 expiry = at + REMOVAL_GRACE
                 if token.grace_until is None or expiry > token.grace_until:
@@ -112,7 +155,7 @@ def compute_contributors(
                 token.grace_until = None
 
     def create(
-        text: str, author: str | None, owner_day: date | None, at: datetime
+        title: str, text: str, author: str | None, owner_day: date | None, at: datetime
     ) -> tuple[int, ...]:
         nonlocal next_token_id
         placements: list[int] = []
@@ -120,7 +163,9 @@ def compute_contributors(
             token_id = next_token_id
             next_token_id += 1
             owner = author if not character.isspace() else None
-            tokens[token_id] = _Token(owner, owner_day if owner is not None else None, at)
+            tokens[token_id] = _Token(
+                owner, owner_day if owner is not None else None, title, at
+            )
             placements.append(token_id)
         return tuple(placements)
 
@@ -129,6 +174,7 @@ def compute_contributors(
             token = tokens[token_id]
             if token.active_count == 0:
                 token.continuous_since = at
+            token.removal_active = False
             token.active_count += 1
         return token_ids
 
@@ -153,12 +199,12 @@ def compute_contributors(
                     best[target] = token_id
                     used.add(token_id)
         if not best:
-            return create(text, author, owner_day, at)
+            return create(title, text, author, owner_day, at)
         placements: list[int] = []
         for index, character in enumerate(text):
             token_id = best.get(index)
             placements.extend(
-                create(character, author, owner_day, at)
+                create(title, character, author, owner_day, at)
                 if token_id is None
                 else reuse((token_id,), at)
             )
@@ -191,7 +237,14 @@ def compute_contributors(
                     end = old_index + len(text)
                     removed = old.placements[old_index:end]
                     deleted_spans[title].append((text, removed))
-                    remove(removed, at, remover, allow_removal_grace)
+                    remove(
+                        removed,
+                        at,
+                        remover,
+                        author,
+                        owner_day,
+                        allow_removal_grace,
+                    )
                     old_index = end
                 else:
                     placements_list.extend(restore(title, text, author, owner_day, at))
@@ -249,7 +302,8 @@ def compute_contributors(
         apply(title, normalize("NFC", current_documents.get(title, "")), now_kst,
               None, None, None, allow_known_body=False, allow_removal_grace=False)
 
-    buckets: dict[tuple[str, date], int] = defaultdict(int)
+    addition_buckets: dict[tuple[str, str, date], int] = defaultdict(int)
+    removal_buckets: dict[tuple[str, str, date], int] = defaultdict(int)
     for token in tokens.values():
         retained = token.active_count > 0 and (
             token.matured or now_kst - token.continuous_since >= MATURITY
@@ -260,17 +314,44 @@ def compute_contributors(
             and now_kst < token.grace_until
         )
         if retained and token.author is not None and token.day is not None:
-            buckets[(token.author, token.day)] += 1
+            addition_buckets[(token.author, token.lineage, token.day)] += 1
+        removal_author = token.removal_author
+        removal_day = token.removal_day
+        removal_lineage = token.removal_lineage
+        removed_since = token.removed_since
+        if (
+            token.active_count == 0
+            and token.removal_active
+            and removal_author is not None
+            and removal_day is not None
+            and removal_lineage is not None
+            and removed_since is not None
+            and now_kst - removed_since >= MATURITY
+        ):
+            removal_buckets[(removal_author, removal_lineage, removal_day)] += 1
 
     by_user: dict[str, list[int]] = defaultdict(list)
-    for (user_id, _), quantity in buckets.items():
+    active_days: dict[str, set[date]] = defaultdict(set)
+    for user_id, lineage, day in addition_buckets.keys() | removal_buckets.keys():
+        quantity = max(
+            addition_buckets[(user_id, lineage, day)],
+            removal_buckets[(user_id, lineage, day)],
+        )
         by_user[user_id].append(quantity)
+        active_days[user_id].add(day)
     entries = (
         ContributorEntry(
             user_id=user_id,
-            score=sum(100 * quantity / (1000 + quantity) for quantity in quantities),
-            retained_characters=sum(quantities),
-            active_days=len(quantities),
+            score=sum(
+                -50 * expm1(-log1p(quantity / 1000) / 3)
+                for quantity in quantities
+            ),
+            retained_characters=sum(
+                quantity
+                for (author, _, _), quantity in addition_buckets.items()
+                if author == user_id
+            ),
+            active_days=len(active_days[user_id]),
         )
         for user_id, quantities in by_user.items()
     )

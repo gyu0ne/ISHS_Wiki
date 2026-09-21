@@ -62,23 +62,40 @@ class RankingContributionsTest(unittest.TestCase):
 
         # Then: four characters form one daily q bucket.
         self.assertEqual((actual.retained_characters, actual.active_days), (4, 1))
-        self.assertAlmostEqual(actual.score, 400 / 1004)
+        self.assertAlmostEqual(actual.score, 0.0664894401)
 
-    def test_same_day_saves_and_pages_do_not_change_score(self) -> None:
-        # Given: equivalent text split across revisions and documents.
-        split = (
-            revision(1, "A", "ab", 0, "alice", mode="r1"),
-            revision(2, "A", "abcd", 1, "alice"),
-            revision(1, "B", "ef", 2, "alice", mode="r1"),
+    def test_same_document_day_saves_do_not_change_score(self) -> None:
+        body = "abcdefghij"
+        split = tuple(
+            revision(
+                index + 1,
+                "A",
+                body[: index + 1],
+                index,
+                "alice",
+                mode="r1" if index == 0 else "",
+            )
+            for index in range(len(body))
         )
-        combined = (revision(1, "A", "abcdef", 0, "alice", mode="r1"),)
+        combined = (revision(1, "A", body, 0, "alice", mode="r1"),)
 
-        # When: both histories are scored.
-        split_result = results(*split, current={"A": "abcd", "B": "ef"})["alice"]
-        combined_result = results(*combined, current={"A": "abcdef"})["alice"]
+        split_result = results(*split, current={"A": body})["alice"]
+        combined_result = results(*combined, current={"A": body})["alice"]
 
-        # Then: aggregation by author and KST day is invariant.
         self.assertEqual(split_result, combined_result)
+
+    def test_distinct_documents_on_same_day_receive_distinct_rewards(self) -> None:
+        split = (
+            revision(1, "A", "a", 0, "alice", mode="r1"),
+            revision(1, "B", "b", 1, "alice", mode="r1"),
+        )
+        combined = (revision(1, "A", "ab", 0, "alice", mode="r1"),)
+
+        split_result = results(*split, current={"A": "a", "B": "b"})["alice"]
+        combined_result = results(*combined, current={"A": "ab"})["alice"]
+
+        self.assertGreater(split_result.score, combined_result.score)
+        self.assertEqual(split_result.active_days, 1)
 
     def test_distinct_days_receive_distinct_rewards(self) -> None:
         revisions = (
@@ -89,7 +106,7 @@ class RankingContributionsTest(unittest.TestCase):
         actual = results(*revisions, current={"A": "ab"})["alice"]
 
         self.assertEqual(actual.active_days, 2)
-        self.assertAlmostEqual(actual.score, 200 / 1001)
+        self.assertAlmostEqual(actual.score, 0.0333111284)
 
     def test_equal_length_replacement_preserves_other_authors_text(self) -> None:
         revisions = (
@@ -101,6 +118,91 @@ class RankingContributionsTest(unittest.TestCase):
 
         self.assertEqual(actual["alice"].retained_characters, 2)
         self.assertEqual(actual["bob"].retained_characters, 1)
+
+    def test_shrinking_replacement_counts_maximum_side_once(self) -> None:
+        revisions = (
+            revision(1, "A", "abc", 0, "alice", mode="r1"),
+            revision(2, "A", "x", 80, "bob"),
+        )
+
+        actual = results(*revisions, current={"A": "x"})
+
+        self.assertEqual(set(actual), {"bob"})
+        self.assertEqual(actual["bob"].retained_characters, 1)
+        self.assertAlmostEqual(actual["bob"].score, 0.0499002327)
+
+    def test_pure_other_user_deletion_receives_retained_editing_credit(self) -> None:
+        revisions = (
+            revision(1, "A", "abc", 0, "alice", mode="r1"),
+            revision(2, "A", "", 80, "bob", mode="delete"),
+        )
+
+        actual = results(*revisions, current={"A": ""})
+
+        self.assertEqual(set(actual), {"bob"})
+        self.assertEqual(actual["bob"].retained_characters, 0)
+        self.assertAlmostEqual(actual["bob"].score, 0.0499002327)
+
+    def test_deletion_credit_matures_at_24_hours(self) -> None:
+        revisions = (
+            revision(1, "A", "abc", 0, "alice", mode="r1"),
+            revision(2, "A", "", 80, "bob", mode="delete"),
+        )
+
+        before = results(*revisions, current={"A": ""}, hours=103)
+        at_boundary = results(*revisions, current={"A": ""}, hours=104)
+
+        self.assertNotIn("bob", before)
+        self.assertEqual(at_boundary["bob"].retained_characters, 0)
+
+    def test_hidden_deletion_does_not_mint_credit(self) -> None:
+        revisions = (
+            revision(1, "A", "abc", 0, "alice", mode="r1"),
+            revision(2, "A", "", 80, "bob", mode="delete", hidden="O"),
+        )
+
+        self.assertEqual(results(*revisions, current={"A": ""}), {})
+
+    def test_replacement_then_delete_matches_direct_delete_on_same_day(self) -> None:
+        replacement_then_delete = (
+            revision(1, "A", "abc", 0, "alice", mode="r1"),
+            revision(2, "A", "xyz", 80, "bob"),
+            revision(3, "A", "", 81, "bob", mode="delete"),
+        )
+        direct_delete = (
+            revision(1, "A", "abc", 0, "alice", mode="r1"),
+            revision(2, "A", "", 80, "bob", mode="delete"),
+        )
+
+        split = results(*replacement_then_delete, current={"A": ""})["bob"]
+        direct = results(*direct_delete, current={"A": ""})["bob"]
+
+        self.assertEqual(split, direct)
+
+    def test_own_added_then_deleted_text_receives_no_new_credit(self) -> None:
+        revisions = (
+            revision(1, "A", "abc", 0, "alice", mode="r1"),
+            revision(2, "A", "", 80, "alice", mode="delete"),
+        )
+
+        self.assertEqual(results(*revisions, current={"A": ""}), {})
+
+    def test_repeated_removal_keeps_first_deletion_author_day_and_lineage(self) -> None:
+        revisions = (
+            revision(1, "A", "abc", 0, "alice", mode="r1"),
+            revision(2, "A", "", 80, "bob", mode="delete"),
+            revision(3, "A", "x", 81, "bob"),
+            revision(4, "A", "abcx", 120, "carol"),
+            revision(1, "B", "abc", 121, "carol", mode="r1"),
+            revision(5, "A", "x", 122, "carol"),
+            revision(2, "B", "", 130, "carol", mode="delete"),
+        )
+
+        actual = results(*revisions, current={"A": "x", "B": ""}, hours=250)
+
+        self.assertEqual(set(actual), {"bob"})
+        self.assertEqual((actual["bob"].retained_characters, actual["bob"].active_days), (1, 1))
+        self.assertAlmostEqual(actual["bob"].score, 0.0499002328)
 
     def test_delete_and_restore_recovers_origin_without_new_reward(self) -> None:
         revisions = (
@@ -124,8 +226,9 @@ class RankingContributionsTest(unittest.TestCase):
 
         actual = results(*revisions, current={"A": "ab"})
 
-        self.assertEqual(set(actual), {"alice"})
+        self.assertEqual(set(actual), {"alice", "bob"})
         self.assertEqual(actual["alice"].retained_characters, 2)
+        self.assertEqual(actual["bob"].retained_characters, 0)
 
     def test_segmented_full_restore_does_not_mint_restorer_credit(self) -> None:
         revisions = (
@@ -204,6 +307,36 @@ class RankingContributionsTest(unittest.TestCase):
         self.assertEqual(set(actual), {"alice"})
         self.assertEqual(actual["alice"].retained_characters, 3)
 
+    def test_requested_curve_values_and_tiny_edit_ordering(self) -> None:
+        expected = {
+            1: 0.01665556,
+            100: 1.56353,
+            1_000: 10.31497,
+            10_000: 27.51778,
+            100_000: 39.26350,
+        }
+
+        for quantity, score in expected.items():
+            with self.subTest(quantity=quantity):
+                body = "x" * quantity
+                actual = results(
+                    revision(1, "A", body, 0, "alice", mode="r1"), current={"A": body}
+                )["alice"]
+                self.assertAlmostEqual(actual.score, score, places=5)
+
+        tiny_revisions = tuple(
+            revision(1, f"D{index}", chr(65 + index), index, "alice", mode="r1")
+            for index in range(10)
+        )
+        tiny = results(
+            *tiny_revisions,
+            current={f"D{index}": chr(65 + index) for index in range(10)},
+        )["alice"]
+
+        self.assertAlmostEqual(tiny.score, 0.1665556, places=6)
+        self.assertLess(tiny.score, expected[100])
+        self.assertLess(expected[100], expected[1_000])
+
     def test_signup_anonymous_metadata_and_hidden_authorship_are_excluded(self) -> None:
         revisions = (
             revision(1, "A", "a", 0, "alice", mode="r1", memo="회원가입"),
@@ -229,11 +362,11 @@ class RankingContributionsTest(unittest.TestCase):
 
         self.assertEqual(actual, {})
 
-    def test_new_text_matures_at_72_hours(self) -> None:
+    def test_new_text_matures_at_24_hours(self) -> None:
         revisions = (revision(1, "A", "a", 0, "alice", mode="r1"),)
 
-        before = results(*revisions, current={"A": "a"}, hours=71)
-        at_boundary = results(*revisions, current={"A": "a"}, hours=72)
+        before = results(*revisions, current={"A": "a"}, hours=23)
+        at_boundary = results(*revisions, current={"A": "a"}, hours=24)
 
         self.assertNotIn("alice", before)
         self.assertEqual(at_boundary["alice"].retained_characters, 1)
