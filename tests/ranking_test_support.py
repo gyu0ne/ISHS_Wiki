@@ -116,11 +116,13 @@ def build_test_app(tmp_path: Path, seed_extra: Callable[[Path], None] | None = N
     clock = TestClock()
     app = Flask(__name__, template_folder=str(ROOT))
     app.secret_key = "ranking-test-secret"
+    app.config["RANKING_CONNECT_CALLS"] = 0
     app.jinja_env.filters["load_lang"] = lambda value: value
     app.jinja_env.globals["cache_v"] = lambda: ""
 
     @contextmanager
     def connect():
+        app.config["RANKING_CONNECT_CALLS"] += 1
         connection = sqlite3.connect(db_path)
         try:
             yield connection

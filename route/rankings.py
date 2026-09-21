@@ -3,7 +3,9 @@ from __future__ import annotations
 import html
 import hmac
 import secrets
+import sqlite3
 import time
+from contextlib import nullcontext
 from dataclasses import dataclass
 from hashlib import sha256
 from typing import Awaitable, Callable, Final
@@ -11,9 +13,10 @@ from urllib.parse import quote, urlsplit
 
 from flask import Blueprint, Flask, current_app, jsonify, make_response, redirect, request, session
 from itsdangerous import BadSignature, URLSafeSerializer
+from pymysql import MySQLError
 
 from .tool.ranking_contributor_cache import ContributorCache
-from .tool.ranking_views import ensure_schema, get_popular, record_view
+from .tool.ranking_views import Connection, ensure_schema, get_popular, record_view
 
 
 TICKET_SALT: Final = "ranking-view-v1"
@@ -45,8 +48,8 @@ class RankingService:
 ranking_blueprint = Blueprint("rankings", __name__)
 
 
-def _service() -> RankingService:
-    return current_app.extensions["rankings"]
+def _service() -> RankingService | None:
+    return current_app.extensions.get("rankings")
 
 
 def _serializer() -> URLSafeSerializer:
@@ -93,14 +96,16 @@ def _error(status: int):
     return jsonify({"response": "error"}), status
 
 
-def issue_ranking_ticket(title: str) -> str:
+def issue_ranking_ticket(title: str, connection: Connection | None = None) -> str:
     if request.method != "GET":
         return ""
     service = _service()
+    if service is None:
+        return ""
     dependencies = service.dependencies
-    with dependencies.connect() as connection:
-        member_id = _member_id(connection, dependencies)
-        if not member_id or not _document_is_canonical(connection, title, dependencies):
+    with (dependencies.connect() if connection is None else nullcontext(connection)) as ranking_connection:
+        member_id = _member_id(ranking_connection, dependencies)
+        if not member_id or not _document_is_canonical(ranking_connection, title, dependencies):
             return ""
     nonce = session.get("_ranking_nonce")
     if not isinstance(nonce, str) or not nonce:
@@ -112,7 +117,8 @@ def issue_ranking_ticket(title: str) -> str:
 
 
 def wait_for_contributor_refresh(app: Flask, timeout: float = 5) -> bool:
-    return app.extensions["rankings"].contributors.ready.wait(timeout)
+    service = app.extensions.get("rankings")
+    return service.contributors.ready.wait(timeout) if service is not None else False
 
 
 def _member_token(member_id: str) -> str:
@@ -129,6 +135,8 @@ def _contributor_name_html(item: dict[str, str | float]) -> str:
 @ranking_blueprint.get("/api/trending")
 async def trending():
     service = _service()
+    if service is None:
+        return _error(503)
     dependencies = service.dependencies
     now_epoch = int(dependencies.clock())
     with dependencies.connect() as connection:
@@ -166,6 +174,8 @@ async def trending():
 @ranking_blueprint.get("/api/rankings/contributors")
 async def contributors():
     service = _service()
+    if service is None:
+        return _error(503)
     with service.dependencies.connect() as connection:
         member_id = _member_id(connection, service.dependencies)
         if not member_id:
@@ -183,6 +193,8 @@ async def contributors():
 @ranking_blueprint.get("/rankings")
 async def rankings_page():
     service = _service()
+    if service is None:
+        return _error(503)
     with service.dependencies.connect() as connection:
         member_id = _member_id(connection, service.dependencies)
         if not member_id:
@@ -216,6 +228,9 @@ async def rankings_page():
 
 @ranking_blueprint.post("/api/ranking/view")
 async def qualify_view():
+    service = _service()
+    if service is None:
+        return _error(503)
     if not _same_origin():
         return _error(403)
     payload = request.get_json(silent=True)
@@ -225,7 +240,6 @@ async def qualify_view():
         ticket = _serializer().loads(payload["ticket"])
     except BadSignature:
         return _error(400)
-    service = _service()
     dependencies = service.dependencies
     now_epoch = int(dependencies.clock())
     if not isinstance(ticket, dict) or set(ticket) != {"member", "nonce", "title", "issued_at"}:
@@ -263,9 +277,14 @@ def init_rankings(
     dependencies = RankingDependencies(
         connect, db_change, acl_check, get_display_name, member_is_eligible, render_page, clock
     )
-    with connect() as connection:
-        ensure_schema(connection, db_change)
+    if ranking_blueprint.name not in app.blueprints:
+        app.register_blueprint(ranking_blueprint)
+    try:
+        with connect() as connection:
+            ensure_schema(connection, db_change)
+    except (sqlite3.DatabaseError, MySQLError):
+        app.logger.exception("ranking schema initialization failed; rankings disabled")
+        return
     service = RankingService(dependencies, contributor_refresh_seconds)
     app.extensions["rankings"] = service
-    app.register_blueprint(ranking_blueprint)
     service.contributors.start()

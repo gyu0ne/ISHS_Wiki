@@ -666,7 +666,7 @@ async def view_w(name = '대문', do_type = ''):
             watch_list = 2 if is_starred else 1
         else:
             watch_list = 0
-        ranking_ticket = issue_ranking_ticket(name) if response_data == 200 else ''
+        ranking_ticket = issue_ranking_ticket(name, conn) if response_data == 200 else ''
         return easy_minify(conn, flask.render_template(
             skin_check(conn),
             imp = [

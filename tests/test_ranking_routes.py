@@ -1,9 +1,69 @@
 from __future__ import annotations
 
+import logging
 import sqlite3
+from contextlib import contextmanager
 from hashlib import sha256
 
-from ranking_test_support import build_test_app, encoded, origin_headers, seed_popular
+from ranking_test_support import _load_rankings_module, build_test_app, encoded, origin_headers, seed_popular
+from flask import Flask, session
+
+
+def test_ranking_schema_failure_keeps_app_routes_live_and_apis_unavailable(caplog):
+    # Given: a database that rejects the rankings schema DDL.
+    rankings = _load_rankings_module()
+    app = Flask(__name__)
+
+    @contextmanager
+    def broken_connect():
+        raise sqlite3.OperationalError("forced rankings schema failure")
+        yield
+
+    async def acl_check(title: str, tool: str) -> int:
+        return 0
+
+    async def render_page(title: str, body: str) -> str:
+        return body
+
+    @app.get("/__test/healthy")
+    def healthy():
+        return "ok"
+
+    # When: rankings initializes during application startup.
+    with caplog.at_level(logging.ERROR):
+        rankings.init_rankings(
+            app,
+            connect=broken_connect,
+            db_change=lambda sql: sql,
+            acl_check=acl_check,
+            get_display_name=lambda connection, user_id: user_id,
+            render_page=render_page,
+            contributor_refresh_seconds=None,
+        )
+    client = app.test_client()
+
+    # Then: the application stays live, rankings reports an outage, and the concrete failure is logged.
+    assert client.get("/__test/healthy").get_data(as_text=True) == "ok"
+    assert client.get("/api/trending").status_code == 503
+    assert client.get("/api/rankings/contributors").status_code == 503
+    assert client.post("/api/ranking/view").status_code == 503
+    assert "forced rankings schema failure" in caplog.text
+
+
+def test_issue_ranking_ticket_reuses_the_document_connection(tmp_path):
+    # Given: a valid member and the already-open document-route connection.
+    test_app = build_test_app(tmp_path)
+    rankings = _load_rankings_module()
+    before = test_app.app.config["RANKING_CONNECT_CALLS"]
+
+    # When: ticket issuance receives that connection.
+    with test_app.connect() as connection, test_app.app.test_request_context("/w/Public%20Page"):
+        session["id"] = "20261234"
+        ticket = rankings.issue_ranking_ticket("Public Page", connection=connection)
+
+    # Then: a usable ticket is issued without opening a nested rankings connection.
+    assert ticket
+    assert test_app.app.config["RANKING_CONNECT_CALLS"] == before
 
 
 def test_trending_requires_a_registered_member(tmp_path):
