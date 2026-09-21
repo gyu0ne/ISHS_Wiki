@@ -56,7 +56,14 @@ def contributor_page(raw_page: str, total: int) -> tuple[int, int, int]:
     return page, total_pages, (page - 1) * PAGE_SIZE
 
 
-def pagination_html(page: int, total_pages: int, *, path: str = "/rankings", period: Period = "all") -> str:
+def pagination_html(
+    page: int,
+    total_pages: int,
+    *,
+    path: str = "/rankings",
+    period: Period = "all",
+    aria_label: str | None = None,
+) -> str:
     if total_pages == 1:
         return ""
     first = max(1, min(page - 2, total_pages - 4))
@@ -67,7 +74,7 @@ def pagination_html(page: int, total_pages: int, *, path: str = "/rankings", per
         links.append(f'<a href="{path}?{period_query}page={number}"{current}>{number}</a>')
     if page < total_pages:
         links.append(f'<a href="{path}?{period_query}page={page + 1}" rel="next">다음</a>')
-    label = "내 기여 내역 페이지" if path == "/rankings/me" else "기여자 순위 페이지"
+    label = aria_label or ("내 기여 내역 페이지" if path == "/rankings/me" else "기여자 순위 페이지")
     return f'<nav class="ringo_rank_pagination" aria-label="{label}">' + "".join(links) + "</nav>"
 
 
@@ -141,3 +148,59 @@ def document_page_html(
 def ranking_state_html(path: str, period: Period, current_month: str, message: str) -> str:
     back = f'<a class="ringo_rank_back" href="/rankings?period={period}">기여자 순위</a>' if path == "/rankings/me" else ""
     return '<div class="opennamu_main">' + back + period_navigation_html(path, period, current_month) + f'<p class="ringo_ranking_empty">{html.escape(message)}</p></div>'
+
+
+def document_contributors_page_html(
+    title: str,
+    items: Iterable[Mapping[str, str | float]],
+    start: int,
+    my_rank: Mapping[str, int | float] | None,
+    page: int,
+    total_pages: int,
+    period: Period,
+    current_month: str,
+    message: str = "",
+) -> str:
+    encoded_title = quote(title, safe="")
+    path = "/rankings/document/" + encoded_title
+    page_items = tuple(items)
+    rows = (
+        contributor_rows_html(page_items, start)
+        if page_items
+        else '<tr><td colspan="3" class="ringo_ranking_empty">집계된 기여가 없습니다.</td></tr>'
+    )
+    personal = (
+        f'<span class="ringo_my_rank_values"><strong>{my_rank["rank"]}위</strong>'
+        f'<span>{float(my_rank["score"]):.2f}점</span></span>'
+        if my_rank is not None
+        else "<span>아직 순위가 없습니다.</span>"
+    )
+    content = (
+        f'<p class="ringo_ranking_empty">{html.escape(message)}</p>'
+        if message
+        else (
+            '<table id="main_table_set" class="ringo_contributor_table"><thead><tr>'
+            '<th scope="col">순위</th><th scope="col">이름</th><th scope="col">점수</th>'
+            "</tr></thead><tbody>"
+            + rows
+            + '</tbody></table><section class="ringo_my_rank" aria-label="이 문서 내 순위">'
+            '<div class="ringo_my_rank_title"><strong>이 문서 내 순위</strong></div>'
+            + personal
+            + "</section>"
+            + pagination_html(
+                page,
+                total_pages,
+                path=path,
+                period=period,
+                aria_label="문서 기여자 페이지",
+            )
+        )
+    )
+    return (
+        '<div class="opennamu_main">'
+        f'<a class="ringo_rank_back" href="/w/{encoded_title}">문서로 돌아가기</a>'
+        f'<h2>문서 기여자: <a href="/w/{encoded_title}">{html.escape(title)}</a></h2>'
+        + period_navigation_html(path, period, current_month)
+        + content
+        + "</div>"
+    )

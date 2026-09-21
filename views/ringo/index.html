@@ -408,6 +408,30 @@
       white-space: nowrap;
     }
 
+    .ringo_document_contributors {
+      margin-top: 24px;
+      padding-top: 16px;
+      border-top: 1px solid var(--hr);
+    }
+
+    .ringo_document_contributors a {
+      display: inline-flex;
+      align-items: center;
+      box-sizing: border-box;
+      min-height: 44px;
+      padding: 8px 12px;
+      border: 1px solid var(--hr);
+      border-radius: 10px;
+      color: var(--text);
+      background: var(--surface);
+      font-weight: 700;
+    }
+
+    .ringo_document_contributors a:focus-visible {
+      outline: 2px solid var(--text);
+      outline-offset: 2px;
+    }
+
     .ringo_rank_period {
       display: flex;
       flex-wrap: wrap;
@@ -1739,6 +1763,11 @@
 
         {% if ranking_ticket|default('') %}
         <div id="ranking_ticket" data-ranking-ticket="{{ ranking_ticket }}" hidden></div>
+        {% if request.view_args and request.view_args.get('name') %}
+        <div class="ringo_document_contributors">
+          <a href="{{ url_for('rankings.document_contributors_page', title=request.view_args['name']) }}">이 문서의 기여자</a>
+        </div>
+        {% endif %}
         {% endif %}
 
         {% if adsense_enabled %}

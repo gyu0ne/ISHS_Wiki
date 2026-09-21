@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import threading
+from collections import defaultdict
 from datetime import datetime, timezone
 from typing import Callable
 from urllib.parse import quote
@@ -35,6 +36,12 @@ class ContributorCache:
         self.documents: dict[Period, dict[str, tuple[dict[str, str | float], ...]]] = {
             "all": {}
         }
+        self.document_contributor_items: dict[
+            Period, dict[str, tuple[dict[str, str | float], ...]]
+        ] = {"all": {}}
+        self.document_contributor_ranks: dict[
+            Period, dict[str, dict[str, dict[str, int | float]]]
+        ] = {"all": {}}
         self.generated_at = 0
         self.state = "loading"
         self.ready = threading.Event()
@@ -61,6 +68,24 @@ class ContributorCache:
         with self.lock:
             return self.documents.get(period, {}).get(member_id, ()), self.generated_at, self.state
 
+    def document_contributors_snapshot(
+        self, title: str, member_id: str, period: Period = "all"
+    ) -> tuple[
+        tuple[dict[str, str | float], ...],
+        int,
+        str,
+        dict[str, int | float] | None,
+    ]:
+        with self.lock:
+            return (
+                self.document_contributor_items.get(period, {}).get(title, ()),
+                self.generated_at,
+                self.state,
+                self.document_contributor_ranks.get(period, {})
+                .get(title, {})
+                .get(member_id),
+            )
+
     def _run(self) -> None:
         succeeded = False
         try:
@@ -80,15 +105,21 @@ class ContributorCache:
         now_epoch = int(self.clock())
         with self.connect() as connection:
             documents = self._documents(connection)
-            period_items, period_member_ranks, document_scores = self._compute(
-                connection, documents, now_epoch
-            )
+            (
+                period_items,
+                period_member_ranks,
+                document_scores,
+                document_contributor_items,
+                document_contributor_ranks,
+            ) = self._compute(connection, documents, now_epoch)
         with self.lock:
             self.items = period_items["all"]
             self.member_ranks = period_member_ranks["all"]
             self.period_items = period_items
             self.period_member_ranks = period_member_ranks
             self.documents = document_scores
+            self.document_contributor_items = document_contributor_items
+            self.document_contributor_ranks = document_contributor_ranks
             self.generated_at = now_epoch
             self.state = "ready"
 
@@ -112,6 +143,8 @@ class ContributorCache:
         dict[Period, tuple[dict[str, str | float], ...]],
         dict[Period, dict[str, dict[str, int | float]]],
         dict[Period, dict[str, tuple[dict[str, str | float], ...]]],
+        dict[Period, dict[str, tuple[dict[str, str | float], ...]]],
+        dict[Period, dict[str, dict[str, dict[str, int | float]]]],
     ]:
         cursor = connection.cursor()
         cursor.execute(self.db_change("select id from user_set where name = 'pw'"))
@@ -136,6 +169,27 @@ class ContributorCache:
         period_items: dict[Period, tuple[dict[str, str | float], ...]] = {}
         period_member_ranks: dict[Period, dict[str, dict[str, int | float]]] = {}
         document_scores: dict[Period, dict[str, tuple[dict[str, str | float], ...]]] = {}
+        document_contributor_items: dict[
+            Period, dict[str, tuple[dict[str, str | float], ...]]
+        ] = {}
+        document_contributor_ranks: dict[
+            Period, dict[str, dict[str, dict[str, int | float]]]
+        ] = {}
+        identities: dict[str, tuple[str, str] | None] = {}
+
+        def identity(user_id: str) -> tuple[str, str] | None:
+            if user_id not in identities:
+                name = self.get_display_name(connection, user_id).strip()
+                identities[user_id] = (
+                    None
+                    if not name or (name == user_id and name.isdigit())
+                    else (
+                        name,
+                        "/w/user:" + quote(user_id, safe="") if name == user_id else "",
+                    )
+                )
+            return identities[user_id]
+
         for named_scores in scores.periods():
             period = named_scores.period
             period_scores = named_scores.scores
@@ -148,15 +202,44 @@ class ContributorCache:
                 )
                 for item in period_scores.documents
             }
+            raw_document_contributors: dict[str, list[tuple[float, str]]] = defaultdict(list)
+            for contributor in period_scores.documents:
+                for row in contributor.documents:
+                    raw_document_contributors[row.title].append((row.score, contributor.user_id))
+            items_by_document: dict[str, tuple[dict[str, str | float], ...]] = {}
+            ranks_by_document: dict[str, dict[str, dict[str, int | float]]] = {}
+            for title, raw_contributors in raw_document_contributors.items():
+                document_items: list[dict[str, str | float]] = []
+                document_ranks: dict[str, dict[str, int | float]] = {}
+                for raw_score, user_id in sorted(
+                    raw_contributors, key=lambda item: (-item[0], item[1])
+                ):
+                    display = identity(user_id)
+                    if display is None:
+                        continue
+                    name, url = display
+                    score = round(raw_score, 2)
+                    document_items.append({"name": name, "url": url, "score": score})
+                    document_ranks[user_id] = {"rank": len(document_items), "score": score}
+                items_by_document[title] = tuple(document_items)
+                ranks_by_document[title] = document_ranks
             for entry in period_scores.contributors:
-                name = self.get_display_name(connection, entry.user_id).strip()
-                if not name or (name == entry.user_id and name.isdigit()):
+                display = identity(entry.user_id)
+                if display is None:
                     continue
-                url = "/w/user:" + quote(entry.user_id, safe="") if name == entry.user_id else ""
+                name, url = display
                 score = round(entry.score, 2)
                 items.append({"name": name, "url": url, "score": score})
                 member_ranks[entry.user_id] = {"rank": len(items), "score": score}
             period_items[period] = tuple(items)
             period_member_ranks[period] = member_ranks
             document_scores[period] = documents_by_member
-        return period_items, period_member_ranks, document_scores
+            document_contributor_items[period] = items_by_document
+            document_contributor_ranks[period] = ranks_by_document
+        return (
+            period_items,
+            period_member_ranks,
+            document_scores,
+            document_contributor_items,
+            document_contributor_ranks,
+        )

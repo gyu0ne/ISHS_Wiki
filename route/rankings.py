@@ -23,6 +23,7 @@ from flask import (
 from itsdangerous import BadSignature, URLSafeSerializer
 from pymysql import MySQLError
 
+from .ranking_document_routes import register_document_ranking_routes
 from .ranking_period_routes import register_ranking_period_routes
 from .tool.ranking_contributor_cache import ContributorCache
 from .tool.ranking_views import Connection, ensure_schema, get_popular, record_view
@@ -238,6 +239,7 @@ async def qualify_view():
 
 
 register_ranking_period_routes(ranking_blueprint, _service, _member_id, _error, _private)
+register_document_ranking_routes(ranking_blueprint, _service, _member_id, _error, _private)
 
 
 def init_rankings(

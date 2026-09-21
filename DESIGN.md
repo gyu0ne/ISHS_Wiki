@@ -126,3 +126,15 @@ links, counts or totals. Preserve loading/error and no-contribution states.
 Document-detail rows use four decimal places so small contributions remain
 inspectable; the existing leaderboard and summary retain two decimal places.
 Totals derive from unrounded scores, without rounding individual rows first.
+
+## A document's contributors
+
+After a readable document body, add one native `이 문서의 기여자` link in a
+subtle separated footer row. Reuse surface/text/border/radius tokens,44px
+minimum target and visible keyboard focus. Only the document render with a
+ranking ticket and raw route name exposes the link; rankings pages do not.
+The destination shows a linked document title and `문서로 돌아가기`, then the
+same overall/month selector,20-row contributor table, top3 medals and the
+viewer's rank within that document. Scores reuse existing original-document
+buckets; do not introduce a second scoring formula. The sidebar remains the
+overall wiki leaderboard. Current public visibility is checked before output.
