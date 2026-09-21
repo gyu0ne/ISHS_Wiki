@@ -41,9 +41,9 @@
   <link href="https://cdn.jsdelivr.net/gh/sun-typeface/SUIT/fonts/static/woff2/SUIT.css" rel="stylesheet">
   <script defer src="https://code.iconify.design/1/1.0.3/iconify.min.js"></script>
   <script defer src="/views/ringo/js/main.js.cache_v3"></script>
-  <script defer src="/views/ringo/js/sidebar.js.cache_v8"></script>
+  <script defer src="/views/ringo/js/sidebar.js.cache_v9"></script>
   <script defer src="/views/ringo/js/skin_set.js.cache_v15"></script>
-  <script defer src="/views/main_css/js/func/autocomplete.js" charset="UTF-8"></script>
+  <script defer src="/views/main_css/js/func/autocomplete.js.cache_v1" charset="UTF-8"></script>
   
   {% if adsense_enabled %}
   <!-- AdSense - defer로 DOM 로드 후 실행 -->
@@ -278,6 +278,20 @@
     aside.do_fixed {
       position: static;
       width: 100%;
+    }
+
+    .ringo_trending_rank {
+      display: inline-block;
+      min-width: 2em;
+      margin-right: 8px;
+      color: var(--bar-a);
+      font-weight: 700;
+    }
+
+    .ringo_trending_message {
+      margin: 8px 2px;
+      color: var(--muted);
+      font-size: 14px;
     }
 
     .main {
@@ -1020,6 +1034,22 @@
       background-color: #f3f4f6;
     }
 
+    .autocomplete-items.ringo_trending_results .ringo_trending_list a {
+      display: flex;
+      align-items: center;
+    }
+
+    .autocomplete-items.ringo_trending_results .ringo_trending_rank {
+      flex: 0 0 2em;
+      margin-right: 0;
+    }
+
+    .autocomplete-items.ringo_trending_results .ringo_trending_title {
+      flex: 1;
+      min-width: 0;
+      overflow-wrap: break-word;
+    }
+
     /* 다크 모드 대응 */
     {% if request.cookies.get('main_css_darkmode', '') == '1' %}
     .namu .autocomplete-items#autocomplete_results_not_mobile,
@@ -1042,6 +1072,16 @@
     {% endif %}
 
     @media (max-width: 640px) {
+      body.namu #autocomplete_results_not_mobile.ringo_trending_results,
+      body.namu #autocomplete_results_mobile.ringo_trending_results {
+        position: fixed;
+        left: 10px !important;
+        right: 10px !important;
+        width: auto !important;
+        min-width: 0 !important;
+        max-width: none !important;
+      }
+
       .autocomplete-items#autocomplete_results_not_mobile,
       .autocomplete-items#autocomplete_results_mobile {
         left: 0 !important;
@@ -1218,6 +1258,7 @@
               {{'recent_change'|load_lang}}</a>
             <a href="/recent_discuss"><span class="iconify" data-icon="ic:baseline-add-comment"></span>
               {{'recent_discussion'|load_lang}}</a>
+            <a href="/rankings"><span class="iconify" data-icon="ic:baseline-leaderboard"></span> 기여자 순위</a>
             <a href="/bbs/main"><span class="iconify" data-icon="ic:outline-developer-board"></span>
               {{'bbs_main'|load_lang}}</a>
           </div>
@@ -1356,6 +1397,10 @@
           {{data|safe}}
         </div>
 
+        {% if ranking_ticket|default('') %}
+        <div id="ranking_ticket" data-ranking-ticket="{{ ranking_ticket }}" hidden></div>
+        {% endif %}
+
         {% if adsense_enabled %}
         <div class="ad-container" style="margin: 16px 0; min-height: 100px;">
           <ins class="adsbygoogle"
@@ -1416,7 +1461,7 @@
 
       <div class="side_card rc_box" id="sidebar_trending" style="margin-bottom:16px;">
         <h3 style="margin-top:0;">실시간 인기 문서</h3>
-        <div class="rc_wrap">
+        <div class="rc_wrap opennamu_trending_sidebar">
           {{ trending_sidebar|safe }}
         </div>
       </div>

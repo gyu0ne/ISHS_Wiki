@@ -196,7 +196,7 @@ async def rankings_page():
         f'<tr><td>{rank}</td><td>{_contributor_name_html(item)}</td><td>{item["score"]:.2f}</td></tr>'
         for rank, item in enumerate(items, 1)
     )
-    body = '<table><thead><tr><th scope="col">순위</th><th scope="col">이름</th><th scope="col">점수</th></tr></thead><tbody>' + rows + "</tbody></table>"
+    body = '<div class="opennamu_main"><table id="main_table_set"><thead><tr><th scope="col">순위</th><th scope="col">이름</th><th scope="col">점수</th></tr></thead><tbody>' + rows + "</tbody></table></div>"
     return await service.dependencies.render_page("기여자 순위", body)
 
 
