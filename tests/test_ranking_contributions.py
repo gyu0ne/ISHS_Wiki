@@ -3,12 +3,13 @@ from __future__ import annotations
 import time
 import unittest
 from datetime import datetime, timedelta, timezone
-from pathlib import Path
-import sys
 
-sys.path.insert(0, str(Path(__file__).parents[1] / "route" / "tool"))
+from ranking_package_support import bootstrap_route_tool_package
 
-from ranking_contributions import HistoryRevision, compute_contributors
+
+bootstrap_route_tool_package()
+
+from route.tool.ranking_contributions import HistoryRevision, compute_contributors
 
 
 KST = timezone(timedelta(hours=9))

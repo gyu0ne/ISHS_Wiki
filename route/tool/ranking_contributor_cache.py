@@ -5,7 +5,8 @@ from datetime import datetime, timezone
 from typing import Callable
 from urllib.parse import quote
 
-from .ranking_contributions import HistoryRevision, compute_contributors
+from .ranking_contribution_scores import Period
+from .ranking_contributions import HistoryRevision, compute_contribution_scores
 
 
 class ContributorCache:
@@ -25,6 +26,15 @@ class ContributorCache:
         self.lock = threading.Lock()
         self.items: tuple[dict[str, str | float], ...] = ()
         self.member_ranks: dict[str, dict[str, int | float]] = {}
+        self.period_items: dict[Period, tuple[dict[str, str | float], ...]] = {
+            "all": self.items
+        }
+        self.period_member_ranks: dict[Period, dict[str, dict[str, int | float]]] = {
+            "all": self.member_ranks
+        }
+        self.documents: dict[Period, dict[str, tuple[dict[str, str | float], ...]]] = {
+            "all": {}
+        }
         self.generated_at = 0
         self.state = "loading"
         self.ready = threading.Event()
@@ -33,10 +43,23 @@ class ContributorCache:
         threading.Thread(target=self._run, daemon=True).start()
 
     def snapshot(
-        self, member_id: str
+        self, member_id: str, period: Period = "all"
     ) -> tuple[tuple[dict[str, str | float], ...], int, str, dict[str, int | float] | None]:
         with self.lock:
-            return self.items, self.generated_at, self.state, self.member_ranks.get(member_id)
+            if period == "all":
+                return self.items, self.generated_at, self.state, self.member_ranks.get(member_id)
+            return (
+                self.period_items.get(period, ()),
+                self.generated_at,
+                self.state,
+                self.period_member_ranks.get(period, {}).get(member_id),
+            )
+
+    def document_snapshot(
+        self, member_id: str, period: Period = "all"
+    ) -> tuple[tuple[dict[str, str | float], ...], int, str]:
+        with self.lock:
+            return self.documents.get(period, {}).get(member_id, ()), self.generated_at, self.state
 
     def _run(self) -> None:
         succeeded = False
@@ -57,10 +80,15 @@ class ContributorCache:
         now_epoch = int(self.clock())
         with self.connect() as connection:
             documents = self._documents(connection)
-            items, member_ranks = self._compute(connection, documents, now_epoch)
+            period_items, period_member_ranks, document_scores = self._compute(
+                connection, documents, now_epoch
+            )
         with self.lock:
-            self.items = items
-            self.member_ranks = member_ranks
+            self.items = period_items["all"]
+            self.member_ranks = period_member_ranks["all"]
+            self.period_items = period_items
+            self.period_member_ranks = period_member_ranks
+            self.documents = document_scores
             self.generated_at = now_epoch
             self.state = "ready"
 
@@ -80,7 +108,11 @@ class ContributorCache:
 
     def _compute(
         self, connection, documents: dict[str, str], now_epoch: int
-    ) -> tuple[tuple[dict[str, str | float], ...], dict[str, dict[str, int | float]]]:
+    ) -> tuple[
+        dict[Period, tuple[dict[str, str | float], ...]],
+        dict[Period, dict[str, dict[str, int | float]]],
+        dict[Period, dict[str, tuple[dict[str, str | float], ...]]],
+    ]:
         cursor = connection.cursor()
         cursor.execute(self.db_change("select id from user_set where name = 'pw'"))
         members = {row[0] for row in cursor.fetchall()}
@@ -98,17 +130,33 @@ class ContributorCache:
             for row in cursor.fetchall()
             if row[1] in documents
         )
-        entries = compute_contributors(
+        scores = compute_contribution_scores(
             revisions, documents, members, datetime.fromtimestamp(now_epoch, tz=timezone.utc)
         )
-        items: list[dict[str, str | float]] = []
-        member_ranks: dict[str, dict[str, int | float]] = {}
-        for entry in entries:
-            name = self.get_display_name(connection, entry.user_id).strip()
-            if not name or (name == entry.user_id and name.isdigit()):
-                continue
-            url = "/w/user:" + quote(entry.user_id, safe="") if name == entry.user_id else ""
-            score = round(entry.score, 2)
-            items.append({"name": name, "url": url, "score": score})
-            member_ranks[entry.user_id] = {"rank": len(items), "score": score}
-        return tuple(items), member_ranks
+        period_items: dict[Period, tuple[dict[str, str | float], ...]] = {}
+        period_member_ranks: dict[Period, dict[str, dict[str, int | float]]] = {}
+        document_scores: dict[Period, dict[str, tuple[dict[str, str | float], ...]]] = {}
+        for named_scores in scores.periods():
+            period = named_scores.period
+            period_scores = named_scores.scores
+            items: list[dict[str, str | float]] = []
+            member_ranks: dict[str, dict[str, int | float]] = {}
+            documents_by_member = {
+                item.user_id: tuple(
+                    {"title": row.title, "score": row.score}
+                    for row in item.documents
+                )
+                for item in period_scores.documents
+            }
+            for entry in period_scores.contributors:
+                name = self.get_display_name(connection, entry.user_id).strip()
+                if not name or (name == entry.user_id and name.isdigit()):
+                    continue
+                url = "/w/user:" + quote(entry.user_id, safe="") if name == entry.user_id else ""
+                score = round(entry.score, 2)
+                items.append({"name": name, "url": url, "score": score})
+                member_ranks[entry.user_id] = {"rank": len(items), "score": score}
+            period_items[period] = tuple(items)
+            period_member_ranks[period] = member_ranks
+            document_scores[period] = documents_by_member
+        return period_items, period_member_ranks, document_scores

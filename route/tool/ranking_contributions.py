@@ -2,121 +2,30 @@ from __future__ import annotations
 
 from collections import defaultdict
 from collections.abc import Iterable, Mapping, Set
-from dataclasses import dataclass
-from datetime import date, datetime, timedelta, timezone
+from datetime import date, datetime
 from heapq import heappop, heappush
-from math import expm1, log1p
-from typing import Final
 from unicodedata import normalize
 
 from diff_match_patch import diff_match_patch
 
-
-KST: Final = timezone(timedelta(hours=9))
-MATURITY: Final = timedelta(hours=24)
-REMOVAL_GRACE: Final = timedelta(hours=24)
-
-
-@dataclass(frozen=True, slots=True)
-class HistoryRevision:
-    id: str
-    title: str
-    data: str
-    date: datetime
-    ip: str
-    send: str
-    leng: int
-    hide: str
-    type: str
+from .ranking_contribution_scores import (
+    ContributionBucket,
+    ContributionScores,
+    ContributorEntry,
+    HistoryRevision,
+)
+from .ranking_contribution_state import DocumentState, MATURITY, REMOVAL_GRACE, TokenState, as_kst, can_own
 
 
-@dataclass(frozen=True, slots=True)
-class ContributorEntry:
-    user_id: str
-    score: float
-    retained_characters: int
-    active_days: int
-
-
-@dataclass(frozen=True, slots=True)
-class _Document:
-    text: str
-    placements: tuple[int, ...]
-
-
-class _Token:
-    __slots__ = (
-        "active_count",
-        "author",
-        "continuous_since",
-        "day",
-        "grace_until",
-        "lineage",
-        "matured",
-        "removal_active",
-        "removal_author",
-        "removal_day",
-        "removal_lineage",
-        "removed_since",
-    )
-
-    active_count: int
-    author: str | None
-    continuous_since: datetime
-    day: date | None
-    grace_until: datetime | None
-    lineage: str
-    matured: bool
-    removal_active: bool
-    removal_author: str | None
-    removal_day: date | None
-    removal_lineage: str | None
-    removed_since: datetime | None
-
-    def __init__(
-        self, author: str | None, day: date | None, lineage: str, since: datetime
-    ) -> None:
-        self.active_count = 1
-        self.author = author
-        self.continuous_since = since
-        self.day = day
-        self.grace_until = None
-        self.lineage = lineage
-        self.matured = False
-        self.removal_active = False
-        self.removal_author = None
-        self.removal_day = None
-        self.removal_lineage = None
-        self.removed_since = None
-
-
-def _kst(value: datetime) -> datetime:
-    return value.replace(tzinfo=KST) if value.tzinfo is None else value.astimezone(KST)
-
-
-def _can_own(revision: HistoryRevision, members: Set[str], contiguous: bool) -> bool:
-    return (
-        contiguous
-        and revision.ip in members
-        and revision.hide != "O"
-        and "회원가입" not in revision.send
-        and not revision.title.lower().startswith(("user:", "file:"))
-        and (
-            revision.type in {"", "r1", "direct", "delete"}
-            or revision.type == "edit_request" and revision.leng != 0
-        )
-    )
-
-
-def compute_contributors(
+def compute_contribution_scores(
     revisions: Iterable[HistoryRevision],
     current_documents: Mapping[str, str],
     member_ids: Set[str],
     now: datetime,
-) -> tuple[ContributorEntry, ...]:
-    now_kst = _kst(now)
-    documents: dict[str, _Document] = {}
-    tokens: dict[int, _Token] = {}
+) -> ContributionScores:
+    now_kst = as_kst(now)
+    documents: dict[str, DocumentState] = {}
+    tokens: dict[int, TokenState] = {}
     known_bodies: dict[str, tuple[int, ...]] = {}
     deleted_spans: dict[str, list[tuple[str, tuple[int, ...]]]] = defaultdict(list)
     last_revision: dict[str, int | None] = {}
@@ -163,7 +72,7 @@ def compute_contributors(
             token_id = next_token_id
             next_token_id += 1
             owner = author if not character.isspace() else None
-            tokens[token_id] = _Token(
+            tokens[token_id] = TokenState(
                 owner, owner_day if owner is not None else None, title, at
             )
             placements.append(token_id)
@@ -221,7 +130,7 @@ def compute_contributors(
         allow_known_body: bool,
         allow_removal_grace: bool,
     ) -> None:
-        old = documents.get(title, _Document("", ()))
+        old = documents.get(title, DocumentState("", ()))
         known = known_bodies.get(new_text) if allow_known_body and new_text else None
         if known is not None and not old.text:
             placements = reuse(known, at)
@@ -249,7 +158,7 @@ def compute_contributors(
                 else:
                     placements_list.extend(restore(title, text, author, owner_day, at))
             placements = tuple(placements_list)
-        documents[title] = _Document(new_text, placements)
+        documents[title] = DocumentState(new_text, placements)
         if new_text:
             known_bodies.setdefault(new_text, placements)
 
@@ -261,7 +170,7 @@ def compute_contributors(
     queue: list[tuple[datetime, int, str, int]] = []
     for title, group in grouped.items():
         index, revision = group[0]
-        heappush(queue, (_kst(revision.date), index, title, 0))
+        heappush(queue, (as_kst(revision.date), index, title, 0))
     ordered: list[HistoryRevision] = []
     while queue:
         _, _, title, position = heappop(queue)
@@ -270,12 +179,12 @@ def compute_contributors(
         next_position = position + 1
         if next_position < len(group):
             index, revision = group[next_position]
-            heappush(queue, (_kst(revision.date), index, title, next_position))
+            heappush(queue, (as_kst(revision.date), index, title, next_position))
 
     uncertain: set[str] = set()
     last_applied_at: dict[str, datetime] = {}
     for revision in ordered:
-        stored_at = _kst(revision.date)
+        stored_at = as_kst(revision.date)
         if stored_at > now_kst:
             continue
         number = int(revision.id)
@@ -288,7 +197,7 @@ def compute_contributors(
         at = max(stored_at, last_applied_at.get(revision.title, stored_at))
         author = (
             revision.ip
-            if revision.title not in uncertain and _can_own(revision, member_ids, contiguous)
+            if revision.title not in uncertain and can_own(revision, member_ids, contiguous)
             else None
         )
         apply(revision.title, normalize("NFC", revision.data), at, author,
@@ -330,29 +239,27 @@ def compute_contributors(
         ):
             removal_buckets[(removal_author, removal_lineage, removal_day)] += 1
 
-    by_user: dict[str, list[int]] = defaultdict(list)
-    active_days: dict[str, set[date]] = defaultdict(set)
-    for user_id, lineage, day in addition_buckets.keys() | removal_buckets.keys():
-        quantity = max(
+    buckets = (
+        ContributionBucket(
+            user_id,
+            lineage,
+            day,
             addition_buckets[(user_id, lineage, day)],
             removal_buckets[(user_id, lineage, day)],
         )
-        by_user[user_id].append(quantity)
-        active_days[user_id].add(day)
-    entries = (
-        ContributorEntry(
-            user_id=user_id,
-            score=sum(
-                -50 * expm1(-log1p(quantity / 1000) / 3)
-                for quantity in quantities
-            ),
-            retained_characters=sum(
-                quantity
-                for (author, _, _), quantity in addition_buckets.items()
-                if author == user_id
-            ),
-            active_days=len(active_days[user_id]),
-        )
-        for user_id, quantities in by_user.items()
+        for user_id, lineage, day in addition_buckets.keys() | removal_buckets.keys()
     )
-    return tuple(sorted(entries, key=lambda entry: (-entry.score, entry.user_id)))
+    return ContributionScores(
+        tuple(sorted(buckets, key=lambda bucket: (bucket.user_id, bucket.title, bucket.day)))
+    )
+
+
+def compute_contributors(
+    revisions: Iterable[HistoryRevision],
+    current_documents: Mapping[str, str],
+    member_ids: Set[str],
+    now: datetime,
+) -> tuple[ContributorEntry, ...]:
+    return compute_contribution_scores(
+        revisions, current_documents, member_ids, now
+    ).contributors()
