@@ -6,9 +6,9 @@ from hashlib import sha256
 from math import exp2
 from typing import Final, Protocol
 
-WINDOW_SECONDS: Final = 3600
-RETENTION_SECONDS: Final = 86400
-HALF_LIFE_SECONDS: Final = 900
+WINDOW_SECONDS: Final = 24 * 60 * 60
+RETENTION_SECONDS: Final = WINDOW_SECONDS
+HALF_LIFE_SECONDS: Final = 6 * 60 * 60
 
 
 class SqlTransform(Protocol):
@@ -76,7 +76,7 @@ def record_view(
     now: int,
     sql_transform: SqlTransform,
 ) -> bool:
-    """Persist one member's first qualified view in each sixty-minute window."""
+    """Persist one member's first qualified view in each rolling 24-hour window."""
     if not member_token:
         return False
 

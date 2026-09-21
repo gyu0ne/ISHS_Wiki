@@ -34,16 +34,17 @@ class TestRealtimePopularityStore(unittest.TestCase):
         conn.execute('pragma busy_timeout = 5000')
         return conn
 
-    def test_records_only_the_first_view_during_a_sixty_minute_window(self):
+    def test_records_only_the_first_view_during_a_twenty_four_hour_window(self):
         # Given: one authenticated member and a document.
-        # When: they repeat a view at 59:59 and then at 60:00.
+        # When: they repeat at one hour, 23:59:59, and exactly 24 hours.
         self.assertTrue(record_view(self.conn, 'doc-1', 'Article', 'member-1', 1000, lambda sql: sql))
-        self.assertFalse(record_view(self.conn, 'doc-1', 'Article', 'member-1', 4599, lambda sql: sql))
-        self.assertTrue(record_view(self.conn, 'doc-1', 'Article', 'member-1', 4600, lambda sql: sql))
+        self.assertFalse(record_view(self.conn, 'doc-1', 'Article', 'member-1', 4600, lambda sql: sql))
+        self.assertFalse(record_view(self.conn, 'doc-1', 'Article', 'member-1', 87399, lambda sql: sql))
+        self.assertTrue(record_view(self.conn, 'doc-1', 'Article', 'member-1', 87400, lambda sql: sql))
 
-        # Then: only the 60-minute boundary advances the persisted timestamp.
+        # Then: only the 24-hour boundary advances the persisted timestamp.
         row = self.conn.execute('select viewed_at from realtime_popularity_views').fetchone()
-        self.assertEqual(row, (4600,))
+        self.assertEqual(row, (87400,))
 
     def test_repeated_one_thousand_times_keeps_a_single_member_document_row(self):
         # Given: one qualified member.
@@ -122,27 +123,30 @@ class TestRealtimePopularityStore(unittest.TestCase):
         self.assertEqual([(item.title, item.readers) for item in popular], [('Article', 3)])
         self.assertEqual(self.conn.execute('select count(*) from realtime_popularity_views').fetchone(), (3,))
 
-    def test_score_uses_the_nine_hundred_second_half_life(self):
+    def test_score_uses_the_six_hour_half_life(self):
         # Given: one current view and one view exactly one half-life old.
         # When: the pure scorer evaluates both at the current timestamp.
-        score = score_views((1000, 1900), 1900)
+        score = score_views((1000, 22600), 22600)
 
         # Then: the older view contributes one half of the current view.
         self.assertEqual(score, 1.5)
+        self.assertEqual(score_views((1000,), 44200), 0.25)
 
-    def test_ranking_excludes_views_older_than_sixty_minutes(self):
-        # Given: three expired, exact-boundary, future, and current views.
-        for member in ('a', 'b', 'c'):
-            record_view(self.conn, 'expired', 'Expired', member, 1000, lambda sql: sql)
-            record_view(self.conn, 'boundary', 'Boundary', member, 1001, lambda sql: sql)
-            record_view(self.conn, 'future', 'Future', member, 4602, lambda sql: sql)
-            record_view(self.conn, 'current', 'Current', member, 4601, lambda sql: sql)
+    def test_ranking_includes_only_views_inside_the_last_twenty_four_hours(self):
+        # Given: three readers at each boundary and at twelve hours ago.
+        for title, viewed_at in (
+            ('Future', 87402), ('Expired', 1000), ('Boundary', 1001),
+            ('Inside', 1002), ('Midday', 44201), ('Current', 87401),
+        ):
+            for member in ('a', 'b', 'c'):
+                record_view(self.conn, title, title, member, viewed_at, lambda sql: sql)
 
-        # When: popularity is queried at 4601, exactly 3600 seconds after Boundary.
-        popular = get_popular(self.conn, 4601, lambda sql: sql)
+        # When: popularity is queried exactly 24 hours after Boundary.
+        popular = get_popular(self.conn, 87401, lambda sql: sql)
 
-        # Then: exact-boundary and future timestamps are outside the [0, 3600) age window.
-        self.assertEqual([item.title for item in popular], ['Current'])
+        # Then: older interest remains, while expired and future views are excluded.
+        self.assertEqual([item.title for item in popular], ['Current', 'Midday', 'Inside'])
+        self.assertEqual([item.readers for item in popular], [3, 3, 3])
 
     def test_equal_scores_and_recency_are_ordered_by_title(self):
         # Given: two documents with identical reader counts and view timestamps.
@@ -198,6 +202,8 @@ class TestMySqlSqlContract(unittest.TestCase):
         self.assertIn('member_token_hash CHAR(64)', statements[0])
         self.assertIn('title TEXT', statements[0])
         self.assertIn('ON DUPLICATE KEY UPDATE', statements[-2])
+        self.assertEqual(conn.cursor_instance.statements[-2][1][-2:], (86400, 86400))
+        self.assertEqual(conn.cursor_instance.statements[-1][1], (-85400, 1000))
 
 
 if __name__ == '__main__':
