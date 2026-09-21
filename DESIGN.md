@@ -74,7 +74,7 @@ hover treatment, or motion. Private account IDs never enter the page or API.
 ## Pagination and contributor sidebar
 
 The full contributor list uses 20 rows per page with native links in a labelled
-pagination nav after the personal rank summary. Keep the current member's global
+centered pagination nav after the personal rank summary. Keep the current member's global
 rank visible on every page. Only global ranks 1, 2 and 3 receive medal colors;
 page position never controls accents. Use previous/next and at most five nearby
 page numbers, `aria-current="page"`, 44px minimum targets, wrapping flex layout,
