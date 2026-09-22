@@ -1,7 +1,15 @@
 from .tool.func import *
+from .tool.auth_state import (
+    auth_pending_matches,
+    clear_auth_transients,
+    clear_login_state,
+    clear_registration_state,
+    get_auth_pending,
+    set_auth_pending,
+)
 from .riroschoolauth import check_riro_login
 import requests
-import asyncio
+import asyncio  # noqa: ANYIO_OK
 
 async def riro_login_page():
     with get_db_connect() as conn:
@@ -12,19 +20,44 @@ async def riro_login_page():
         if ip_or_user(ip) == 0:
             return redirect(conn, '/user')
 
+        is_register = flask.request.path == '/register'
+        pending = get_auth_pending(flask.session)
+
+        if flask.request.method == 'GET':
+            if is_register:
+                clear_auth_transients(flask.session)
+                set_auth_pending(flask.session, 'register_riro', None)
+            elif pending is None:
+                if flask.session.get('pending_riro_verification_for_user'):
+                    clear_login_state(flask.session)
+                    return redirect(conn, '/login')
+                clear_registration_state(flask.session)
+                set_auth_pending(flask.session, 'register_riro', None)
+
         if flask.request.method == 'POST':
+            pending_user_id = flask.session.get('pending_riro_verification_for_user')
+            login_flow = bool(
+                pending_user_id
+                and auth_pending_matches(flask.session, 'login_riro', pending_user_id)
+            )
+            registration_flow = auth_pending_matches(flask.session, 'register_riro', None)
+            if is_register:
+                registration_flow = registration_flow and not login_flow
+            if not login_flow and not registration_flow:
+                clear_auth_transients(flask.session)
+                return redirect(conn, '/login' if pending_user_id else '/register')
+
             riro_id = flask.request.form.get('riro_id', '')
             riro_pw = flask.request.form.get('riro_pw', '')
 
             try:
                 loop = asyncio.get_running_loop()
                 result = await loop.run_in_executor(None, check_riro_login, riro_id, riro_pw)
-            except Exception as e:
+            except Exception as e:  # noqa: BROAD_EXCEPT_OK
                 result = {'status': 'error', 'message': f'인증 중 오류가 발생했습니다: {e}'}
 
             if result.get('status') == 'success':
-                pending_user_id = flask.session.get('pending_riro_verification_for_user', None)
-                if pending_user_id:
+                if login_flow:
                     def upsert(name, data):
                         curs.execute(db_change("select data from user_set where id = ? and name = ?"), [pending_user_id, name])
                         if curs.fetchall():
@@ -37,7 +70,14 @@ async def riro_login_page():
                     upsert('generation', str(result.get('generation', '')))
                     
                     flask.session.pop('pending_riro_verification_for_user', None)
+                    curs.execute(db_change('select data from user_set where name = "2fa" and id = ?'), [pending_user_id])
+                    fa_data = curs.fetchall()
+                    if fa_data and fa_data[0][0]:
+                        flask.session['login_id'] = pending_user_id
+                        set_auth_pending(flask.session, 'login_2fa', pending_user_id)
+                        return redirect(conn, '/login/2fa')
                     flask.session['id'] = pending_user_id
+                    clear_auth_transients(flask.session)
                     return redirect(conn, '/user')
                 # 인증 성공 시, 세션에 인증 정보 저장 후 회원가입 페이지로 이동
                 else:
@@ -46,6 +86,7 @@ async def riro_login_page():
                     # 'hakbun' 대신 'student_number' 사용
                     flask.session['riro_student_number'] = result.get('student_number')
                     flask.session['riro_generation'] = result.get('generation')
+                    set_auth_pending(flask.session, 'register_verified', None)
                     
                     # is_teacher 플래그 우선 사용 (riroschoolauth에서 명확히 판별됨)
                     is_teacher = result.get('is_teacher', False)

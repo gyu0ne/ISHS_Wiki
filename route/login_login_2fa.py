@@ -1,4 +1,5 @@
 from .tool.func import *
+from .tool.auth_state import auth_pending_matches, clear_login_state
 
 async def login_login_2fa():
     with get_db_connect() as conn:
@@ -7,8 +8,10 @@ async def login_login_2fa():
         # email 2fa
         # pw 2fa
         # q_a 2fa
-        if not (flask.session and 'login_id' in flask.session):
-            return redirect(conn, '/user')
+        user_id = flask.session.get('login_id')
+        if not user_id or not auth_pending_matches(flask.session, 'login_2fa', user_id):
+            clear_login_state(flask.session)
+            return redirect(conn, '/login')
 
         ip = ip_check()
         if ip_or_user(ip) == 0:
@@ -22,19 +25,23 @@ async def login_login_2fa():
                 return await re_error(conn, 13)
 
             user_agent = flask.request.headers.get('User-Agent', '')
-            user_id = flask.session['login_id']
             user_pw = flask.request.form.get('pw', '')
+
+            curs.execute(db_change('select data from user_set where name = "2fa" and id = ?'), [user_id])
+            enabled = curs.fetchall()
+            if not enabled or not enabled[0][0]:
+                clear_login_state(flask.session)
+                return redirect(conn, '/login')
 
             curs.execute(db_change('select data from user_set where name = "2fa_pw" and id = ?'), [user_id])
             user_1 = curs.fetchall()
-            if user_1:
-                curs.execute(db_change('select data from user_set where name = "2fa_pw_encode" and id = ?'), [user_id])
-                user_1 = user_1[0][0]
-                user_2 = curs.fetchall()[0][0]
+            curs.execute(db_change('select data from user_set where name = "2fa_pw_encode" and id = ?'), [user_id])
+            user_2 = curs.fetchall()
+            if not user_1 or not user_1[0][0] or not user_2 or not user_2[0][0]:
+                return await re_error(conn, 10)
 
-                pw_check_d = pw_check(conn, user_pw, user_1, user_2, user_id)
-                if pw_check_d != 1:
-                    return await re_error(conn, 10)
+            if pw_check(conn, user_pw, user_1[0][0], user_2[0][0], user_id) != 1:
+                return await re_error(conn, 10)
 
             flask.session['id'] = user_id
 
@@ -45,7 +52,7 @@ async def login_login_2fa():
                 get_time()
             )
 
-            flask.session.pop('b_id', None)
+            clear_login_state(flask.session)
 
             return redirect(conn, '/user')
         else:

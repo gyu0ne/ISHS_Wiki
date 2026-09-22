@@ -1,4 +1,6 @@
+# noqa: SIZE_OK
 from .tool.func import *
+from .tool.auth_state import auth_pending_matches, clear_registration_state
 import datetime
 import hmac, hashlib, html, unicodedata, re
 
@@ -9,7 +11,7 @@ def _valid_date(y, m, d):
     try:
         datetime.date(int(y), int(m), int(d))
         return True
-    except:
+    except (TypeError, ValueError):
         return False
 
 def _norm(s: str) -> str:
@@ -83,7 +85,8 @@ async def login_register_student():
         curs = conn.cursor()
 
         # 리로 인증 확인
-        if not flask.session.get('riro_verified'):
+        if not flask.session.get('riro_verified') or not auth_pending_matches(flask.session, 'register_verified', None):
+            clear_registration_state(flask.session)
             return redirect(conn, '/riro_login')
 
         # 학생이 아닌 경우(교사) 리다이렉트
@@ -208,8 +211,10 @@ async def login_register_student():
                     curs.execute(db_change("insert into data (title, data) values (?, ?)"), [doc_title, doc_content])
                     history_plus(conn, doc_title, doc_content, today, user_id, '회원가입', leng, mode='r1')
                     render_set(conn, doc_name=doc_title, doc_data=doc_content, data_type='backlink')
-            except Exception as e:
+            except Exception as e:  # noqa: BROAD_EXCEPT_OK
                 print(f"Error creating user document for {user_id}: {e}")
+
+            clear_registration_state(flask.session)
 
             return easy_minify(conn, flask.render_template(
                 skin_check(conn),
@@ -349,7 +354,8 @@ async def login_register_teacher():
         curs = conn.cursor()
 
         # 리로 인증 확인
-        if not flask.session.get('riro_verified'):
+        if not flask.session.get('riro_verified') or not auth_pending_matches(flask.session, 'register_verified', None):
+            clear_registration_state(flask.session)
             return redirect(conn, '/riro_login')
 
         # 교사가 아닌 경우(학생) 리다이렉트
@@ -468,8 +474,10 @@ async def login_register_teacher():
                     curs.execute(db_change("insert into data (title, data) values (?, ?)"), [doc_title, doc_content])
                     history_plus(conn, doc_title, doc_content, today, user_id, '회원가입', leng, mode='r1')
                     render_set(conn, doc_name=doc_title, doc_data=doc_content, data_type='backlink')
-            except Exception as e:
+            except Exception as e:  # noqa: BROAD_EXCEPT_OK
                 print(f"Error creating user document for {user_id}: {e}")
+
+            clear_registration_state(flask.session)
 
             return easy_minify(conn, flask.render_template(
                 skin_check(conn),
