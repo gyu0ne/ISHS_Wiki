@@ -33,7 +33,11 @@ def ensure_challenge_indexes(connection: ChallengeConnection) -> None:
                 cursor.execute(f"SHOW INDEX FROM {table} WHERE Key_name = %s", [name])
                 if cursor.fetchall():
                     continue
-                cursor.execute(f"CREATE INDEX {name} ON {table} ({column}(128))")
+                try:
+                    cursor.execute(f"CREATE INDEX {name} ON {table} ({column}(128))")
+                except MySQLError as error:
+                    if not error.args or error.args[0] != 1061:
+                        raise
             else:
                 cursor.execute(f"CREATE INDEX IF NOT EXISTS {name} ON {table} ({column})")
     finally:

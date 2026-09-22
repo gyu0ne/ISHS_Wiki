@@ -4,6 +4,9 @@ import json
 import sqlite3
 import sys
 from pathlib import Path
+from unittest.mock import MagicMock
+
+from pymysql import MySQLError
 
 import pytest
 
@@ -154,3 +157,23 @@ def test_write_pass_rechecks_awards_changed_after_read_only_pass(tmp_path: Path,
         values = dict(connection.execute("select name,data from user_set where id='20261234'"))
         assert (values["level"], values["experience"]) == ("15", "760")
         assert values["challenge_monthly_first"] == "1"
+
+
+@pytest.mark.parametrize("error_code", [1061, 1142])
+def test_mysql_index_creation_handles_only_concurrent_duplicate(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, error_code: int,
+) -> None:
+    build_challenge_app(tmp_path)
+    progress = sys.modules["route.tool.challenge_progress"]
+    monkeypatch.setattr(progress, "db_change", lambda query: "%s")
+    connection = MagicMock()
+    cursor = connection.cursor.return_value
+    cursor.fetchall.return_value = []
+    cursor.execute.side_effect = [None, MySQLError(error_code, "index creation failed")] * 3
+    if error_code == 1061:
+        progress.ensure_challenge_indexes(connection)
+        assert cursor.execute.call_count == 6
+    else:
+        with pytest.raises(MySQLError):
+            progress.ensure_challenge_indexes(connection)
+    cursor.close.assert_called_once()
