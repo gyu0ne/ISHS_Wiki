@@ -6,7 +6,7 @@ from unittest.mock import AsyncMock, Mock, patch
 from bs4 import BeautifulSoup
 from flask import Flask
 
-from test_render_math import get_db_table_list
+from tests.test_render_math import get_db_table_list
 from route.edit import edit_editor
 
 

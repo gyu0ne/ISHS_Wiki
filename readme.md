@@ -33,6 +33,10 @@ docker build . -t ishs-wiki
 docker run -p 3000:3000 -v data:/app/data --name ishs-wiki ishs-wiki
 ```
 
+## 개발 테스트
+
+Python 3.11/3.12 테스트 의존성과 전체·개별 실행 명령은 [테스트 안내](tests/README.md)를 참고하세요.
+
 # 변경사항
 ## 0.0.1 - 2025.08.29 (알파버전)
 * 기본 세팅 수정

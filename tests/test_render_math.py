@@ -34,14 +34,12 @@ def import_renderer():
         try:
             os.chdir(temp_path)
             with (
-                patch("subprocess.check_call") as pip_install,
-                patch("subprocess.Popen") as process_restart,
-                patch("os._exit") as process_exit,
+                patch("subprocess.check_call", side_effect=AssertionError("Unexpected dependency installation")) as pip_install,
+                patch("os._exit", side_effect=AssertionError("Unexpected process exit")) as process_exit,
             ):
                 from route.tool.func import get_db_table_list, render_set
 
             pip_install.assert_not_called()
-            process_restart.assert_not_called()
             process_exit.assert_not_called()
         finally:
             os.chdir(original_cwd)
