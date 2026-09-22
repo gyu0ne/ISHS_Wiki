@@ -40,7 +40,21 @@ async def refresh_challenges(
     cursor = connection.cursor()
     committed = False
     try:
-        cursor.execute("START TRANSACTION" if mysql else "BEGIN IMMEDIATE")
+        if automatic and not mysql:
+            cursor.execute("PRAGMA busy_timeout")
+            busy_timeout = int(cursor.fetchall()[0][0])
+            try:
+                cursor.execute("PRAGMA busy_timeout = 0")
+                cursor.execute("BEGIN IMMEDIATE")
+            except sqlite3.OperationalError as error:
+                if error.sqlite_errorcode != sqlite3.SQLITE_BUSY:
+                    raise
+                refreshed[member_id] = ()
+                return ()
+            finally:
+                cursor.execute(f"PRAGMA busy_timeout = {busy_timeout}")
+        else:
+            cursor.execute("START TRANSACTION" if mysql else "BEGIN IMMEDIATE")
         cursor.execute(db_change("select name, data from user_set where id = ?")
                        + (" FOR UPDATE" if mysql else ""), [member_id])
         stored = dict(cursor.fetchall())

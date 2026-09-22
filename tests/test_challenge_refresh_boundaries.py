@@ -108,3 +108,17 @@ def test_older_refresh_cannot_overwrite_new_ranking_reward(tmp_path: Path, monke
             "select name, data from user_set where id='20261234' and name in ('level', 'experience')"))
         assert values == newer_values
         assert connection.execute("select count(*) from user_notice where id='challenge_monthly_first'").fetchone()[0] == 1
+
+
+def test_automatic_refresh_does_not_wait_for_another_writer(tmp_path: Path) -> None:
+    store = build_challenge_app(tmp_path)
+    client = store.app.test_client()
+    client.get('/__test/login/20261234')
+    with store.connect() as connection:
+        connection.execute('PRAGMA journal_mode=WAL')
+    with store.connect() as writer:
+        writer.execute('BEGIN IMMEDIATE')
+        assert client.get('/__test/ordinary-page').status_code == 200
+        with client.session_transaction() as session:
+            assert 'challenge_refresh' not in session
+    assert client.get('/__test/ordinary-page').json['notices']
