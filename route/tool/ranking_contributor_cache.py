@@ -7,7 +7,8 @@ from typing import Callable
 from urllib.parse import quote
 
 from .ranking_contribution_scores import ContributorEntry, Period
-from .ranking_contributions import HistoryRevision, compute_contribution_scores
+from .ranking_incremental import CheckpointConflict, read_revisions, refresh_scores, source_snapshot
+from .ranking_checkpoint_store import ensure_schema as ensure_checkpoint_schema
 from .ranking_monthly_awards import MonthlyHistory, ensure_schema, finalize_months
 from .ranking_alltime_awards import ensure_alltime_schema, confirm_alltime_candidates
 
@@ -105,25 +106,24 @@ class ContributorCache:
 
     def _refresh(self) -> None:
         now_epoch = int(self.clock())
-        with self.connect() as connection:
-            ensure_schema(connection, self.db_change)
-            ensure_alltime_schema(connection, self.db_change)
-            documents = self._documents(connection)
-            (
-                period_items,
-                period_member_ranks,
-                document_scores,
-                document_contributor_items,
-                document_contributor_ranks,
-            ) = self._compute(connection, documents, now_epoch)
+        for attempt in range(2):
+            try:
+                with self.connect() as connection:
+                    ensure_schema(connection, self.db_change)
+                    ensure_alltime_schema(connection, self.db_change)
+                    ensure_checkpoint_schema(connection, self.db_change)
+                    with source_snapshot(connection, self.db_change):
+                        documents = self._documents(connection)
+                        calculated = self._compute(connection, documents, now_epoch)
+                break
+            except CheckpointConflict:
+                if attempt:
+                    raise
         with self.lock:
-            self.items = period_items["all"]
-            self.member_ranks = period_member_ranks["all"]
-            self.period_items = period_items
-            self.period_member_ranks = period_member_ranks
-            self.documents = document_scores
-            self.document_contributor_items = document_contributor_items
-            self.document_contributor_ranks = document_contributor_ranks
+            (self.period_items, self.period_member_ranks, self.documents,
+             self.document_contributor_items, self.document_contributor_ranks) = calculated
+            self.items = self.period_items["all"]
+            self.member_ranks = self.period_member_ranks["all"]
             self.generated_at = now_epoch
             self.state = "ready"
 
@@ -153,23 +153,19 @@ class ContributorCache:
         cursor = connection.cursor()
         cursor.execute(self.db_change("select id from user_set where name = 'pw'"))
         members = {row[0] for row in cursor.fetchall()}
-        cursor.execute(
-            self.db_change(
-                "select id, title, data, date, ip, send, leng, hide, type from history order by date, title, id"
-            )
-        )
-        revisions = tuple(
-            HistoryRevision(
-                id=row[0], title=row[1], data=row[2], date=datetime.fromisoformat(row[3]),
-                ip=row[4], send=row[5], leng=int(str(row[6]).replace("+", "") or 0),
-                hide=row[7], type=row[8],
-            )
-            for row in cursor.fetchall()
-            if row[1] in documents
-        )
-        scores = compute_contribution_scores(
-            revisions, documents, members, datetime.fromtimestamp(now_epoch, tz=timezone.utc)
-        )
+        cursor.close()
+        now = datetime.fromtimestamp(now_epoch, tz=timezone.utc)
+        calculation = refresh_scores(connection, self.db_change, documents, members, now)
+        scores = calculation.scores
+        revisions = None
+
+        def load_revisions():
+            nonlocal revisions
+            if revisions is None:
+                revisions = tuple(row for row in read_revisions(connection, self.db_change)
+                                  if row.title in documents)
+            return revisions
+
         period_items: dict[Period, tuple[dict[str, str | float], ...]] = {}
         period_member_ranks: dict[Period, dict[str, dict[str, int | float]]] = {}
         document_scores: dict[Period, dict[str, tuple[dict[str, str | float], ...]]] = {}
@@ -195,13 +191,13 @@ class ContributorCache:
             return identities[user_id]
 
         finalize_months(connection, self.db_change, MonthlyHistory(
-            revisions, frozenset(members),
+            (), frozenset(members),
             frozenset(
-                user_id for user_id in members & {row.ip for row in revisions}
+                user_id for user_id in members
                 if identity(user_id) is not None
             ),
-            datetime.fromtimestamp(now_epoch, tz=timezone.utc),
-        ))
+            now,
+        ), first_revision_at=calculation.first_revision_at, load_revisions=load_revisions)
 
         alltime_entries: list[ContributorEntry] = []
         for named_scores in scores.periods():
@@ -253,9 +249,10 @@ class ContributorCache:
             document_contributor_items[period] = items_by_document
             document_contributor_ranks[period] = ranks_by_document
         confirm_alltime_candidates(
-            connection, self.db_change, tuple(alltime_entries), revisions, documents,
-            members, datetime.fromtimestamp(now_epoch, tz=timezone.utc),
+            connection, self.db_change, tuple(alltime_entries), (), documents,
+            members, now, load_revisions=load_revisions, revision_limits=calculation.revision_limits,
         )
+        connection.commit()
         return (
             period_items,
             period_member_ranks,

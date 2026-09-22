@@ -35,6 +35,8 @@ def confirm_alltime_candidates(
     documents: Mapping[str, str],
     members: Set[str],
     now: datetime,
+    *, load_revisions: Callable[[], tuple[HistoryRevision, ...]] | None = None,
+    revision_limits: Mapping[str, int] | None = None,
 ) -> None:
     """Confirm original contributions against frozen competitors, then seed new candidates."""
     now_epoch = int(as_kst(now).timestamp())
@@ -45,13 +47,15 @@ def confirm_alltime_candidates(
                 "WHERE reached_at <= ?"),
             (now_epoch - 86400,),
         )
+        due = cursor.fetchall()
+        replay = load_revisions() if due and load_revisions is not None else revisions
         retained_by_snapshot: dict[str, dict[str, float]] = {}
-        for member, threshold, reached_at, serialized, cutoff_score, cutoff_member in cursor.fetchall():
+        for member, threshold, reached_at, serialized, cutoff_score, cutoff_member in due:
             if serialized not in retained_by_snapshot:
                 limits: dict[str, int] = json.loads(serialized)
                 retained_by_snapshot[serialized] = {
                     entry.user_id: entry.score for entry in compute_contribution_scores(
-                        revisions, documents, members, now, credit_limits=limits
+                        replay, documents, members, now, credit_limits=limits
                     ).contributors()
                 }
             score = retained_by_snapshot[serialized].get(member, 0)
@@ -65,13 +69,14 @@ def confirm_alltime_candidates(
             )
         cursor.execute("SELECT member_id, CAST(best_rank AS CHAR) FROM contributor_alltime_results")
         earned = {member: int(rank) for member, rank in cursor.fetchall()}
-        limits = {}
-        future_titles: set[str] = set()
-        for revision in sorted(revisions, key=lambda row: (row.title, int(row.id))):
-            if as_kst(revision.date) > as_kst(now):
-                future_titles.add(revision.title)
-            if revision.title not in future_titles:
-                limits[revision.title] = int(revision.id)
+        limits = dict(revision_limits) if revision_limits is not None else {}
+        if revision_limits is None:
+            future_titles: set[str] = set()
+            for revision in sorted(replay, key=lambda row: (row.title, int(row.id))):
+                if as_kst(revision.date) > as_kst(now):
+                    future_titles.add(revision.title)
+                if revision.title not in future_titles:
+                    limits[revision.title] = int(revision.id)
         serialized = json.dumps(limits, sort_keys=True, separators=(",", ":"), ensure_ascii=False)
         conflict = (
             " ON DUPLICATE KEY UPDATE member_id = member_id"
