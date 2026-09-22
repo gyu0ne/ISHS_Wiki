@@ -39,8 +39,8 @@ class FlaskFacade:
         return flask_module.session
 
     @staticmethod
-    def make_response(value):
-        return flask_module.make_response(value)
+    def make_response(*args):
+        return flask_module.make_response(*args)
 
     @staticmethod
     def render_template(_name, **kwargs):
@@ -81,6 +81,9 @@ class AuthFixture:
             "generation": 40,
             "is_teacher": False,
         }
+        self.riro_calls = 0
+        self.history_plus: Callable = lambda *_args, **_kwargs: None
+        self.render_set: Callable = lambda *_args, **_kwargs: None
         with fixture.connect() as conn:
             conn.executescript(
                 """
@@ -144,7 +147,7 @@ class AuthFixture:
         riro_dependencies = dict(common)
         riro_dependencies.update({
             "asyncio": __import__("asyncio"),
-            "check_riro_login": lambda _user, _password: self.riro_result,
+            "check_riro_login": self.check_riro_login,
             "easy_minify": lambda _conn, value: value,
             "skin_check": lambda _conn: "synthetic",
             "get_lang": lambda _conn, key: key,
@@ -172,8 +175,8 @@ class AuthFixture:
             "wiki_css": lambda _value: "",
             "http_warning": lambda _conn: "",
             "ban_insert": lambda *_args, **_kwargs: None,
-            "history_plus": lambda *_args, **_kwargs: None,
-            "render_set": lambda *_args, **_kwargs: None,
+            "history_plus": lambda *args, **kwargs: self.history_plus(*args, **kwargs),
+            "render_set": lambda *args, **kwargs: self.render_set(*args, **kwargs),
         })
         register_helpers = load_source_definitions(
             ROOT / "route/login_register.py",
@@ -191,6 +194,10 @@ class AuthFixture:
         fixture.app.add_url_rule("/register", "register", lambda: _run(self.riro), methods=("GET", "POST"))
         fixture.app.add_url_rule("/register_form_student", "register_student", lambda: _run(self.register_student), methods=("GET", "POST"))
         fixture.app.add_url_rule("/register_form_teacher", "register_teacher", lambda: _run(self.register_teacher), methods=("GET", "POST"))
+
+    def check_riro_login(self, _user: str, _password: str) -> dict:
+        self.riro_calls += 1
+        return self.riro_result
 
     @staticmethod
     def _load(relative: str, name: str, dependencies: dict) -> Callable:
@@ -505,6 +512,82 @@ class AuthenticationSecurityTests(unittest.TestCase):
                 self.assertNotIn("riro_verified", session)
                 self.assertNotIn("auth_pending", session)
 
+    def test_register_post_rejects_pending_login_before_riro_or_profile_writes(self) -> None:
+        with security_fixture() as fixture:
+            auth = AuthFixture(fixture)
+            auth.add_user("riro-user", "primary", linked=False)
+            client = fixture.app.test_client()
+            with client.session_transaction() as session:
+                session["pending_riro_verification_for_user"] = "riro-user"
+                session["auth_pending"] = {
+                    "purpose": "login_riro",
+                    "account_id": "riro-user",
+                    "issued_at": int(time.time()),
+                }
+
+            response = client.post("/register", data={"riro_id": "x", "riro_pw": "y"})
+
+            self.assertEqual(response.headers["Location"], "/login")
+            self.assertEqual(auth.riro_calls, 0)
+            with client.session_transaction() as session:
+                self.assertNotIn("id", session)
+            with fixture.connect() as conn:
+                rows = conn.execute(
+                    "select name from user_set where id = ? and name in ('real_name', 'generation')",
+                    ("riro-user",),
+                ).fetchall()
+            self.assertEqual(rows, [])
+
+    def test_riro_login_get_then_post_preserves_student_and_teacher_registration(self) -> None:
+        cases = (
+            (False, "1101", 40, "/register_form_student"),
+            (True, "0", 0, "/register_form_teacher"),
+        )
+        for is_teacher, student_number, generation, location in cases:
+            with self.subTest(location=location), security_fixture() as fixture:
+                auth = AuthFixture(fixture)
+                auth.riro_result.update({
+                    "is_teacher": is_teacher,
+                    "student_number": student_number,
+                    "generation": generation,
+                })
+                client = fixture.app.test_client()
+
+                self.assertEqual(client.get("/riro_login").status_code, 200)
+                response = client.post("/riro_login", data={"riro_id": "x", "riro_pw": "y"})
+
+                self.assertEqual(response.headers["Location"], location)
+                self.assertEqual(auth.riro_calls, 1)
+                with client.session_transaction() as session:
+                    self.assertTrue(session.get("riro_verified"))
+                    self.assertEqual(session["auth_pending"]["purpose"], "register_verified")
+
+    def test_expired_registration_proof_is_rejected_before_writes(self) -> None:
+        with security_fixture() as fixture:
+            AuthFixture(fixture)
+            client = fixture.app.test_client()
+            with client.session_transaction() as session:
+                session.update({
+                    "riro_verified": True,
+                    "riro_name": "Expired Student",
+                    "riro_student_number": "1101",
+                    "riro_generation": 40,
+                    "auth_pending": {
+                        "purpose": "register_verified",
+                        "account_id": None,
+                        "issued_at": int(time.time()) - 601,
+                    },
+                })
+
+            response = client.post("/register_form_student", data={"user_name": "expiredstudent"})
+
+            self.assertEqual(response.headers["Location"], "/riro_login")
+            with client.session_transaction() as session:
+                self.assertNotIn("riro_verified", session)
+                self.assertNotIn("auth_pending", session)
+            with fixture.connect() as conn:
+                self.assertEqual(conn.execute("select count(*) from user_set where id = ?", ("expiredstudent",)).fetchone()[0], 0)
+
     def test_registration_success_consumes_student_and_teacher_proof(self) -> None:
         cases = (
             ("/register_form_student", "Student Name", "1101", 40, "studentaccount"),
@@ -540,6 +623,68 @@ class AuthenticationSecurityTests(unittest.TestCase):
                         self.assertNotIn(key, session)
                 with fixture.connect() as conn:
                     self.assertEqual(conn.execute("select count(*) from user_set where id = ? and name = 'pw'", (account,)).fetchone()[0], 2)
+
+    def test_registration_document_failure_rolls_back_and_retains_proof_for_retry(self) -> None:
+        cases = (
+            ("/register_form_student", "Student Name", "1101", 40, "studentatomic", "history"),
+            ("/register_form_teacher", "Teacher Name", "0", 0, "teacheratomic", "render"),
+        )
+        for path, name, student_number, generation, account, failing_step in cases:
+            with self.subTest(path=path, failing_step=failing_step), security_fixture() as fixture:
+                auth = AuthFixture(fixture)
+                client = fixture.app.test_client()
+                with client.session_transaction() as session:
+                    session.update({
+                        "riro_verified": True,
+                        "riro_name": name,
+                        "riro_student_number": student_number,
+                        "riro_generation": generation,
+                        "auth_pending": {"purpose": "register_verified", "account_id": None, "issued_at": int(time.time())},
+                    })
+
+                def fail(*_args, **_kwargs):
+                    raise sqlite3.OperationalError("synthetic document failure")
+
+                if failing_step == "history":
+                    auth.history_plus = fail
+                else:
+                    auth.render_set = fail
+                form = {
+                    "birth_year": "2000",
+                    "birth_month": "1",
+                    "birth_day": "1",
+                    "gender": "female",
+                    "user_name": account,
+                    "pw": "password",
+                    "pw2": "password",
+                    "agreement": "agree",
+                }
+
+                response = client.post(path, data=form)
+
+                self.assertEqual(response.status_code, 500)
+                self.assertEqual(response.get_data(as_text=True), "회원가입 처리 중 오류가 발생했습니다.")
+                self.assertNotIn(account.encode(), response.data)
+                self.assertNotIn(name.encode(), response.data)
+                self.assertNotIn("회원가입에 성공".encode(), response.data)
+                with client.session_transaction() as session:
+                    self.assertTrue(session.get("riro_verified"))
+                    self.assertEqual(session["auth_pending"]["purpose"], "register_verified")
+                with fixture.connect() as conn:
+                    self.assertEqual(conn.execute("select count(*) from user_set where id = ?", (account,)).fetchone()[0], 0)
+                    self.assertEqual(conn.execute("select count(*) from data where title like ?", (f"{name}%",)).fetchone()[0], 0)
+
+                auth.history_plus = lambda *_args, **_kwargs: None
+                auth.render_set = lambda *_args, **_kwargs: None
+                retry = client.post(path, data=form)
+
+                self.assertEqual(retry.status_code, 200)
+                with client.session_transaction() as session:
+                    self.assertNotIn("auth_pending", session)
+                    self.assertNotIn("riro_verified", session)
+                with fixture.connect() as conn:
+                    self.assertEqual(conn.execute("select count(*) from user_set where id = ? and name = 'pw'", (account,)).fetchone()[0], 2)
+                    self.assertEqual(conn.execute("select count(*) from data where title like ?", (f"{name}%",)).fetchone()[0], 1)
 
     def test_registration_proof_cannot_complete_login_factor(self) -> None:
         with security_fixture() as fixture:

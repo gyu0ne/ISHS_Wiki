@@ -42,7 +42,7 @@ async def riro_login_page():
             )
             registration_flow = auth_pending_matches(flask.session, 'register_riro', None)
             if is_register:
-                registration_flow = registration_flow and not login_flow
+                login_flow = False
             if not login_flow and not registration_flow:
                 clear_auth_transients(flask.session)
                 return redirect(conn, '/login' if pending_user_id else '/register')
