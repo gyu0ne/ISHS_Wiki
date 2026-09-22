@@ -148,7 +148,7 @@ def register_ranking_period_routes(blueprint, service_getter, member_id_getter, 
             visible = await _visible_documents(connection, items, dependencies)
         if state in {"loading", "error"}:
             message = "불러오는 중입니다." if state == "loading" else "불러오지 못했습니다."
-            response = make_response(await dependencies.render_page("내 기여 내역", ranking_state_html("/rankings/me", period, current_month, message)))
+            response = make_response(await dependencies.render_page("기여한 문서", ranking_state_html("/rankings/me", period, current_month, message)))
             if state == "loading":
                 response.headers["Refresh"] = "5"
             return private_response(response)
@@ -161,4 +161,4 @@ def register_ranking_period_routes(blueprint, service_getter, member_id_getter, 
             period,
             current_month,
         )
-        return private_response(make_response(await dependencies.render_page("내 기여 내역", body)))
+        return private_response(make_response(await dependencies.render_page("기여한 문서", body)))

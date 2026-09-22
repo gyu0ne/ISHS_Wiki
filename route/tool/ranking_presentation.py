@@ -15,22 +15,22 @@ def ranking_period(raw_period: str) -> Period:
     return raw_period if re.fullmatch(r"(?!0000)[0-9]{4}-(?:0[1-9]|1[0-2])", raw_period) else "all"
 
 
-def period_navigation_html(path: str, period: Period, current_month: str) -> str:
+def period_navigation_html(path: str, period: Period, current_month: str, *, back: str = "") -> str:
     all_current = ' aria-current="page"' if period == "all" else ""
     month_current = ' aria-current="page"' if period != "all" else ""
     navigation = (
-        '<nav class="ringo_rank_period" aria-label="집계 기간">'
+        '<div class="ringo_rank_toolbar"><nav class="ringo_rank_period" aria-label="집계 기간">'
         f'<a href="{path}?period=all&amp;page=1"{all_current}>전체</a>'
         f'<a href="{path}?period={current_month}&amp;page=1"{month_current}>월별</a></nav>'
     )
     if period == "all":
-        return navigation
+        return navigation + back + "</div>"
     return (
         navigation
         + f'<form class="ringo_rank_month" method="get" action="{path}">'
         '<label for="ringo_rank_month_input">조회 월</label>'
         f'<input id="ringo_rank_month_input" type="month" name="period" value="{period}" '
-        f'max="{current_month}" required aria-label="조회 월"><button type="submit">보기</button></form>'
+        f'max="{current_month}" required aria-label="조회 월"><button type="submit">보기</button></form>' + back + "</div>"
     )
 
 
@@ -74,7 +74,7 @@ def pagination_html(
         links.append(f'<a href="{path}?{period_query}page={number}"{current}>{number}</a>')
     if page < total_pages:
         links.append(f'<a href="{path}?{period_query}page={page + 1}" rel="next">다음</a>')
-    label = aria_label or ("내 기여 내역 페이지" if path == "/rankings/me" else "기여자 순위 페이지")
+    label = aria_label or ("기여한 문서 페이지" if path == "/rankings/me" else "기여자 순위 페이지")
     return f'<nav class="ringo_rank_pagination" aria-label="{label}">' + "".join(links) + "</nav>"
 
 
@@ -113,8 +113,8 @@ def contributor_page_html(
         '<div class="opennamu_main">' + period_navigation_html("/rankings", period, current_month) + '<table id="main_table_set" class="ringo_contributor_table"><thead><tr>'
         '<th scope="col">순위</th><th scope="col">이름</th><th scope="col">점수</th>'
         "</tr></thead><tbody>" + rows + '</tbody></table><section class="ringo_my_rank" aria-label="내 순위">'
-        '<div class="ringo_my_rank_title"><strong>내 순위</strong>'
-        f'<a class="ringo_my_contributions" href="/rankings/me?period={period}">내 기여 내역</a></div>' + personal + "</section>" + pagination_html(page, total_pages, period=period) + "</div>"
+        '<div class="ringo_my_rank_title"><span>내 순위</span>' + personal + '</div>'
+        f'<a class="ringo_my_contributions" href="/rankings/me?period={period}">기여한 문서 보기</a>' + "</section>" + pagination_html(page, total_pages, period=period) + "</div>"
     )
 
 
@@ -130,15 +130,15 @@ def document_page_html(
         '<p class="ringo_ranking_empty">기여한 공개 문서가 없습니다.</p>'
         if not items
         else (
-            f'<p class="ringo_contribution_summary"><strong>합계</strong> {total_score:.2f}점</p>'
+            f'<p class="ringo_contribution_summary"><span>총 기여 점수</span><strong>{total_score:.2f}점</strong></p>'
             '<table class="ringo_document_table"><thead><tr><th scope="col">문서</th>'
             '<th scope="col">기여 점수</th></tr></thead><tbody>' + document_rows_html(items) + "</tbody></table>"
         )
     )
     return (
-        '<div class="opennamu_main"><a class="ringo_rank_back" '
-        f'href="/rankings?period={period}">기여자 순위</a>'
-        + period_navigation_html("/rankings/me", period, current_month)
+        '<div class="opennamu_main">'
+        + period_navigation_html("/rankings/me", period, current_month,
+            back=f'<a class="ringo_rank_back" href="/rankings?period={period}">기여자 순위</a>')
         + content
         + pagination_html(page, total_pages, path="/rankings/me", period=period)
         + "</div>"
@@ -147,7 +147,7 @@ def document_page_html(
 
 def ranking_state_html(path: str, period: Period, current_month: str, message: str) -> str:
     back = f'<a class="ringo_rank_back" href="/rankings?period={period}">기여자 순위</a>' if path == "/rankings/me" else ""
-    return '<div class="opennamu_main">' + back + period_navigation_html(path, period, current_month) + f'<p class="ringo_ranking_empty">{html.escape(message)}</p></div>'
+    return '<div class="opennamu_main">' + period_navigation_html(path, period, current_month, back=back) + f'<p class="ringo_ranking_empty">{html.escape(message)}</p></div>'
 
 
 def document_contributors_page_html(
@@ -184,9 +184,9 @@ def document_contributors_page_html(
             "</tr></thead><tbody>"
             + rows
             + '</tbody></table><section class="ringo_my_rank" aria-label="이 문서 내 순위">'
-            '<div class="ringo_my_rank_title"><strong>이 문서 내 순위</strong></div>'
+            '<div class="ringo_my_rank_title"><span>이 문서 내 순위</span>'
             + personal
-            + "</section>"
+            + "</div></section>"
             + pagination_html(
                 page,
                 total_pages,
@@ -198,9 +198,9 @@ def document_contributors_page_html(
     )
     return (
         '<div class="opennamu_main">'
-        f'<a class="ringo_rank_back" href="/w/{encoded_title}">문서로 돌아가기</a>'
-        f'<h2>문서 기여자: <a href="/w/{encoded_title}">{html.escape(title)}</a></h2>'
-        + period_navigation_html(path, period, current_month)
+        f'<h2 class="ringo_rank_document_title"><a href="/w/{encoded_title}">{html.escape(title)}</a></h2>'
+        + period_navigation_html(path, period, current_month,
+            back=f'<a class="ringo_rank_back" href="/w/{encoded_title}">문서로 돌아가기</a>')
         + content
         + "</div>"
     )

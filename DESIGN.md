@@ -111,8 +111,14 @@ The month form uses a wrapping flex row,8px gap,44px minimum input/button
 height and existing surface/text/border tokens. Month selection submits a
 native GET request with YYYY-MM and resets to page1. Keep period on all pagination links. Preserve the centered44px pager.
 
-The own-rank label and `내 기여 내역` link form a wrapping title group with12px
-gap; selected-period rank/score stays opposite. The link leads to the
+Group the small 14px `내 순위` label above the selected-period values on the
+left, using a 4px gap. The rank is 24px/700 with a 1.3 line height; the score
+is 14px normal weight and baseline-aligned with a 12px gap. Place a separate
+`기여한 문서 보기` link on the right, styled as a neutral outlined button with
+44px minimum height, 8px/12px padding, 10px radius, and existing surface/text/hr
+tokens. At 640px and below, the link spans the summary width below the values.
+Keep visible focus and a text-color border on hover, without animation. The
+document-specific own-rank summary reuses the label/value hierarchy. The link leads to the
 session owner's `/rankings/me` page, with the same period links and a
 `기여자 순위` back link. Other accounts' private identifiers never appear.
 
@@ -129,7 +135,7 @@ Totals derive from unrounded scores, without rounding individual rows first.
 
 ## A document's contributors
 
-After a readable document body, add one native `이 문서의 기여자` link in a
+After a readable document body, add one native `기여자 순위 보기` link in a
 subtle separated footer row. Reuse surface/text/border/radius tokens,44px
 minimum target and visible keyboard focus. Only the document render with a
 ranking ticket and raw route name exposes the link; rankings pages do not.
@@ -138,3 +144,28 @@ same overall/month selector,20-row contributor table, top3 medals and the
 viewer's rank within that document. Scores reuse existing original-document
 buckets; do not introduce a second scoring formula. The sidebar remains the
 overall wiki leaderboard. Current public visibility is checked before output.
+
+## Ranking surface polish
+
+Keep ranking data primary and use one control row above each table: period
+links on the left and the native month form on the right, wrapping with a
+12px gap and 20px bottom spacing. Controls retain 44px targets. A document
+ranking uses the existing page heading followed by one 20px linked document
+title, without repeating the heading in that title. Back links stay native.
+The personal document page is titled `기여한 문서`; its total uses the same
+neutral label/value hierarchy as personal rank, with 16px inset and 20px gap.
+
+The document footer offers a right-aligned `기여자 순위 보기` action with a
+decorative arrow, 44px target, and existing neutral button tokens; it is a
+quiet continuation after reading, not a second section heading. At 640px
+the action fills the available row. Contributor sidebar full-list links
+have 44px touch height. Remove the unwanted fallback edit/discussion/bbs
+controls and their now-unused handlers; keep configured sidebar HTML and
+the recent-changes, popular-documents and contributor cards.
+
+Back navigation belongs inside the period toolbar as a 44px outlined link
+on the right, with a decorative left arrow. At 1024px and below, the native
+month form follows the period/back row on its own wrapping row. Apply the
+same pattern to personal documents, document rankings, loading and errors.
+No new fonts, colors, motion, libraries, scoring rules or site-wide shell
+redesign.
