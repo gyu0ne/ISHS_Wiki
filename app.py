@@ -769,6 +769,15 @@ def check_reauth_global():
                 if not reauth_data or reauth_data[0] != '1':
                     return flask.redirect('/w/user:' + url_pas(user_id))
 
+@app.before_request
+def _document_form_limits() -> None:
+    if (
+        flask.request.method == 'POST'
+        and flask.request.endpoint in ('edit', 'api_w_render_exter')
+        and flask.session.get('id')
+    ):
+        flask.request.max_form_memory_size = flask.request.max_content_length
+
 app.before_request(check_view_log)
 
 if os.path.exists('custom.py'):

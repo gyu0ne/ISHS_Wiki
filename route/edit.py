@@ -87,7 +87,7 @@ async def edit_editor(conn, ip, data_main = '', do_type = 'edit', addon = '', na
         out_field += '<hr class="main_hr">'
 
     return '''
-        <textarea style="display: none;" id="opennamu_edit_origin" name="doc_data_org">''' + html.escape(data_main) + '''</textarea>
+        <textarea style="display: none;" id="opennamu_edit_origin">''' + html.escape(data_main) + '''</textarea>
         <div>
             ''' + monaco_editor_top + '''
             <hr class="main_hr">
