@@ -975,10 +975,13 @@ async def get_acl_list(type_data = 'normal'):
 ## Func-simple-with_DB
 async def get_user_title_list(conn, ip = ''):
     from .ranking_challenges import earned_ranking_challenges
+    from .challenge_progress import refresh_challenges
 
     curs = conn.cursor()
 
     ip = ip_check() if ip == '' else ip
+
+    await refresh_challenges(conn, ip)
 
     # default
     user_title = {
@@ -1352,9 +1355,12 @@ async def wiki_set():
     return data["data"]
 
 async def wiki_custom(conn):
+    from .challenge_progress import refresh_challenges
+
     curs = conn.cursor()
 
     ip = ip_check()
+    await refresh_challenges(conn, ip)
     skin_name = '_' + skin_check(conn, 1)
 
     if ip_or_user(ip) == 0:
@@ -1870,7 +1876,13 @@ def do_user_name_check(conn, user_name, current_user_id = ''):
     return 0
 
 async def level_check(ip = ''):
+    from .challenge_progress import refresh_challenges
+
     ip = ip_check() if ip == '' else ip
+
+    if ip == ip_check():
+        with get_db_connect() as conn:
+            await refresh_challenges(conn, ip)
 
     other_set = {}
     other_set['ip'] = ip
@@ -1890,7 +1902,7 @@ async def acl_check(name = '', tool = '', topic_num = '', ip = '', memo = ''):
 
     data = await python_to_golang('api_func_acl', other_set)
 
-    result = 0 if data["data"] else 1
+    result = 0 if data.get("response") != "error" and data["data"] else 1
 
     if memo != '' and result == 0:
         other_set = {}
