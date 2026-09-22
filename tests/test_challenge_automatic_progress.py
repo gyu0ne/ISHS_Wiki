@@ -108,3 +108,33 @@ def test_acl_backend_error_does_not_grant_admin_permission(tmp_path: Path) -> No
     namespace = {"python_to_golang": unavailable_backend}
     exec(compile(ast.Module(body=selected, type_ignores=[]), "func.py", "exec"), namespace)
     assert store.app.ensure_sync(namespace["acl_check"])(tool="all_admin_auth", ip="20261234") == 1
+
+
+def test_normal_page_keeps_rank_xp_when_rank_table_vanishes(tmp_path: Path) -> None:
+    store = build_challenge_app(tmp_path)
+    client = store.app.test_client()
+    with store.connect() as connection:
+        connection.execute("insert into contributor_monthly_results values (?, ?)",
+                           ["2026-01", json.dumps(["20261234"])])
+    client.get("/__test/login/20261234")
+    assert client.get("/__test/ordinary-page").status_code == 200
+    with store.connect() as connection:
+        previous = dict(connection.execute(
+            "select name, data from user_set where id = ? and name in ('level', 'experience')",
+            ["20261234"],
+        ))
+        assert connection.execute(
+            "select 1 from user_set where id = ? and name = 'challenge_monthly_first'",
+            ["20261234"],
+        ).fetchone()
+        connection.execute("drop table contributor_monthly_results")
+
+    store.clock.value += 60
+    response = client.get("/__test/ordinary-page")
+    assert response.status_code == 200
+    assert response.json["level"][:2] == [previous["level"], previous["experience"]]
+    with store.connect() as connection:
+        assert dict(connection.execute(
+            "select name, data from user_set where id = ? and name in ('level', 'experience')",
+            ["20261234"],
+        )) == previous

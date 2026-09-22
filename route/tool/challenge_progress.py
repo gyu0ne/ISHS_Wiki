@@ -1,13 +1,15 @@
 from __future__ import annotations
 
 import html
+import sqlite3
 from time import time
 from typing import Protocol
 
 import flask
+from pymysql import MySQLError
 
 from .func import acl_check, db_change, get_lang, get_time, ip_or_user
-from .ranking_challenges import RankingChallenge, earned_ranking_challenges
+from .ranking_challenges import RANKING_CHALLENGES, RankingChallenge, earned_ranking_challenges
 from .ranking_monthly_awards import Cursor
 
 
@@ -42,8 +44,20 @@ async def refresh_challenges(
         cursor.execute(db_change("select name, data from user_set where id = ?")
                        + (" FOR UPDATE" if mysql else ""), [member_id])
         stored = dict(cursor.fetchall())
-        rankings = (earned_ranking_challenges(connection, member_id, db_change)
-                    if "rankings" in flask.current_app.extensions else ())
+        rankings = ()
+        if "rankings" in flask.current_app.extensions:
+            try:
+                rankings = earned_ranking_challenges(connection, member_id, db_change)
+            except sqlite3.OperationalError as error:
+                if "no such table" not in str(error).lower():
+                    raise
+                rankings = tuple(challenge for challenge in RANKING_CHALLENGES
+                                 if "challenge_" + challenge.key in stored)
+            except MySQLError as error:
+                if not error.args or error.args[0] != 1146:
+                    raise
+                rankings = tuple(challenge for challenge in RANKING_CHALLENGES
+                                 if "challenge_" + challenge.key in stored)
         experience = sum(challenge.experience for challenge in rankings)
         earned = [challenge.key for challenge in rankings]
         for table, category in (("history", "contribute"), ("topic", "discussion")):

@@ -182,3 +182,23 @@ def test_document_cache_is_isolated_by_account_id_when_names_match(tmp_path: Pat
     assert (generated_at, state) == (second_generated_at, second_state) == (int(NOW.timestamp()), "ready")
     assert cache.snapshot("member-1", "2026-01")[0]
     assert cache.snapshot("member-1", "2025-12") == ((), int(NOW.timestamp()), "ready", None)
+
+
+def test_award_snapshot_excludes_later_replacement_credit() -> None:
+    from test_ranking_contributions import revision, BASE
+    from datetime import timedelta
+    from route.tool.ranking_contributions import compute_contribution_scores
+
+    # Given: old qualifying text is withdrawn and replaced by new text the same day.
+    rows = (
+        revision(1, "A", "abc", 0, "alice"),
+        revision(2, "A", "", 1, "alice"),
+        revision(3, "A", "xyz", 2, "alice"),
+    )
+    # When: confirmation replays only the contribution origins seen at qualification.
+    confirmed = compute_contribution_scores(
+        rows, {"A": "xyz"}, {"alice"}, BASE + timedelta(hours=24),
+        credit_limits={"A": 1},
+    )
+    # Then: same-day additions cannot replace the withdrawn qualifying contribution.
+    assert confirmed.contributors() == ()

@@ -118,18 +118,23 @@ def _replay(history: MonthlyHistory, cutoff: datetime) -> tuple[HistoryRevision,
 
 
 def finalize_months(
-    connection: Connection, sql: Callable[[str], str], history: MonthlyHistory
+    connection: Connection, sql: Callable[[str], str], history: MonthlyHistory,
+    *, first_revision_at: datetime | None = None,
+    load_revisions: Callable[[], tuple[HistoryRevision, ...]] | None = None,
 ) -> None:
     """Atomically insert each complete month once; failures never mark it complete."""
-    if not history.revisions:
-        return
     now = as_kst(history.now)
-    elapsed_dates = [as_kst(row.date) for row in history.revisions if as_kst(row.date) <= now]
-    if not elapsed_dates:
+    first = as_kst(first_revision_at) if first_revision_at is not None else min(
+        (as_kst(row.date) for row in history.revisions if as_kst(row.date) <= now),
+        default=None,
+    )
+    if first is None or first > now:
         return
-    month = min(elapsed_dates).replace(
+    month = first.replace(
         day=1, hour=0, minute=0, second=0, microsecond=0
     )
+    replay_history = history
+    pending_loader = load_revisions
     cursor = connection.cursor()
     try:
         cursor.execute(sql("SELECT period FROM contributor_monthly_results"))
@@ -138,12 +143,19 @@ def finalize_months(
             period = month.strftime("%Y-%m")
             cutoff = _next_month(month) + timedelta(days=1)
             if period not in complete:
-                replay = _replay(history, cutoff)
+                if pending_loader is not None:
+                    replay_history = MonthlyHistory(
+                        pending_loader(), history.members, history.eligible_members, history.now
+                    )
+                    pending_loader = None
+                replay = _replay(replay_history, cutoff)
                 documents = {
                     row.title: row.data for row in replay
                     if not (row.type == "edit_request" and row.leng == 0)
                 }
-                scores = compute_contribution_scores(replay, documents, history.members, cutoff)
+                scores = compute_contribution_scores(
+                    replay, documents, history.members, cutoff, require_mature=True
+                )
                 winners = [
                     entry.user_id for entry in scores.contributors(period)
                     if entry.score > 0 and entry.user_id in history.eligible_members

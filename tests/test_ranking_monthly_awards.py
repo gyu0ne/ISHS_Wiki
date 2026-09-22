@@ -198,10 +198,10 @@ def test_cache_records_only_displayable_alltime_members(tmp_path: Path) -> None:
     from test_document_contributor_cache import build_cache
     # When: the real cache refreshes the existing historical ranking fixture.
     cache = build_cache(tmp_path)
-    # Then: displayed members receive their actual ranks; numeric fallback receives none.
+    # Then: ranks are visible immediately, but no all-time reward is granted on first sight.
     with cache.connect() as connection:
-        assert get_member_awards(connection, "member-a", sql).alltime_best_rank == 1
-        assert get_member_awards(connection, "member-b", sql).alltime_best_rank == 2
+        assert get_member_awards(connection, "member-a", sql).alltime_best_rank is None
+        assert get_member_awards(connection, "member-b", sql).alltime_best_rank is None
         assert get_member_awards(connection, "123", sql).alltime_best_rank is None
 
 
@@ -218,3 +218,18 @@ def test_empty_cache_does_not_record_an_alltime_winner(tmp_path: Path) -> None:
     # Then: no all-time achievement is awarded.
     with cache.connect() as connection:
         assert connection.execute("select count(*) from contributor_alltime_results").fetchone() == (0,)
+
+
+def test_month_end_transient_edit_never_earns_permanent_monthly_reward() -> None:
+    # Given: a final-second edit is removed before surviving a full day.
+    data = history(
+        revision(1, "a" * 100, "2026-01-31T23:59:59+09:00"),
+        revision(2, "", "2026-02-01T01:00:00+09:00", "bob"),
+        now="2026-02-02T00:00:00+09:00",
+    )
+    with closing(sqlite3.connect(":memory:")) as connection:
+        ensure_schema(connection, sql)
+        # When: January finalizes.
+        finalize_months(connection, sql, data)
+        # Then: the immediately visible January addition earns no permanent reward.
+        assert get_member_awards(connection, "alice", sql) == MonthlyAwards()
