@@ -70,8 +70,37 @@ def test_checkpoint_rejects_invalid_token_references():
     import pytest
     from route.tool.ranking_replay_checkpoint import InvalidCheckpoint
     engine = ranking_contributions.DocumentContributionEngine('Page')
-    payload = json.loads(engine.dump_checkpoint())
+    payload = [1, 'Page', None, None, None, False, False, '', [], [], []]
     payload[7], payload[8] = 'x', [99]
     # When loading it, then the boundary rejects it before any scoring occurs.
     with pytest.raises(InvalidCheckpoint):
         engine.load_checkpoint(json.dumps(payload))
+
+
+def test_compressed_checkpoint_remains_small_and_reads_legacy_json():
+    import json
+    import zlib
+    from base64 import b64decode
+
+    now = datetime(2026, 4, 3, tzinfo=timezone.utc)
+    body = ('학교 문서 본문입니다. 내용이 길어지는 상황입니다.' + chr(10)) * 1000
+    engine = ranking_contributions.DocumentContributionEngine('Page')
+    engine.advance([HistoryRevision('1', 'Page', body, now - timedelta(days=2),
+                                    'alice', '', len(body), '', '')], {'alice'}, now)
+    compressed = engine.dump_checkpoint()
+    legacy = zlib.decompress(b64decode(compressed[5:])).decode()
+    assert json.loads(legacy)[0] == 1
+    assert len(compressed.encode()) < len(legacy.encode()) / 10
+    for payload in (compressed, legacy):
+        resumed = engine.load_checkpoint(payload)
+        assert resumed.text == body
+        assert resumed.scores(body, now) == engine.scores(body, now)
+
+
+def test_invalid_compression_is_rejected():
+    import pytest
+    from route.tool.ranking_replay_checkpoint import InvalidCheckpoint
+
+    for payload in ('zlib:!', 'zlib:eA=='):
+        with pytest.raises(InvalidCheckpoint):
+            ranking_contributions.DocumentContributionEngine.load_checkpoint(payload)

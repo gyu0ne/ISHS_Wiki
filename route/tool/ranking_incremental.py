@@ -184,10 +184,13 @@ def refresh_scores(connection: store.CheckpointConnection, sql: Callable[[str], 
     checkpoints, pending = _prepare(connection, sql, snapshot, documents, member_hash, as_kst(now))
     connection.commit()
     updates: list[store.CheckpointWrite] = []
-    for item in pending:
+    pending.reverse()
+    while pending:
+        item = pending.pop()
         checkpoint, payload = _advance(item, members, as_kst(now))
         checkpoints[item.title] = checkpoint
         updates.append(store.CheckpointWrite(item.title, checkpoint.encode(), payload))
+        del item
     removals = tuple(title for title in snapshot.checkpoints if title not in documents)
     if not store.publish(connection, sql, snapshot, updates, removals, member_hash):
         raise CheckpointConflict
