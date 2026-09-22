@@ -4,6 +4,9 @@ import json
 import sqlite3
 import sys
 from pathlib import Path
+from unittest.mock import MagicMock
+
+from pymysql import MySQLError
 
 import pytest
 
@@ -108,3 +111,69 @@ def test_older_refresh_cannot_overwrite_new_ranking_reward(tmp_path: Path, monke
             "select name, data from user_set where id='20261234' and name in ('level', 'experience')"))
         assert values == newer_values
         assert connection.execute("select count(*) from user_notice where id='challenge_monthly_first'").fetchone()[0] == 1
+
+
+def test_unchanged_refresh_succeeds_while_another_writer_holds_lock(tmp_path: Path) -> None:
+    store = build_challenge_app(tmp_path)
+    with store.connect() as connection:
+        connection.execute("pragma journal_mode=WAL")
+    client = store.app.test_client()
+    client.get("/__test/login/20261234")
+    expected = client.get("/__test/ordinary-page").json
+    store.clock.value += 60
+    with store.connect() as writer:
+        writer.execute("BEGIN IMMEDIATE")
+        assert client.get("/__test/ordinary-page").json == expected
+
+
+def test_challenge_indexes_support_member_queries_and_repeated_startup(tmp_path: Path) -> None:
+    store = build_challenge_app(tmp_path)
+    progress = sys.modules["route.tool.challenge_progress"]
+    with store.connect() as connection:
+        progress.ensure_challenge_indexes(connection)
+        progress.ensure_challenge_indexes(connection)
+        for table, column in (("history", "ip"), ("topic", "ip"), ("user_set", "id")):
+            plans = connection.execute(f"EXPLAIN QUERY PLAN SELECT count(*) FROM {table} WHERE {column}=?", ["20261234"]).fetchall()
+            assert any("SEARCH" in row[3] and "INDEX" in row[3] for row in plans), plans
+
+
+def test_write_pass_rechecks_awards_changed_after_read_only_pass(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    store = build_challenge_app(tmp_path)
+    progress = sys.modules["route.tool.challenge_progress"]
+    read_awards = progress.earned_ranking_challenges
+
+    def publish_after_read(connection, member_id, sql):
+        stale = read_awards(connection, member_id, sql)
+        monkeypatch.setattr(progress, "earned_ranking_challenges", read_awards)
+        with store.connect() as publisher:
+            publisher.execute("insert into contributor_monthly_results values (?,?)", ["2026-01", json.dumps([member_id])])
+        return stale
+
+    monkeypatch.setattr(progress, "earned_ranking_challenges", publish_after_read)
+    client = store.app.test_client()
+    client.get("/__test/login/20261234")
+    assert client.get("/__test/ordinary-page").status_code == 200
+    with store.connect() as connection:
+        values = dict(connection.execute("select name,data from user_set where id='20261234'"))
+        assert (values["level"], values["experience"]) == ("15", "760")
+        assert values["challenge_monthly_first"] == "1"
+
+
+@pytest.mark.parametrize("error_code", [1061, 1142])
+def test_mysql_index_creation_handles_only_concurrent_duplicate(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, error_code: int,
+) -> None:
+    build_challenge_app(tmp_path)
+    progress = sys.modules["route.tool.challenge_progress"]
+    monkeypatch.setattr(progress, "db_change", lambda query: "%s")
+    connection = MagicMock()
+    cursor = connection.cursor.return_value
+    cursor.fetchall.return_value = []
+    cursor.execute.side_effect = [None, MySQLError(error_code, "index creation failed")] * 3
+    if error_code == 1061:
+        progress.ensure_challenge_indexes(connection)
+        assert cursor.execute.call_count == 6
+    else:
+        with pytest.raises(MySQLError):
+            progress.ensure_challenge_indexes(connection)
+    cursor.close.assert_called_once()

@@ -12,6 +12,7 @@ from route.tool.func import *
 from route import *
 from route.riro_login_page import riro_login_page
 from route.tool.request_rate_limit import check_request_rate_limit
+from route.tool.challenge_progress import ensure_challenge_indexes
 from hypercorn.asyncio import serve
 from hypercorn.config import Config
 from flask import g
@@ -205,6 +206,7 @@ with get_db_connect(init_mode = True) as conn:
         else:
             set_init(conn)
 
+    ensure_challenge_indexes(conn)
     view_log_init(conn)
     set_init_always(conn, version_list['c_ver'], run_mode)
 
