@@ -1,6 +1,9 @@
 from __future__ import annotations
 
 import importlib.util
+import ast
+from html import escape
+from urllib.parse import quote
 import json
 import sys
 import types
@@ -17,12 +20,21 @@ def build_challenge_app(tmp_path: Path) -> RankingTestApp:
     store = build_test_app(tmp_path)
     with store.connect() as connection:
         connection.execute("create table topic (ip text)")
+        connection.execute("create table user_notice (id text, name text, data text, date text, readme text)")
+        connection.executemany(
+            "insert into contributor_alltime_results (member_id, best_rank) values (?, ?) "
+            "on conflict(member_id) do update set best_rank=excluded.best_rank",
+            [("20261234", 1), ("20265678", 2)],
+        )
     labels = json.loads((ROOT / "lang" / "ko-KR.json").read_text(encoding="utf-8"))
     functions = types.ModuleType("route.tool.func")
     functions.__package__ = "route.tool"
 
     async def acl_check(**kwargs) -> int:
-        return 1
+        return int(kwargs.get("ip") not in flask.current_app.config.get("CHALLENGE_ADMINS", ()))
+
+    async def ip_pas(member_id: str) -> str:
+        return escape(member_id)
 
     async def wiki_set() -> list:
         return ["테스트 위키", "", "", "", "", "", "", ["", "", ""]]
@@ -47,17 +59,65 @@ def build_challenge_app(tmp_path: Path) -> RankingTestApp:
         redirect=lambda connection, url: flask.redirect(url),
         get_lang=lambda connection, key, safe=0: labels.get(key, key),
         acl_check=acl_check,
+        get_time=lambda: "2026-09-22 12:00:00",
         wiki_set=wiki_set,
         wiki_custom=wiki_custom,
         wiki_css=wiki_css,
         skin_check=lambda connection: "./views/ringo/index.html",
         easy_minify=lambda connection, body: body,
+        number_check=lambda value: value,
+        url_pas=quote,
+        ip_pas=ip_pas,
+        get_init_set_list=lambda: {"language": {"list": ["ko-KR", "en-US"]}},
+        get_next_page_bottom=lambda connection, url, number, data: "",
     )
     spec = importlib.util.spec_from_file_location("route.challenge_test_route", ROOT / "route" / "user_challenge.py")
     assert spec is not None and spec.loader is not None
     module = importlib.util.module_from_spec(spec)
     with patch.dict(sys.modules, {"route.tool.func": functions}):
+        progress_spec = importlib.util.spec_from_file_location("route.tool.challenge_progress", ROOT / "route" / "tool" / "challenge_progress.py")
+        assert progress_spec is not None and progress_spec.loader is not None
+        progress = importlib.util.module_from_spec(progress_spec)
+        progress_spec.loader.exec_module(progress)
+        progress.time = store.clock
+        sys.modules[progress_spec.name] = progress
         spec.loader.exec_module(module)
+        for filename, url in (("user_alarm", "/alarm"), ("user_alarm_delete", "/alarm/delete/<id>")):
+            alarm_spec = importlib.util.spec_from_file_location("route.challenge_test_" + filename, ROOT / "route" / (filename + ".py"))
+            assert alarm_spec is not None and alarm_spec.loader is not None
+            alarm_module = importlib.util.module_from_spec(alarm_spec)
+            alarm_spec.loader.exec_module(alarm_module)
+            store.app.add_url_rule(url, view_func=getattr(alarm_module, filename))
+    sys.modules[progress_spec.name] = progress
     store.app.add_url_rule("/challenge", view_func=module.user_challenge, methods=["GET", "POST"])
     store.app.jinja_env.filters["load_lang"] = lambda key: labels.get(key, key)
+    namespace = dict(functions.__dict__)
+    namespace["flask"] = flask
+
+    async def python_to_golang(action: str, options: dict[str, str]) -> dict[str, list[str]]:
+        assert action == "api_func_level"
+        with store.connect() as connection:
+            values = dict(connection.execute("select name, data from user_set where id = ?", [options["ip"]]))
+        level = values.get("level", "0")
+        return {"data": [level, values.get("experience", "0"), str(500 + int(level) * 50)]}
+
+    namespace["python_to_golang"] = python_to_golang
+    tree = ast.parse((ROOT / "route" / "tool" / "func.py").read_text(encoding="utf-8"))
+    selected = [node for node in tree.body if isinstance(node, ast.AsyncFunctionDef) and node.name in ("level_check", "get_user_title_list")]
+    exec(compile(ast.Module(body=selected, type_ignores=[]), "func.py", "exec"), namespace)
+    functions.get_user_title_list = namespace["get_user_title_list"]
+    setting_spec = importlib.util.spec_from_file_location("route.challenge_test_settings", ROOT / "route" / "user_setting.py")
+    assert setting_spec is not None and setting_spec.loader is not None
+    setting_module = importlib.util.module_from_spec(setting_spec)
+    with patch.dict(sys.modules, {"route.tool.func": functions}):
+        setting_spec.loader.exec_module(setting_module)
+    store.app.add_url_rule("/change", view_func=setting_module.user_setting, methods=["POST"])
+
+    @store.app.get("/__test/ordinary-page")
+    async def ordinary_page():
+        level = await namespace["level_check"]()
+        with store.connect() as connection:
+            notices = connection.execute("select name, id, data from user_notice order by rowid").fetchall()
+        return {"level": level, "notices": notices}
+
     return store

@@ -32,9 +32,9 @@ def test_challenge_route_rewards_titles_and_refresh_are_consistent(tmp_path: Pat
     locked = client.get("/challenge").get_data(as_text=True)
     assert "어, 또 나야" in locked
     assert "시작이 반이다." in locked
-    client.post("/challenge")
     with store.connect() as connection:
         baseline = dict(connection.execute("select name, data from user_set where id='20261234' and name in ('level','experience')"))
+        assert set(baseline) == {"level", "experience"}
         for period in ("2026-01", "2026-03"):
             connection.execute("insert into contributor_monthly_results values (?, ?)", (period, json.dumps(["20261234"])))
     earned = client.get("/challenge").get_data(as_text=True)
@@ -42,7 +42,7 @@ def test_challenge_route_rewards_titles_and_refresh_are_consistent(tmp_path: Pat
         assert title in earned
     results = []
     for _ in range(2):
-        assert client.post("/challenge").status_code == 302
+        assert client.get("/challenge").status_code == 200
         with store.connect() as connection:
             results.append(dict(connection.execute("select name, data from user_set where id='20261234' and name in ('level','experience')")))
     def total(values: dict[str, str]) -> int:
@@ -69,6 +69,30 @@ def test_challenge_route_rewards_titles_and_refresh_are_consistent(tmp_path: Pat
     assert all(item.title not in other_titles for item in RANKING_CHALLENGES if not item.alltime)
     assert "🐐" not in other_titles
     assert "🔰" in titles
+
+
+@pytest.mark.parametrize("rankings_enabled", [True, False])
+def test_challenge_get_updates_activity_without_manual_refresh(tmp_path: Path, rankings_enabled: bool) -> None:
+    store = build_challenge_app(tmp_path)
+    if not rankings_enabled:
+        store.app.extensions.pop("rankings")
+    client = store.app.test_client()
+    client.get("/__test/login/20261234")
+    assert client.get("/challenge").status_code == 200
+    with store.connect() as connection:
+        badges = dict(connection.execute("select name, data from user_set where id='20261234'"))
+        assert badges["challenge_first_contribute"] == "1"
+        assert "challenge_first_discussion" not in badges
+        connection.executemany("insert into topic values (?)", [("20261234",)] * 10)
+    results = []
+    for _ in range(2):
+        assert client.get("/challenge").status_code == 200
+        with store.connect() as connection:
+            results.append(dict(connection.execute("select name, data from user_set where id='20261234'")))
+    assert results[0] == results[1]
+    assert results[0]["challenge_first_discussion"] == "1"
+    assert results[0]["challenge_tenth_discussion"] == "1"
+    assert results[0]["level"] != badges["level"]
 
 
 def test_existing_challenges_still_work_when_rankings_are_disabled(tmp_path: Path) -> None:
