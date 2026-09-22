@@ -148,9 +148,14 @@ class DocumentContributionEngine:
         title: str, text: str, author: str | None, owner_day: date | None, at: datetime
     ) -> tuple[int, ...]:
         matches: list[tuple[int, int, int, tuple[int, ...]]] = []
+        comparisons: dict[str, list[tuple[int, str]]] = {}
         for priority, (deleted, token_ids) in enumerate(reversed(self.deleted_spans[title])):
+            if all(self.tokens[token_id].active_count != 0 for token_id in token_ids):
+                continue
+            if deleted not in comparisons:
+                comparisons[deleted] = self.differ.diff_main(deleted, text)
             old_index = new_index = 0
-            for operation, part in self.differ.diff_main(deleted, text):
+            for operation, part in comparisons[deleted]:
                 size = len(part)
                 if operation == 0:
                     matches.append((-size, priority, new_index, token_ids[old_index : old_index + size]))
