@@ -26,7 +26,6 @@ def compute_contribution_scores(
     now_kst = as_kst(now)
     documents: dict[str, DocumentState] = {}
     tokens: dict[int, TokenState] = {}
-    known_bodies: dict[str, tuple[int, ...]] = {}
     deleted_spans: dict[str, list[tuple[str, tuple[int, ...]]]] = defaultdict(list)
     last_revision: dict[str, int | None] = {}
     next_token_id = 0
@@ -127,40 +126,33 @@ def compute_contribution_scores(
         owner_day: date | None,
         remover: str | None,
         *,
-        allow_known_body: bool,
         allow_removal_grace: bool,
     ) -> None:
         old = documents.get(title, DocumentState("", ()))
-        known = known_bodies.get(new_text) if allow_known_body and new_text else None
-        if known is not None and not old.text:
-            placements = reuse(known, at)
-        else:
-            placements_list: list[int] = []
-            old_index = 0
-            for operation, text in differ.diff_main(old.text, new_text):
-                if operation == 0:
-                    end = old_index + len(text)
-                    placements_list.extend(old.placements[old_index:end])
-                    old_index = end
-                elif operation == -1:
-                    end = old_index + len(text)
-                    removed = old.placements[old_index:end]
-                    deleted_spans[title].append((text, removed))
-                    remove(
-                        removed,
-                        at,
-                        remover,
-                        author,
-                        owner_day,
-                        allow_removal_grace,
-                    )
-                    old_index = end
-                else:
-                    placements_list.extend(restore(title, text, author, owner_day, at))
-            placements = tuple(placements_list)
+        placements_list: list[int] = []
+        old_index = 0
+        for operation, text in differ.diff_main(old.text, new_text):
+            if operation == 0:
+                end = old_index + len(text)
+                placements_list.extend(old.placements[old_index:end])
+                old_index = end
+            elif operation == -1:
+                end = old_index + len(text)
+                removed = old.placements[old_index:end]
+                deleted_spans[title].append((text, removed))
+                remove(
+                    removed,
+                    at,
+                    remover,
+                    author,
+                    owner_day,
+                    allow_removal_grace,
+                )
+                old_index = end
+            else:
+                placements_list.extend(restore(title, text, author, owner_day, at))
+        placements = tuple(placements_list)
         documents[title] = DocumentState(new_text, placements)
-        if new_text:
-            known_bodies.setdefault(new_text, placements)
 
     grouped: dict[str, list[tuple[int, HistoryRevision]]] = defaultdict(list)
     for index, revision in enumerate(revisions):
@@ -203,13 +195,13 @@ def compute_contribution_scores(
         apply(revision.title, normalize("NFC", revision.data), at, author,
               stored_at.date() if author is not None else None,
               revision.ip if revision.ip in member_ids else None,
-              allow_known_body=True, allow_removal_grace=True)
+              allow_removal_grace=True)
         uncertain.discard(revision.title)
         last_applied_at[revision.title] = at
 
     for title in documents.keys() | current_documents.keys():
         apply(title, normalize("NFC", current_documents.get(title, "")), now_kst,
-              None, None, None, allow_known_body=False, allow_removal_grace=False)
+              None, None, None, allow_removal_grace=False)
 
     addition_buckets: dict[tuple[str, str, date], int] = defaultdict(int)
     removal_buckets: dict[tuple[str, str, date], int] = defaultdict(int)

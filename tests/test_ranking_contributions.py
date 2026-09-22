@@ -296,11 +296,22 @@ class RankingContributionsTest(unittest.TestCase):
         self.assertEqual(set(actual), {"alice"})
         self.assertEqual(actual["alice"].retained_characters, 3)
 
-    def test_known_copy_and_move_reuse_origin_without_duplication(self) -> None:
+    def test_identical_text_in_independent_documents_keeps_each_author(self) -> None:
         revisions = (
             revision(1, "A", "abc", 0, "alice", mode="r1"),
             revision(1, "B", "abc", 80, "bob", mode="r1"),
-            revision(2, "A", "", 81, "bob", mode="delete"),
+        )
+
+        actual = results(*revisions, current={"A": "abc", "B": "abc"})
+
+        self.assertEqual(set(actual), {"alice", "bob"})
+        self.assertEqual(actual["alice"].retained_characters, 3)
+        self.assertEqual(actual["bob"].retained_characters, 3)
+
+    def test_move_history_rewritten_to_destination_keeps_original_author(self) -> None:
+        revisions = (
+            revision(1, "B", "abc", 0, "alice", mode="r1"),
+            revision(2, "B", "abc", 80, "bob", mode="move"),
         )
 
         actual = results(*revisions, current={"B": "abc"})
