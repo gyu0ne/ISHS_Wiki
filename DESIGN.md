@@ -175,8 +175,17 @@ redesign.
 Extend the existing `/challenge` table renderer and earned/unearned ordering;
 use the existing title selector and experience recalculation. Exactly six
 conditions: monthly top3, first place, first place twice in distinct months,
-and all-time top10, top3, first place. The best all-time rank is remembered
-when observed in a successful ranking refresh; it is not retroactively inferred. Titles are playful but descriptions state the exact condition and
+and all-time top10, top3, first place. Live scores include additions and deletions
+on the next ranking refresh without the 24-hour maturity delay. Monthly entries
+close at 00:00 KST on the first; rewards finalize from the second after replaying
+the existing 24-hour survival check. An all-time threshold records the original
+contribution revision limits and
+the other competitors' score needed at that moment. After 24 hours, replay the
+member's original contributions against current content; later additions cannot
+replace withdrawn credit. Other members overtaking the candidate and unrelated
+account sanctions do not cancel eligibility. Earned ranks remain permanent;
+past all-time rank achievements are not inferred. Titles are playful but
+descriptions state the exact condition and
 reward. Preserve existing challenge typography, colors and layout. This is an
 extension of the existing challenge page, not a redesign. New challenge blocks
 use `word-break: keep-all` so Korean title endings do not split on mobile.

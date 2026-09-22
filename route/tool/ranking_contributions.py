@@ -22,7 +22,11 @@ def compute_contribution_scores(
     current_documents: Mapping[str, str],
     member_ids: Set[str],
     now: datetime,
+    *,
+    require_mature: bool = False,
+    credit_limits: Mapping[str, int] | None = None,
 ) -> ContributionScores:
+    """Score live content, optionally confirming mature or snapshotted origins."""
     now_kst = as_kst(now)
     documents: dict[str, DocumentState] = {}
     tokens: dict[int, TokenState] = {}
@@ -189,7 +193,9 @@ def compute_contribution_scores(
         at = max(stored_at, last_applied_at.get(revision.title, stored_at))
         author = (
             revision.ip
-            if revision.title not in uncertain and can_own(revision, member_ids, contiguous)
+            if (revision.title not in uncertain
+                and can_own(revision, member_ids, contiguous)
+                and (credit_limits is None or number <= credit_limits.get(revision.title, 0)))
             else None
         )
         apply(revision.title, normalize("NFC", revision.data), at, author,
@@ -207,10 +213,11 @@ def compute_contribution_scores(
     removal_buckets: dict[tuple[str, str, date], int] = defaultdict(int)
     for token in tokens.values():
         retained = token.active_count > 0 and (
-            token.matured or now_kst - token.continuous_since >= MATURITY
+            not require_mature or token.matured or now_kst - token.continuous_since >= MATURITY
         )
         retained = retained or (
-            token.active_count == 0
+            require_mature
+            and token.active_count == 0
             and token.grace_until is not None
             and now_kst < token.grace_until
         )
@@ -227,7 +234,7 @@ def compute_contribution_scores(
             and removal_day is not None
             and removal_lineage is not None
             and removed_since is not None
-            and now_kst - removed_since >= MATURITY
+            and (not require_mature or now_kst - removed_since >= MATURITY)
         ):
             removal_buckets[(removal_author, removal_lineage, removal_day)] += 1
 

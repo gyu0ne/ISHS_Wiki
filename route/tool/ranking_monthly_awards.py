@@ -143,7 +143,9 @@ def finalize_months(
                     row.title: row.data for row in replay
                     if not (row.type == "edit_request" and row.leng == 0)
                 }
-                scores = compute_contribution_scores(replay, documents, history.members, cutoff)
+                scores = compute_contribution_scores(
+                    replay, documents, history.members, cutoff, require_mature=True
+                )
                 winners = [
                     entry.user_id for entry in scores.contributors(period)
                     if entry.score > 0 and entry.user_id in history.eligible_members

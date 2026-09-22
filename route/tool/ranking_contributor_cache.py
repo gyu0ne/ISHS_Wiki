@@ -6,9 +6,10 @@ from datetime import datetime, timezone
 from typing import Callable
 from urllib.parse import quote
 
-from .ranking_contribution_scores import Period
+from .ranking_contribution_scores import ContributorEntry, Period
 from .ranking_contributions import HistoryRevision, compute_contribution_scores
-from .ranking_monthly_awards import MonthlyHistory, ensure_schema, finalize_months, record_alltime_rank
+from .ranking_monthly_awards import MonthlyHistory, ensure_schema, finalize_months
+from .ranking_alltime_awards import ensure_alltime_schema, confirm_alltime_candidates
 
 
 class ContributorCache:
@@ -106,6 +107,7 @@ class ContributorCache:
         now_epoch = int(self.clock())
         with self.connect() as connection:
             ensure_schema(connection, self.db_change)
+            ensure_alltime_schema(connection, self.db_change)
             documents = self._documents(connection)
             (
                 period_items,
@@ -201,6 +203,7 @@ class ContributorCache:
             datetime.fromtimestamp(now_epoch, tz=timezone.utc),
         ))
 
+        alltime_entries: list[ContributorEntry] = []
         for named_scores in scores.periods():
             period = named_scores.period
             period_scores = named_scores.scores
@@ -238,8 +241,8 @@ class ContributorCache:
                 display = identity(entry.user_id)
                 if display is None:
                     continue
-                if period == "all" and len(items) < 10 and entry.score > 0:
-                    record_alltime_rank(connection, (entry.user_id, len(items) + 1), self.db_change)
+                if period == "all" and entry.score > 0:
+                    alltime_entries.append(entry)
                 name, url = display
                 score = round(entry.score, 2)
                 items.append({"name": name, "url": url, "score": score})
@@ -249,6 +252,10 @@ class ContributorCache:
             document_scores[period] = documents_by_member
             document_contributor_items[period] = items_by_document
             document_contributor_ranks[period] = ranks_by_document
+        confirm_alltime_candidates(
+            connection, self.db_change, tuple(alltime_entries), revisions, documents,
+            members, datetime.fromtimestamp(now_epoch, tz=timezone.utc),
+        )
         return (
             period_items,
             period_member_ranks,

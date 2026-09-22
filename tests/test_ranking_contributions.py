@@ -144,16 +144,16 @@ class RankingContributionsTest(unittest.TestCase):
         self.assertEqual(actual["bob"].retained_characters, 0)
         self.assertAlmostEqual(actual["bob"].score, 0.0499002327)
 
-    def test_deletion_credit_matures_at_24_hours(self) -> None:
+    def test_deletion_credit_is_immediate(self) -> None:
         revisions = (
             revision(1, "A", "abc", 0, "alice", mode="r1"),
             revision(2, "A", "", 80, "bob", mode="delete"),
         )
 
-        before = results(*revisions, current={"A": ""}, hours=103)
+        before = results(*revisions, current={"A": ""}, hours=80)
         at_boundary = results(*revisions, current={"A": ""}, hours=104)
 
-        self.assertNotIn("bob", before)
+        self.assertEqual(before["bob"].score, at_boundary["bob"].score)
         self.assertEqual(at_boundary["bob"].retained_characters, 0)
 
     def test_hidden_deletion_does_not_mint_credit(self) -> None:
@@ -374,16 +374,16 @@ class RankingContributionsTest(unittest.TestCase):
 
         self.assertEqual(actual, {})
 
-    def test_new_text_matures_at_24_hours(self) -> None:
+    def test_new_text_counts_immediately(self) -> None:
         revisions = (revision(1, "A", "a", 0, "alice", mode="r1"),)
 
-        before = results(*revisions, current={"A": "a"}, hours=23)
+        before = results(*revisions, current={"A": "a"}, hours=0)
         at_boundary = results(*revisions, current={"A": "a"}, hours=24)
 
-        self.assertNotIn("alice", before)
+        self.assertEqual(before["alice"].score, at_boundary["alice"].score)
         self.assertEqual(at_boundary["alice"].retained_characters, 1)
 
-    def test_mature_text_removed_by_other_has_24_hour_grace(self) -> None:
+    def test_other_member_deletion_removes_live_credit_immediately(self) -> None:
         revisions = (
             revision(1, "A", "a", 0, "alice", mode="r1"),
             revision(2, "A", "", 80, "bob", mode="delete"),
@@ -392,7 +392,7 @@ class RankingContributionsTest(unittest.TestCase):
         before = results(*revisions, current={"A": ""}, hours=103)
         at_boundary = results(*revisions, current={"A": ""}, hours=104)
 
-        self.assertEqual(before["alice"].retained_characters, 1)
+        self.assertNotIn("alice", before)
         self.assertNotIn("alice", at_boundary)
 
     def test_own_removal_is_immediate(self) -> None:
