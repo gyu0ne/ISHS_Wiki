@@ -6,11 +6,12 @@ import json
 from collections.abc import Sequence
 from dataclasses import dataclass
 from datetime import datetime, timedelta
+from itertools import groupby
 from typing import Callable, Protocol
 
-from .ranking_contribution_scores import HistoryRevision
+from .ranking_contribution_engine import DocumentContributionEngine
+from .ranking_contribution_scores import ContributionBucket, ContributionScores, HistoryRevision
 from .ranking_contribution_state import as_kst
-from .ranking_contributions import compute_contribution_scores
 
 
 class Cursor(Protocol):
@@ -105,18 +106,6 @@ def _next_month(month: datetime) -> datetime:
     return (month.replace(day=28) + timedelta(days=4)).replace(day=1)
 
 
-def _replay(history: MonthlyHistory, cutoff: datetime) -> tuple[HistoryRevision, ...]:
-    """Clip each document at the first future revision, including backdated successors."""
-    blocked: set[str] = set()
-    replay: list[HistoryRevision] = []
-    for revision in sorted(history.revisions, key=lambda item: (item.title, int(item.id))):
-        if as_kst(revision.date) > cutoff:
-            blocked.add(revision.title)
-        if revision.title not in blocked:
-            replay.append(revision)
-    return tuple(replay)
-
-
 def finalize_months(
     connection: Connection, sql: Callable[[str], str], history: MonthlyHistory,
     *, first_revision_at: datetime | None = None,
@@ -133,41 +122,50 @@ def finalize_months(
     month = first.replace(
         day=1, hour=0, minute=0, second=0, microsecond=0
     )
-    replay_history = history
-    pending_loader = load_revisions
     cursor = connection.cursor()
     try:
         cursor.execute(sql("SELECT period FROM contributor_monthly_results"))
         complete = {row[0] for row in cursor.fetchall()}
+        pending: list[tuple[str, datetime]] = []
         while _next_month(month) + timedelta(days=1) <= now:
             period = month.strftime("%Y-%m")
             cutoff = _next_month(month) + timedelta(days=1)
             if period not in complete:
-                if pending_loader is not None:
-                    replay_history = MonthlyHistory(
-                        pending_loader(), history.members, history.eligible_members, history.now
-                    )
-                    pending_loader = None
-                replay = _replay(replay_history, cutoff)
-                documents = {
-                    row.title: row.data for row in replay
-                    if not (row.type == "edit_request" and row.leng == 0)
-                }
-                scores = compute_contribution_scores(
-                    replay, documents, history.members, cutoff, require_mature=True
-                )
-                winners = [
-                    entry.user_id for entry in scores.contributors(period)
-                    if entry.score > 0 and entry.user_id in history.eligible_members
-                ][:10]
-                conflict = (
-                    " ON DUPLICATE KEY UPDATE period = VALUES(period)"
-                    if sql("?") == "%s" else " ON CONFLICT(period) DO NOTHING"
-                )
-                cursor.execute(
-                    sql("INSERT INTO contributor_monthly_results (period, winners) VALUES (?, ?)" + conflict),
-                    (period, json.dumps(winners, ensure_ascii=False)),
-                )
+                pending.append((period, cutoff))
             month = _next_month(month)
+        if not pending:
+            return
+        revisions = load_revisions() if load_revisions is not None else history.revisions
+        buckets: dict[str, list[ContributionBucket]] = {period: [] for period, _ in pending}
+        ordered = sorted(revisions, key=lambda row: (row.title, int(row.id)))
+        for title, document_rows in groupby(ordered, key=lambda row: row.title):
+            engine = DocumentContributionEngine(title)
+            rows = list(document_rows)
+            position = 0
+            for period, cutoff in pending:
+                start = position
+                while position < len(rows) and as_kst(rows[position].date) <= cutoff:
+                    position += 1
+                engine.advance(rows[start:position], history.members, cutoff)
+                buckets[period].extend(
+                    bucket for bucket in engine.scores(engine.text, cutoff, require_mature=True).buckets
+                    if bucket.day.strftime("%Y-%m") == period
+                )
+        for period, _ in pending:
+            scores = ContributionScores(tuple(sorted(
+                buckets[period], key=lambda bucket: (bucket.user_id, bucket.title, bucket.day)
+            )))
+            winners = [
+                entry.user_id for entry in scores.contributors()
+                if entry.score > 0 and entry.user_id in history.eligible_members
+            ][:10]
+            conflict = (
+                " ON DUPLICATE KEY UPDATE period = VALUES(period)"
+                if sql("?") == "%s" else " ON CONFLICT(period) DO NOTHING"
+            )
+            cursor.execute(
+                sql("INSERT INTO contributor_monthly_results (period, winners) VALUES (?, ?)" + conflict),
+                (period, json.dumps(winners, ensure_ascii=False)),
+            )
     finally:
         cursor.close()
