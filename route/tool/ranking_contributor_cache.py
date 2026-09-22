@@ -8,6 +8,7 @@ from urllib.parse import quote
 
 from .ranking_contribution_scores import Period
 from .ranking_contributions import HistoryRevision, compute_contribution_scores
+from .ranking_monthly_awards import MonthlyHistory, ensure_schema, finalize_months, record_alltime_rank
 
 
 class ContributorCache:
@@ -104,6 +105,7 @@ class ContributorCache:
     def _refresh(self) -> None:
         now_epoch = int(self.clock())
         with self.connect() as connection:
+            ensure_schema(connection, self.db_change)
             documents = self._documents(connection)
             (
                 period_items,
@@ -190,6 +192,15 @@ class ContributorCache:
                 )
             return identities[user_id]
 
+        finalize_months(connection, self.db_change, MonthlyHistory(
+            revisions, frozenset(members),
+            frozenset(
+                user_id for user_id in members & {row.ip for row in revisions}
+                if identity(user_id) is not None
+            ),
+            datetime.fromtimestamp(now_epoch, tz=timezone.utc),
+        ))
+
         for named_scores in scores.periods():
             period = named_scores.period
             period_scores = named_scores.scores
@@ -227,6 +238,8 @@ class ContributorCache:
                 display = identity(entry.user_id)
                 if display is None:
                     continue
+                if period == "all" and len(items) < 10 and entry.score > 0:
+                    record_alltime_rank(connection, (entry.user_id, len(items) + 1), self.db_change)
                 name, url = display
                 score = round(entry.score, 2)
                 items.append({"name": name, "url": url, "score": score})

@@ -27,6 +27,7 @@ from .ranking_document_routes import register_document_ranking_routes
 from .ranking_period_routes import register_ranking_period_routes
 from .tool.ranking_contributor_cache import ContributorCache
 from .tool.ranking_views import Connection, ensure_schema, get_popular, record_view
+from .tool.ranking_monthly_awards import ensure_schema as ensure_monthly_schema
 
 TICKET_SALT: Final = "ranking-view-v1"
 TICKET_MIN_AGE: Final = 5
@@ -268,6 +269,7 @@ def init_rankings(
     try:
         with connect() as connection:
             ensure_schema(connection, db_change)
+            ensure_monthly_schema(connection, db_change)
     except (sqlite3.DatabaseError, MySQLError):
         app.logger.exception("ranking schema initialization failed; rankings disabled")
         return

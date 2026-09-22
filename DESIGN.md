@@ -169,3 +169,22 @@ month form follows the period/back row on its own wrapping row. Apply the
 same pattern to personal documents, document rankings, loading and errors.
 No new fonts, colors, motion, libraries, scoring rules or site-wide shell
 redesign.
+
+## Monthly ranking challenges
+
+Extend the existing `/challenge` table renderer and earned/unearned ordering;
+use the existing title selector and experience recalculation. Exactly six
+conditions: monthly top3, first place, first place twice in distinct months,
+and all-time top10, top3, first place. The best all-time rank is remembered
+when observed in a successful ranking refresh; it is not retroactively inferred. Titles are playful but descriptions state the exact condition and
+reward. Preserve existing challenge typography, colors and layout. This is an
+extension of the existing challenge page, not a redesign. New challenge blocks
+use `word-break: keep-all` so Korean title endings do not split on mobile.
+
+Use the user-selected native title characters: 🥉, 🥵, 🫪, 🪨, 💎, and 🐐. The existing
+emoji-title convention intentionally remains. For U+1FAEA only, serve a small
+self-hosted subset font so Windows systems lacking the glyph can display it.
+Its unicode range must contain only U+1FAEA; existing text and other emoji keep
+their current font stack. Include upstream font license and reproducible source
+provenance. The fallback applies to body text and the title selector, introduces
+no external runtime requests, and adds no animation.
