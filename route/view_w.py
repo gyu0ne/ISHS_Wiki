@@ -1,6 +1,5 @@
 from .tool.func import *
 import flask
-import time
 import datetime
 import html
 import re
@@ -8,6 +7,7 @@ import re
 from .go_api_w_raw import api_w_raw
 from .go_api_w_render import api_w_render
 from .go_api_w_page_view import api_w_page_view
+from .rankings import issue_ranking_ticket
 
 PERSON_TEMPLATE_RE = re.compile(r'\[include\(\s*틀:인곽위키/인물\s*\)\]', re.I)
 INCIDENT_TEMPLATE_RE = re.compile(r'\[include\(\s*틀:사건사고\s*\)\]', re.I)
@@ -83,60 +83,6 @@ def _recent_changes_sidebar_simple_html(conn, limit=10):
         items.append(f'<li><a href="/w/{url_pas(_title)}">{safe_title}</a> {r_link} {len_html}</li>')
 
     return '<ul class="opennamu_recent_change">' + ''.join(items) + '</ul>'
-_trending_cache = {"time": 0.0, "html": ""}
-
-def _trending_sidebar_html(conn, limit=10):
-    """
-    실시간 인기 문서 (최근 1일 조회수 기준, 캐싱 적용)
-    """
-    global _trending_cache
-    now_time = time.time()
-    # 5분(300초) 캐시 적용으로 F5 새로고침 서버 폭주 방지
-    try:
-        if now_time - float(_trending_cache["time"]) < 300 and _trending_cache["html"]:
-            return _trending_cache["html"]
-    except:
-        pass
-
-    c = conn.cursor()
-
-    time_1_day_ago = (datetime.datetime.now() - datetime.timedelta(days=1)).strftime('%Y-%m-%d')
-
-    c.execute(db_change(
-        "SELECT title, SUM(CAST(view_count AS INTEGER)) as cnt "
-        "FROM pageview_daily "
-        "WHERE view_date >= ? "
-        "AND title != '인곽위키:대문' "
-        "GROUP BY title "
-        "ORDER BY cnt DESC "
-        "LIMIT ?"
-    ), [time_1_day_ago, 100])
-    
-    data_list = c.fetchall()
-    
-    # 공식 문서 목록 한 번에 가져와서 필터링 (N+1 방지)
-    c.execute(db_change("SELECT link FROM back WHERE title = '틀:인곽위키/공식문서' AND type = 'include'"))
-    official_docs = {row[0] for row in c.fetchall()}
-    official_docs.add('인곽위키:대문')
-
-    items = []
-    rank = 1
-    for title, count in data_list:
-        if rank > 10: break
-        if title in official_docs: continue
-
-        safe_title = html.escape(title)
-        items.append(f'<li><span style="width: 20px; display: inline-block; font-weight: bold; color: var(--muted);">{rank}</span> <a href="/w/{url_pas(title)}">{safe_title}</a></li>')
-        rank += 1
-        
-    if not items:
-        res = '<div class="opennamu_trending_sidebar" style="padding: 10px; color: var(--muted); font-size: 0.9em;">최근 데이터가 없습니다.</div>'
-    else:
-        res = '<ul class="opennamu_trending_sidebar" style="list-style: none; padding: 0; margin: 0;">' + ''.join(items) + '</ul>'
-
-    _trending_cache["time"] = now_time
-    _trending_cache["html"] = res
-    return res
 
 
 def _open_discussions_sidebar_html(conn, limit=5):
@@ -720,6 +666,7 @@ async def view_w(name = '대문', do_type = ''):
             watch_list = 2 if is_starred else 1
         else:
             watch_list = 0
+        ranking_ticket = issue_ranking_ticket(name, conn) if response_data == 200 else ''
         return easy_minify(conn, flask.render_template(
             skin_check(conn),
             imp = [
@@ -730,5 +677,6 @@ async def view_w(name = '대문', do_type = ''):
             ],
             data = div,
             menu = menu,
-            adsense_enabled = monetization_enabled
+            adsense_enabled = monetization_enabled,
+            ranking_ticket = ranking_ticket
         )), response_data

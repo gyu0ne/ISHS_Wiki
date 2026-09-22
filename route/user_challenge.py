@@ -1,4 +1,5 @@
 from .tool.func import *
+from .tool.ranking_challenges import RANKING_CHALLENGES, earned_ranking_challenges
 
 def do_make_challenge_design(img, title, info, disable = 0):
     if disable == 1:
@@ -30,8 +31,10 @@ async def user_challenge():
         if ip_or_user(ip) == 1:
             return redirect(conn, '/user')
 
+        ranking_challenges = (earned_ranking_challenges(conn, ip, db_change)
+                              if 'rankings' in flask.current_app.extensions else ())
         if flask.request.method == 'POST':
-            user_exp = 0
+            user_exp = sum(item.experience for item in ranking_challenges)
 
             curs.execute(db_change('select count(*) from history where ip = ?'), [ip])
             db_data = curs.fetchall()
@@ -233,8 +236,6 @@ async def user_challenge():
             else:
                 data_html_red += data_html
                 
-            data_html = data_html_green + data_html_red
-
             curs.execute(db_change('select data from user_set where name = ? and id = ?'), ['challenge_admin', ip])
             db_data = curs.fetchall()
             disable = 1 if db_data else 0
@@ -249,6 +250,19 @@ async def user_challenge():
             else:
                 data_html_red += data_html
                 
+            for challenge in RANKING_CHALLENGES:
+                achieved = challenge in ranking_challenges
+                data_html = '<div style="word-break:keep-all">' + do_make_challenge_design(
+                    challenge.title,
+                    get_lang(conn, 'challenge_title_' + challenge.key),
+                    get_lang(conn, 'challenge_info_' + challenge.key, 1),
+                    int(achieved)
+                ) + '</div>'
+                if achieved:
+                    data_html_green += data_html
+                else:
+                    data_html_red += data_html
+
             data_html = data_html_green + data_html_red
             
             return easy_minify(conn, flask.render_template(skin_check(conn),

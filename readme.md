@@ -33,6 +33,17 @@ docker build . -t ishs-wiki
 docker run -p 3000:3000 -v data:/app/data --name ishs-wiki ishs-wiki
 ```
 
+## 테스트 실행
+
+가상환경을 활성화한 뒤 저장소 루트에서 실행합니다. 개발 의존성에는 운영 의존성과 `pytest`가 포함됩니다.
+
+```sh
+python -m pip install -r requirements-dev.txt
+python -m pytest -q
+```
+
+`pytest`는 기존 `unittest` 테스트와 fixture·parametrize를 사용하는 테스트를 함께 실행합니다.
+
 # 변경사항
 ## 0.0.1 - 2025.08.29 (알파버전)
 * 기본 세팅 수정

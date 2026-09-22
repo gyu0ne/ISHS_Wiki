@@ -974,6 +974,8 @@ async def get_acl_list(type_data = 'normal'):
 
 ## Func-simple-with_DB
 async def get_user_title_list(conn, ip = ''):
+    from .ranking_challenges import earned_ranking_challenges
+
     curs = conn.cursor()
 
     ip = ip_check() if ip == '' else ip
@@ -1026,6 +1028,10 @@ async def get_user_title_list(conn, ip = ''):
 
     if await acl_check(tool = 'all_admin_auth') != 1:
         user_title['✅'] = '✅ admin'
+
+    if 'rankings' in flask.current_app.extensions:
+        for challenge in earned_ranking_challenges(conn, ip, db_change):
+            user_title[challenge.title] = challenge.title + ' ' + get_lang(conn, 'challenge_title_' + challenge.key)
     
     return user_title
     

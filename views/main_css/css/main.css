@@ -1,3 +1,14 @@
+@font-face {
+    font-family: 'Noto Distorted Face';
+    src: url('/views/main_css/fonts/noto-distorted-face.woff2') format('woff2');
+    font-display: swap;
+    unicode-range: U+1FAEA;
+}
+
+.namu select[name="user_title"] {
+    font-family: 'Noto Distorted Face', 'SUIT', sans-serif;
+}
+
 /* 기본 전체 옵션 */
 .opennamu_main video, 
 .opennamu_main table, 

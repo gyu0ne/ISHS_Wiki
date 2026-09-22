@@ -33,6 +33,17 @@ docker build . -t ishs-wiki
 docker run -p 3000:3000 -v data:/app/data --name ishs-wiki ishs-wiki
 ```
 
+## Running tests
+
+Activate a virtual environment, then run these commands from the repository root. The development requirements include the runtime dependencies and `pytest`.
+
+```sh
+python -m pip install -r requirements-dev.txt
+python -m pytest -q
+```
+
+`pytest` runs both the existing `unittest` tests and the tests that use fixtures and parametrization.
+
 # Changes
 ## 0.0.1 - 2025.08.29 (Alpha)
 * Basic settings modified

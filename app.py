@@ -532,12 +532,13 @@ def _capture_login_referer():
                         flask.session['__login_prev_title'] = title
     except Exception:
         pass
-from route.view_w import _recent_changes_sidebar_simple_html, _trending_sidebar_html, _open_discussions_sidebar_html
+from route.view_w import _recent_changes_sidebar_simple_html, _open_discussions_sidebar_html
+from route.rankings import init_rankings
+from route.riro_reauth_target import REAUTH_TARGET_GENERATIONS
 
 # 사이드바 전역 캐시 (백그라운드에서 주기적으로 갱신됨)
 _sidebar_global_cache = {
     "recent": '<div style="padding: 10px; color: var(--muted); font-size: 0.9em;">준비 중...</div>',
-    "trending": '<div style="padding: 10px; color: var(--muted); font-size: 0.9em;">준비 중...</div>',
     "discussions": '<div style="padding: 10px; color: var(--muted); font-size: 0.9em;">준비 중...</div>',
     "updating": False
 }
@@ -555,17 +556,13 @@ def _sidebar_worker():
         _sidebar_global_cache["updating"] = True
         try:
             with get_db_connect() as conn:
-                # 실시간 인기 문서 및 최근 토론 백그라운드 갱신
-                trending_html = _trending_sidebar_html(conn, limit=10)
                 discussion_html = _open_discussions_sidebar_html(conn, limit=5)
                 
                 # 성공 시 업데이트
-                _sidebar_global_cache["trending"] = trending_html
                 _sidebar_global_cache["discussions"] = discussion_html
         except Exception as e:
             # 오류 발생 시 사용자에게 '오류 발생' 임을 명시 (데이터 없음과 구분)
             error_msg = f'<div style="padding: 10px; color: #ef4444; font-size: 0.85em;">[오류] 데이터를 갱신할 수 없습니다.</div>'
-            _sidebar_global_cache["trending"] = error_msg
             _sidebar_global_cache["discussions"] = error_msg
             print(f"[WARN] Sidebar background update failed: {e}")
         finally:
@@ -581,7 +578,6 @@ try:
     print("[INFO] Initializing sidebar cache...")
     with get_db_connect() as conn:
         _sidebar_global_cache["recent"] = _recent_changes_sidebar_simple_html(conn, limit=10)
-        _sidebar_global_cache["trending"] = _trending_sidebar_html(conn, limit=10)
         _sidebar_global_cache["discussions"] = _open_discussions_sidebar_html(conn, limit=5)
     print("[INFO] Sidebar cache initialized.")
 except:
@@ -598,9 +594,40 @@ def inject_recent_sidebar():
     global _sidebar_global_cache
     return dict(
         recent_sidebar=_sidebar_global_cache["recent"], 
-        trending_sidebar=_sidebar_global_cache["trending"],
+        trending_sidebar='',
         discussion_sidebar=_sidebar_global_cache["discussions"]
     )
+
+async def _render_rankings_page(title, body):
+    with get_db_connect() as conn:
+        return easy_minify(conn, flask.render_template(
+            skin_check(conn),
+            imp = [title, await wiki_set(), await wiki_custom(conn), wiki_css([0])],
+            data = body,
+            menu = 0,
+            adsense_enabled = False,
+            ranking_ticket = ''
+        ))
+
+def _ranking_member_is_eligible(conn, user_id):
+    curs = conn.cursor()
+    curs.execute(db_change("select data from user_set where id = ? and name = 'generation'"), [user_id])
+    generation = curs.fetchone()
+    if not generation or not str(generation[0]).isdigit() or int(generation[0]) not in REAUTH_TARGET_GENERATIONS:
+        return True
+    curs.execute(db_change("select data from user_set where id = ? and name = 'riro_reauthed'"), [user_id])
+    verified = curs.fetchone()
+    return bool(verified and verified[0] == '1')
+
+init_rankings(
+    app,
+    connect = get_db_connect,
+    db_change = db_change,
+    acl_check = acl_check,
+    get_display_name = get_display_name,
+    render_page = _render_rankings_page,
+    member_is_eligible = _ranking_member_is_eligible
+)
 
 @app.after_request
 def _redirect_login_to_last_doc(response):
@@ -1271,15 +1298,6 @@ signal.signal(signal.SIGTERM, signal_handler)
 signal.signal(signal.SIGINT, signal_handler)
 
 atexit.register(terminate_golang)
-
-@app.route('/api/trending')
-def api_trending():
-    # 백그라운드 워커가 이미 계산해둔 HTML을 즉시 반환하여 타임아웃 방지
-    global _sidebar_global_cache
-    return flask.jsonify({
-        'response': 'ok', 
-        'data': _sidebar_global_cache["trending"]
-    })
 
 @app.route('/api/sidebar/recent')
 def api_recent_sidebar():

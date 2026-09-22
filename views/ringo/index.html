@@ -41,9 +41,10 @@
   <link href="https://cdn.jsdelivr.net/gh/sun-typeface/SUIT/fonts/static/woff2/SUIT.css" rel="stylesheet">
   <script defer src="https://code.iconify.design/1/1.0.3/iconify.min.js"></script>
   <script defer src="/views/ringo/js/main.js.cache_v3"></script>
-  <script defer src="/views/ringo/js/sidebar.js.cache_v8"></script>
+  <script defer src="/views/ringo/js/sidebar.js.cache_v10"></script>
+  <script defer src="/views/ringo/js/contributors.js.cache_v1"></script>
   <script defer src="/views/ringo/js/skin_set.js.cache_v15"></script>
-  <script defer src="/views/main_css/js/func/autocomplete.js" charset="UTF-8"></script>
+  <script defer src="/views/main_css/js/func/autocomplete.js.cache_v1" charset="UTF-8"></script>
   
   {% if adsense_enabled %}
   <!-- AdSense - defer로 DOM 로드 후 실행 -->
@@ -76,6 +77,16 @@
       --success-bg: #eaffe6;
       --success-border: #c7e7c7;
       --success-text: #126b12;
+      --rank-gold-bg: #fff0bd;
+      --rank-gold-text: #744600;
+      --rank-gold-border: #dfb34c;
+      --rank-silver-bg: #edf1f6;
+      --rank-silver-text: #45566c;
+      --rank-silver-border: #b7c3d3;
+      --rank-bronze-bg: #f9e7db;
+      --rank-bronze-text: #80451f;
+      --rank-bronze-border: #d5a37e;
+      --rank-neutral: var(--muted);
     }
 
     html,
@@ -88,7 +99,7 @@
     body.namu {
       background: var(--bg);
       color: var(--text);
-      font-family: 'SUIT', system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+      font-family: 'Noto Distorted Face', 'SUIT', system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
       font-size: var(--base-font);
       text-size-adjust: 100%;
     }
@@ -278,6 +289,455 @@
     aside.do_fixed {
       position: static;
       width: 100%;
+    }
+
+    .ringo_trending_rank {
+      display: inline-block;
+      min-width: 2em;
+      margin-right: 8px;
+      color: var(--rank-neutral);
+      font-weight: 700;
+    }
+
+    .ringo_ranked[data-rank="1"] {
+      --rank-bg: var(--rank-gold-bg);
+      --rank-text: var(--rank-gold-text);
+      --rank-border: var(--rank-gold-border);
+    }
+
+    .ringo_ranked[data-rank="2"] {
+      --rank-bg: var(--rank-silver-bg);
+      --rank-text: var(--rank-silver-text);
+      --rank-border: var(--rank-silver-border);
+    }
+
+    .ringo_ranked[data-rank="3"] {
+      --rank-bg: var(--rank-bronze-bg);
+      --rank-text: var(--rank-bronze-text);
+      --rank-border: var(--rank-bronze-border);
+    }
+
+    .ringo_rank_badge {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      box-sizing: border-box;
+      width: 32px;
+      height: 32px;
+      flex-shrink: 0;
+      border-radius: 50%;
+      border: 1px solid var(--rank-border, transparent);
+      background: var(--rank-bg, transparent);
+      color: var(--rank-text, var(--rank-neutral));
+      font-weight: 700;
+      font-variant-numeric: tabular-nums;
+      line-height: 1;
+    }
+
+    .opennamu_main #main_table_set.ringo_contributor_table,
+    .opennamu_main .ringo_document_table {
+      width: 100%;
+      border: 0;
+      border-collapse: separate;
+      border-spacing: 0;
+      text-align: left;
+    }
+
+    .opennamu_main .ringo_contributor_table th,
+    .opennamu_main .ringo_contributor_table td,
+    .opennamu_main .ringo_document_table th,
+    .opennamu_main .ringo_document_table td {
+      padding: 12px 16px;
+      border: 0;
+      border-bottom: 1px solid var(--hr);
+      vertical-align: middle;
+    }
+
+    .ringo_contributor_table th,
+    .ringo_document_table th {
+      color: var(--rank-neutral);
+      background: var(--bg);
+      font-size: 14px;
+    }
+
+    .ringo_contributor_table th:first-child,
+    .ringo_contributor_table td:first-child {
+      width: 48px;
+      text-align: center;
+    }
+
+    .ringo_contributor_table th:last-child,
+    .ringo_contributor_table .ringo_contributor_score {
+      width: 80px;
+      text-align: right;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .ringo_contributor_table .ringo_ranked:is([data-rank="1"], [data-rank="2"], [data-rank="3"]) {
+      background: color-mix(in srgb, var(--rank-bg) 40%, var(--surface));
+      font-weight: 700;
+    }
+
+    .ringo_contributor_name {
+      overflow-wrap: anywhere;
+    }
+
+    .ringo_my_rank {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      margin-top: 20px;
+      padding: 16px;
+      border: 1px solid var(--hr);
+      border-radius: var(--radius);
+      background: var(--bg);
+      color: var(--text);
+      word-break: keep-all;
+    }
+
+    .ringo_my_rank_values {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: baseline;
+      gap: 12px;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .ringo_my_rank_values strong {
+      font-size: 24px;
+      line-height: 1.3;
+    }
+
+    .ringo_my_rank_values > * {
+      white-space: nowrap;
+    }
+
+    .ringo_document_contributors {
+      display: flex;
+      justify-content: flex-end;
+      margin-top: 24px;
+      padding-top: 16px;
+      border-top: 1px solid var(--hr);
+    }
+
+    .ringo_document_contributors a {
+      display: inline-flex;
+      align-items: center;
+      box-sizing: border-box;
+      min-height: 44px;
+      padding: 8px 12px;
+      border: 1px solid var(--hr);
+      border-radius: 10px;
+      color: var(--text);
+      background: var(--surface);
+      gap: 12px;
+      font-size: 14px;
+      font-weight: 400;
+      text-decoration: none;
+    }
+
+    .ringo_document_contributors a:hover {
+      border-color: var(--text);
+    }
+
+    .ringo_rank_toolbar {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 20px;
+    }
+
+    .ringo_rank_document_title {
+      margin: 0 0 20px;
+      font-size: 20px;
+      line-height: 1.5;
+      overflow-wrap: anywhere;
+    }
+
+    .ringo_rank_document_title a {
+      color: var(--text);
+    }
+
+    .ringo_document_contributors a:focus-visible {
+      outline: 2px solid var(--text);
+      outline-offset: 2px;
+    }
+
+    .ringo_rank_period {
+      display: flex;
+      flex-wrap: wrap;
+      width: fit-content;
+      max-width: 100%;
+      gap: 4px;
+      margin-bottom: 0;
+      padding: 4px;
+      border: 1px solid var(--hr);
+      border-radius: var(--radius);
+      background: var(--bg);
+    }
+
+    .ringo_rank_period a {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      box-sizing: border-box;
+      min-height: 44px;
+      padding: 8px 16px;
+      border: 1px solid transparent;
+      border-radius: calc(var(--radius) - 4px);
+      color: var(--text);
+      font-weight: 700;
+      word-break: keep-all;
+    }
+
+    .ringo_rank_period a[aria-current="page"] {
+      border-color: var(--text);
+      background: var(--surface);
+    }
+
+    .ringo_rank_period a:focus-visible,
+    .ringo_my_contributions:focus-visible,
+    .ringo_rank_back:focus-visible,
+    .ringo_document_table a:focus-visible {
+      outline: 2px solid var(--text);
+      outline-offset: -2px;
+    }
+
+    .ringo_rank_month {
+      order: 1;
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 8px;
+      margin: 0;
+    }
+
+    .ringo_rank_month label {
+      font-weight: 700;
+      word-break: keep-all;
+    }
+
+    .ringo_rank_month input,
+    .ringo_rank_month button {
+      box-sizing: border-box;
+      min-height: 44px;
+      max-width: 100%;
+      padding: 8px 12px;
+      border: 1px solid var(--hr);
+      border-radius: 10px;
+      background: var(--surface);
+      color: var(--text);
+      font: inherit;
+    }
+
+    .opennamu_main .ringo_rank_month input {
+      width: auto;
+      min-width: 0;
+    }
+
+    .ringo_rank_month button {
+      cursor: pointer;
+      font-weight: 700;
+    }
+
+    .ringo_rank_month input:focus-visible,
+    .ringo_rank_month button:focus-visible {
+      outline: 2px solid var(--text);
+      outline-offset: -2px;
+    }
+
+    .ringo_my_rank_title {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      font-size: 14px;
+    }
+
+    .ringo_my_contributions {
+      justify-content: center;
+      box-sizing: border-box;
+      padding: 8px 12px;
+      border: 1px solid var(--hr);
+      border-radius: 10px;
+      background: var(--surface);
+      text-decoration: none;
+    }
+
+    .ringo_my_contributions:hover {
+      border-color: var(--text);
+    }
+
+    @media (max-width: 1024px) {
+      .ringo_rank_month {
+        order: 3;
+        flex-basis: 100%;
+      }
+    }
+
+    @media (max-width: 640px) {
+      .ringo_my_contributions,
+      .ringo_document_contributors a {
+        width: 100%;
+        justify-content: center;
+      }
+    }
+
+    .ringo_my_contributions,
+    .ringo_rank_back {
+      display: inline-flex;
+      align-items: center;
+      min-height: 44px;
+      color: var(--text);
+      font-size: 14px;
+    }
+
+    .ringo_rank_toolbar .ringo_rank_back {
+      order: 2;
+      gap: 8px;
+      margin-left: auto;
+      padding: 8px 12px;
+      box-sizing: border-box;
+      border: 1px solid var(--hr);
+      border-radius: 10px;
+      color: var(--text);
+      background: var(--surface);
+      text-decoration: none;
+      white-space: nowrap;
+    }
+
+    .ringo_rank_back::before {
+      content: "←";
+    }
+
+    .ringo_rank_back:hover {
+      border-color: var(--text);
+    }
+
+    .ringo_document_table td:first-child {
+      overflow-wrap: anywhere;
+      word-break: keep-all;
+    }
+
+    .ringo_document_table th:last-child,
+    .ringo_document_table td:last-child {
+      width: 100px;
+      text-align: right;
+      white-space: nowrap;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .ringo_contribution_summary {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      margin: 0 0 20px;
+      padding: 16px;
+      border-radius: var(--radius);
+      background: var(--bg);
+      font-size: 14px;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .ringo_contribution_summary strong {
+      font-size: 24px;
+      line-height: 1.3;
+    }
+
+    .ringo_ranking_empty {
+      margin: 24px 0;
+      color: var(--muted);
+      word-break: keep-all;
+    }
+
+    .ringo_rank_pagination {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 8px;
+      margin-top: 20px;
+    }
+
+    .ringo_rank_pagination a {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      box-sizing: border-box;
+      min-width: 44px;
+      min-height: 44px;
+      padding: 8px 12px;
+      border: 1px solid var(--hr);
+      border-radius: var(--radius);
+      background: var(--surface);
+      color: var(--text);
+      font-variant-numeric: tabular-nums;
+    }
+
+    .ringo_rank_pagination a[aria-current="page"] {
+      border-color: var(--bar-a);
+      background: var(--bg);
+      font-weight: 700;
+    }
+
+    .ringo_rank_pagination a:focus-visible,
+    #sidebar_contributors a:focus-visible {
+      outline: 2px solid var(--text);
+      outline-offset: 2px;
+    }
+
+    .ringo_rank_pagination a:focus-visible {
+      outline-offset: -3px;
+    }
+
+    #sidebar_contributors {
+      margin-bottom: 16px;
+    }
+
+    .ringo_contributor_heading {
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+      gap: 8px;
+    }
+
+    .ringo_contributor_heading h3 {
+      margin: 0;
+    }
+
+    .ringo_contributor_heading > a {
+      display: inline-flex;
+      align-items: center;
+      min-height: 44px;
+      flex-shrink: 0;
+      font-size: 14px;
+      color: var(--text);
+    }
+
+    .ringo_contributor_list li {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .ringo_contributor_list .ringo_contributor_name {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .ringo_contributor_list .ringo_contributor_score {
+      flex-shrink: 0;
+      text-align: right;
+      font-variant-numeric: tabular-nums;
+      white-space: nowrap;
+    }
+
+    .ringo_trending_message {
+      margin: 8px 2px;
+      color: var(--muted);
+      font-size: 14px;
     }
 
     .main {
@@ -750,8 +1210,22 @@
       --success-bg: #143314;
       --success-border: #2e4d2e;
       --success-text: #a8e6a8;
+      --rank-gold-bg: #493a19;
+      --rank-gold-text: #ffdc82;
+      --rank-gold-border: #8e7131;
+      --rank-silver-bg: #303b49;
+      --rank-silver-text: #d4deeb;
+      --rank-silver-border: #65758c;
+      --rank-bronze-bg: #493226;
+      --rank-bronze-text: #f1bf9f;
+      --rank-bronze-border: #93694c;
+      --rank-neutral: #aab3bf;
       background: var(--bg);
       color: var(--text);
+    }
+
+    .ringo_rank_month input {
+      color-scheme: dark;
     }
 
     /* Dark Mode User Info Header */
@@ -1020,6 +1494,22 @@
       background-color: #f3f4f6;
     }
 
+    .autocomplete-items.ringo_trending_results .ringo_trending_list a {
+      display: flex;
+      align-items: center;
+    }
+
+    .autocomplete-items.ringo_trending_results .ringo_trending_rank {
+      flex: 0 0 2em;
+      margin-right: 0;
+    }
+
+    .autocomplete-items.ringo_trending_results .ringo_trending_title {
+      flex: 1;
+      min-width: 0;
+      overflow-wrap: break-word;
+    }
+
     /* 다크 모드 대응 */
     {% if request.cookies.get('main_css_darkmode', '') == '1' %}
     .namu .autocomplete-items#autocomplete_results_not_mobile,
@@ -1042,6 +1532,16 @@
     {% endif %}
 
     @media (max-width: 640px) {
+      body.namu #autocomplete_results_not_mobile.ringo_trending_results,
+      body.namu #autocomplete_results_mobile.ringo_trending_results {
+        position: fixed;
+        left: 10px !important;
+        right: 10px !important;
+        width: auto !important;
+        min-width: 0 !important;
+        max-width: none !important;
+      }
+
       .autocomplete-items#autocomplete_results_not_mobile,
       .autocomplete-items#autocomplete_results_mobile {
         left: 0 !important;
@@ -1218,6 +1718,7 @@
               {{'recent_change'|load_lang}}</a>
             <a href="/recent_discuss"><span class="iconify" data-icon="ic:baseline-add-comment"></span>
               {{'recent_discussion'|load_lang}}</a>
+            <a href="/rankings"><span class="iconify" data-icon="ic:baseline-leaderboard"></span> 기여자 순위</a>
             <a href="/bbs/main"><span class="iconify" data-icon="ic:outline-developer-board"></span>
               {{'bbs_main'|load_lang}}</a>
           </div>
@@ -1356,6 +1857,15 @@
           {{data|safe}}
         </div>
 
+        {% if ranking_ticket|default('') %}
+        <div id="ranking_ticket" data-ranking-ticket="{{ ranking_ticket }}" hidden></div>
+        {% if request.view_args and request.view_args.get('name') %}
+        <div class="ringo_document_contributors">
+          <a href="{{ url_for('rankings.document_contributors_page', title=request.view_args['name']) }}">기여자 순위 보기 <span aria-hidden="true">→</span></a>
+        </div>
+        {% endif %}
+        {% endif %}
+
         {% if adsense_enabled %}
         <div class="ad-container" style="margin: 16px 0; min-height: 100px;">
           <ins class="adsbygoogle"
@@ -1416,23 +1926,24 @@
 
       <div class="side_card rc_box" id="sidebar_trending" style="margin-bottom:16px;">
         <h3 style="margin-top:0;">실시간 인기 문서</h3>
-        <div class="rc_wrap">
+        <div class="rc_wrap opennamu_trending_sidebar">
           {{ trending_sidebar|safe }}
         </div>
       </div>
 
+      <section class="side_card rc_box" id="sidebar_contributors" aria-labelledby="sidebar_contributors_heading">
+        <div class="ringo_contributor_heading">
+          <h3 id="sidebar_contributors_heading">기여자 순위</h3>
+          <a href="/rankings">전체 보기</a>
+        </div>
+        <div class="rc_wrap" id="contributors_sidebar_wrap" aria-live="polite">
+          <p class="ringo_trending_message">불러오는 중입니다.</p>
+        </div>
+      </section>
 
 
-      {% if imp[1][7][1] == '' %}
-      <button id="side_button_1" class="side_button selected">{{'edit'|load_lang}}</button><!--
-         --><button id="side_button_2" class="side_button">{{'discussion'|load_lang}}</button><!--
-         --><button id="side_button_3" class="side_button">{{'bbs'|load_lang}}</button>
-      <div id="side_content">
-        Loading...
-      </div>
-      {% else %}
+
       {{imp[1][7][1]|safe}}
-      {% endif %}
     </aside>
 
   </div>
