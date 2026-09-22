@@ -2005,6 +2005,17 @@
   </script>
   {% endif %}
 
+<script>
+  document.querySelectorAll('.ringo_rank_month').forEach(function(form) {
+    var month = form.elements.namedItem('period');
+    month.addEventListener('change', function() {
+      if (month.validity.valid && month.value !== month.defaultValue) {
+        form.requestSubmit();
+      }
+    });
+    form.querySelector('button[type="submit"]').hidden = true;
+  });
+</script>
 </body>
 
 </html>

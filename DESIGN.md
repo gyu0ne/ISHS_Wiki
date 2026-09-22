@@ -69,7 +69,8 @@ tabular values; an unranked account sees `아직 순위가 없습니다.`.
 The summary uses existing `--bg`, `--hr`, `--text`, and `--radius` tokens,
 16px padding, 20px top spacing, and a wrapping flex row with a 12px gap.
 Keep the label and each value intact on narrow screens. It has no medal tint,
-hover treatment, or motion. Private account IDs never enter the page or API.
+hover treatment, or motion. Account IDs are used only in canonical user-document links; visible labels remain
+nicknames and personal rank exposes only rank and score.
 
 ## Pagination and contributor sidebar
 
@@ -100,7 +101,8 @@ Keep the heading `기여자 순위`. Above the table, `ringo_rank_period` provid
 native `전체` and `월별` links with a visible active text-token border and
 `aria-current="page"`; switching period resets pagination to page1. Monthly
 mode opens the current KST calendar month and offers a labelled native month
-input and `보기` submit button. Calendar months use original contribution
+input that submits when a valid changed month is selected. The `보기` submit
+button remains available only without JavaScript. Calendar months use original contribution
 dates after full-history attribution, so restoration never renews the month. The sidebar retains the
 all-time top5 and its existing all-time full-list link.
 
@@ -120,7 +122,7 @@ tokens. At 640px and below, the link spans the summary width below the values.
 Keep visible focus and a text-color border on hover, without animation. The
 document-specific own-rank summary reuses the label/value hierarchy. The link leads to the
 session owner's `/rankings/me` page, with the same period links and a
-`기여자 순위` back link. Other accounts' private identifiers never appear.
+`기여자 순위` back link. No other account's personal contribution list is exposed.
 
 Use a neutral two-column `ringo_document_table`: `문서` and `기여 점수`.
 Reuse table typography,12px/16px cell spacing,header surface and row separators.

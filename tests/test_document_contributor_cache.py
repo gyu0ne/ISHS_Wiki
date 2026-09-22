@@ -73,8 +73,8 @@ def test_shared_document_ranking_keeps_same_name_accounts_and_private_rank(tmp_p
 
     # Then: user-ID tie order keeps separate public rows and the private rank points to row two.
     assert items == (
-        {"name": "같은 이름", "url": "", "score": 1.56},
-        {"name": "같은 이름", "url": "", "score": 1.56},
+        {"name": "같은 이름", "url": "/w/user:member-a", "score": 1.56},
+        {"name": "같은 이름", "url": "/w/user:member-b", "score": 1.56},
     )
     assert my_rank == {"rank": 2, "score": 1.56}
     assert (generated_at, state) == (int(NOW.timestamp()), "ready")
@@ -90,7 +90,7 @@ def test_document_ranking_is_period_scoped_and_hides_numeric_fallback(tmp_path: 
     unknown_document = cache.document_contributors_snapshot("Missing", "member-a")
 
     # Then: January contains only its author and absent keys keep current cache metadata.
-    assert january[0] == ({"name": "같은 이름", "url": "", "score": 1.56},)
+    assert january[0] == ({"name": "같은 이름", "url": "/w/user:member-a", "score": 1.56},)
     assert january[3] == {"rank": 1, "score": 1.56}
     assert unknown_month == ((), int(NOW.timestamp()), "ready", None)
     assert unknown_document == ((), int(NOW.timestamp()), "ready", None)

@@ -210,7 +210,7 @@ def test_view_ticket_rejects_after_session_cookie_state_is_removed(tmp_path):
     assert response.status_code == 400
 
 
-def test_contributors_replays_mature_history_but_returns_only_public_nicknames(tmp_path):
+def test_contributors_replays_mature_history_and_links_nicknames_to_accounts(tmp_path):
     # Given: mature public and restricted history with student-number member IDs.
     test_app = build_test_app(tmp_path)
     client = test_app.app.test_client()
@@ -219,12 +219,13 @@ def test_contributors_replays_mature_history_but_returns_only_public_nicknames(t
     # When: the member requests contributor rankings.
     response = client.get("/api/rankings/contributors")
 
-    # Then: old public contributions appear by nickname, with no raw IDs or restricted totals.
+    # Then: nicknames remain labels and links use the canonical account document.
     payload = response.get_json()
     assert [item["name"] for item in payload["items"]] == ["별빛", "달빛"]
-    assert all(item["url"] == "" for item in payload["items"])
-    assert "20261234" not in response.get_data(as_text=True)
-    assert "20265678" not in response.get_data(as_text=True)
+    assert [item["url"] for item in payload["items"]] == [
+        "/w/user:20261234", "/w/user:20265678"
+    ]
+    assert all(set(item) == {"name", "url", "score"} for item in payload["items"])
 
 
 def test_contributor_cache_keeps_default_all_and_user_view_policies(tmp_path):
@@ -341,8 +342,10 @@ def test_personal_rank_uses_account_identity_and_handles_unranked_members(tmp_pa
         assert page.index('aria-label="내 순위"') > page.index("</table>")
         assert api_response.headers["Cache-Control"] == "private, no-store"
         assert page_response.headers["Cache-Control"] == "private, no-store"
-        assert "20261234" not in api_response.get_data(as_text=True)
-        assert "20265678" not in api_response.get_data(as_text=True)
+        assert [item["url"] for item in api_response.get_json()["items"]] == [
+            "/w/user:20261234", "/w/user:20265678"
+        ]
+        assert all(item["name"] == "같은 이름" for item in api_response.get_json()["items"])
         if rank is None:
             assert api_response.get_json()["me"] is None
             assert "아직 순위가 없습니다." in personal

@@ -185,7 +185,7 @@ class ContributorCache:
                     if not name or (name == user_id and name.isdigit())
                     else (
                         name,
-                        "/w/user:" + quote(user_id, safe="") if name == user_id else "",
+                        "/w/user:" + quote(user_id, safe=""),
                     )
                 )
             return identities[user_id]
