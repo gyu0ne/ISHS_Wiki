@@ -228,7 +228,6 @@ with get_db_connect(init_mode = True) as conn:
     app.config['JSON_AS_ASCII'] = False
     app.config['JSONIFY_PRETTYPRINT_REGULAR'] = False
     app.config['MAX_CONTENT_LENGTH'] = 16 * 1000 * 1000
-    app.config['MAX_FORM_MEMORY_SIZE'] = app.config['MAX_CONTENT_LENGTH']
     app.config['SEND_FILE_MAX_AGE_DEFAULT'] = 3600
     if run_mode == 'dev':
         app.config['TEMPLATES_AUTO_RELOAD'] = True
@@ -769,6 +768,15 @@ def check_reauth_global():
                 reauth_data = curs.fetchone()
                 if not reauth_data or reauth_data[0] != '1':
                     return flask.redirect('/w/user:' + url_pas(user_id))
+
+@app.before_request
+def _document_form_limits() -> None:
+    if (
+        flask.request.method == 'POST'
+        and flask.request.endpoint in ('edit', 'api_w_render_exter')
+        and flask.session.get('id')
+    ):
+        flask.request.max_form_memory_size = flask.request.max_content_length
 
 app.before_request(check_view_log)
 
