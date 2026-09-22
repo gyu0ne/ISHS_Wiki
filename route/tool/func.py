@@ -203,6 +203,9 @@ async def python_to_golang(func_name, other_set = {}):
         while retry_count < max_retry:
             try:
                 async with session.post('http://localhost:' + port_data + '/', data = json_dumps(other_set)) as res:
+                    if func_name == 'api_func_acl' and not 200 <= res.status < 300:
+                        return {"response": "error", "data": "Go backend HTTP error."}
+
                     data = await res.json()
 
                     if "response" in data and data["response"] == "error":
@@ -1884,7 +1887,7 @@ async def acl_check(name = '', tool = '', topic_num = '', ip = '', memo = ''):
 
     data = await python_to_golang('api_func_acl', other_set)
 
-    result = 0 if data["data"] else 1
+    result = 0 if isinstance(data, dict) and data.get("response") == "ok" and data.get("data") is True else 1
 
     if memo != '' and result == 0:
         other_set = {}
