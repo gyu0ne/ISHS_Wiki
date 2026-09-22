@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import html
 import sqlite3
+from time import time
 from typing import Protocol
 
 import flask
@@ -22,8 +23,13 @@ class ChallengeConnection(Protocol):
     def rollback(self) -> None: ...
 
 
-async def refresh_challenges(connection: ChallengeConnection, member_id: str) -> tuple[RankingChallenge, ...]:
+async def refresh_challenges(
+    connection: ChallengeConnection, member_id: str, *, automatic: bool = False,
+) -> tuple[RankingChallenge, ...]:
     if ip_or_user(member_id) == 1:
+        return ()
+    last_member, last_refresh = flask.session.get("challenge_refresh", ("", 0))
+    if automatic and last_member == member_id and 0 <= time() - last_refresh < 60:
         return ()
     refreshed: dict[str, tuple[RankingChallenge, ...]] = flask.g.setdefault("challenge_progress", {})
     if member_id in refreshed:
@@ -103,4 +109,5 @@ async def refresh_challenges(connection: ChallengeConnection, member_id: str) ->
             connection.rollback()
         cursor.close()
     refreshed[member_id] = rankings
+    flask.session["challenge_refresh"] = (member_id, time())
     return rankings

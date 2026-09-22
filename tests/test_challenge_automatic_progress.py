@@ -31,6 +31,7 @@ def test_normal_browsing_refreshes_progress_and_notifies_once(tmp_path: Path, ra
         if rankings_enabled:
             connection.execute("insert into contributor_monthly_results values (?, ?)",
                                ["2026-01", json.dumps(["20261234"])])
+    store.clock.value += 60
     second = client.get("/__test/ordinary-page").json
     assert int(second["level"][0]) > int(first["level"][0])
     assert len(second["notices"]) == len(first["notices"]) + (4 if rankings_enabled else 2)
@@ -128,6 +129,7 @@ def test_normal_page_keeps_rank_xp_when_rank_table_vanishes(tmp_path: Path) -> N
         ).fetchone()
         connection.execute("drop table contributor_monthly_results")
 
+    store.clock.value += 60
     response = client.get("/__test/ordinary-page")
     assert response.status_code == 200
     assert response.json["level"][:2] == [previous["level"], previous["experience"]]
