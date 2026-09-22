@@ -241,3 +241,30 @@ def test_production_autocommit_wrapper_rolls_back_failed_refresh_and_retries(tmp
     cache._refresh()
     assert_full_replay_matches(cache, database)
     assert cache.snapshot("member-a")[3] is None
+
+
+@pytest.mark.parametrize('format_name', ['legacy', 'broken-json', 'broken-compression'])
+def test_old_or_broken_checkpoint_is_resaved_compressed(tmp_path: Path, format_name: str) -> None:
+    import zlib
+    from base64 import b64decode
+    from route.tool.ranking_contribution_engine import DocumentContributionEngine
+
+    cache = build_cache(tmp_path)
+    database = tmp_path / 'document-contributors.sqlite3'
+    with sqlite3.connect(database) as connection:
+        saved = connection.execute('select payload from contributor_checkpoints').fetchone()[0]
+        replacements = {
+            'legacy': zlib.decompress(b64decode(saved[5:])).decode(),
+            'broken-json': '[]',
+            'broken-compression': 'zlib:!',
+        }
+        connection.execute('update contributor_checkpoints set payload = ?', (replacements[format_name],))
+        connection.execute("update data set data = data || '!' where title = 'Shared'")
+    cache = restarted(cache)
+    cache._refresh()
+    assert_full_replay_matches(cache, database)
+    with sqlite3.connect(database) as connection:
+        resaved = connection.execute('select payload from contributor_checkpoints').fetchone()[0]
+    assert resaved.startswith('zlib:')
+    restored = DocumentContributionEngine.load_checkpoint(resaved)
+    assert restored.text
