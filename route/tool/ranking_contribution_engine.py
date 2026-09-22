@@ -6,11 +6,12 @@ from copy import deepcopy
 from datetime import date, datetime
 from unicodedata import normalize
 
-from diff_match_patch import diff_match_patch
+from .ranking_text_diff import ContributionDiffer
 
 from .ranking_contribution_scores import ContributionBucket, ContributionScores, HistoryRevision
 from .ranking_contribution_state import DocumentState, MATURITY, REMOVAL_GRACE, TokenState, as_kst, can_own
 from .ranking_replay_checkpoint import decode_checkpoint, encode_checkpoint
+from .ranking_revision_snapshot import RevisionSnapshot, restore_revision
 
 
 class DocumentContributionEngine:
@@ -27,7 +28,8 @@ class DocumentContributionEngine:
         self.last_applied_at: datetime | None = None
         self.uncertain = False
         self.frozen = False
-        self.differ = diff_match_patch()
+        self.differ = ContributionDiffer()
+        self.revision_snapshots: dict[int, RevisionSnapshot] = {}
 
     @property
     def text(self) -> str:
@@ -64,10 +66,12 @@ class DocumentContributionEngine:
                     and (self.credit_limit is None or number <= self.credit_limit))
                 else None
             )
-            self.apply(self.title, normalize("NFC", revision.data), at, author,
-                       stored_at.date() if author is not None else None,
-                       revision.ip if revision.ip in member_ids else None,
-                       allow_removal_grace=True)
+            if not restore_revision(self, revision, at):
+                self.apply(self.title, normalize("NFC", revision.data), at, author,
+                           stored_at.date() if author is not None else None,
+                           revision.ip if revision.ip in member_ids else None,
+                           allow_removal_grace=True)
+            self.revision_snapshots[number] = RevisionSnapshot.capture(self.documents[self.title])
             self.uncertain = False
             self.last_applied_at = at
 

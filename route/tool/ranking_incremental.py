@@ -55,7 +55,7 @@ class DocumentCheckpoint:
 
     def encode(self) -> str:
         return json.dumps({
-            "version": 1,
+            "version": 2,
             "body_hash": self.body_hash, "last_id": self.last_id,
             "first_at": self.first_at.isoformat() if self.first_at else None,
             "future_at": self.future_at.isoformat() if self.future_at else None,
@@ -67,7 +67,7 @@ class DocumentCheckpoint:
     @classmethod
     def decode(cls, payload: str) -> DocumentCheckpoint:
         value = json.loads(payload)
-        if value["version"] != 1:
+        if value["version"] != 2:
             raise InvalidCheckpoint("Unsupported contribution metadata version")
         return cls(
             value["body_hash"], int(value["last_id"]),

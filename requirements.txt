@@ -9,6 +9,7 @@ asyncio
 requests
 
 diff-match-patch
+rapidfuzz==3.14.6
 
 pillow
 

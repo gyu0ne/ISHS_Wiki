@@ -70,7 +70,7 @@ def test_checkpoint_rejects_invalid_token_references():
     import pytest
     from route.tool.ranking_replay_checkpoint import InvalidCheckpoint
     engine = ranking_contributions.DocumentContributionEngine('Page')
-    payload = [1, 'Page', None, None, None, False, False, '', [], [], []]
+    payload = [2, 'Page', None, None, None, False, False, '', [], [], [], []]
     payload[7], payload[8] = 'x', [99]
     # When loading it, then the boundary rejects it before any scoring occurs.
     with pytest.raises(InvalidCheckpoint):
@@ -89,7 +89,7 @@ def test_compressed_checkpoint_remains_small_and_reads_legacy_json():
                                     'alice', '', len(body), '', '')], {'alice'}, now)
     compressed = engine.dump_checkpoint()
     legacy = zlib.decompress(b64decode(compressed[5:])).decode()
-    assert json.loads(legacy)[0] == 1
+    assert json.loads(legacy)[0] == 2
     assert len(compressed.encode()) < len(legacy.encode()) / 10
     for payload in (compressed, legacy):
         resumed = engine.load_checkpoint(payload)

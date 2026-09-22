@@ -8,6 +8,7 @@ from datetime import date, datetime
 from typing import TYPE_CHECKING, TypeAlias
 
 from .ranking_contribution_state import DocumentState, TokenState
+from .ranking_revision_snapshot import RevisionSnapshot
 
 if TYPE_CHECKING:
     from .ranking_contribution_engine import DocumentContributionEngine
@@ -68,11 +69,13 @@ def encode_checkpoint(engine: DocumentContributionEngine) -> str:
         for token in engine.tokens.values()
     ]
     document = engine.documents.get(engine.title, DocumentState('', ()))
-    payload = [1, engine.title, engine.credit_limit, engine.last_revision,
+    payload = [2, engine.title, engine.credit_limit, engine.last_revision,
                engine.last_applied_at.isoformat() if engine.last_applied_at else None,
                engine.uncertain, engine.frozen, document.text, list(document.placements),
                [[text, list(placements)] for text, placements in engine.deleted_spans[engine.title]],
-               tokens]
+               tokens,
+               [[number, snapshot.digest, snapshot.length, snapshot.ranges]
+                for number, snapshot in engine.revision_snapshots.items()]]
     serialized = json.dumps(payload, ensure_ascii=False, separators=(',', ':')).encode()
     return 'zlib:' + b64encode(zlib.compress(serialized, level=1)).decode('ascii')
 
@@ -85,7 +88,7 @@ def decode_checkpoint(payload: str, engine_type: type[DocumentContributionEngine
         except (zlib.error, Base64Error, UnicodeDecodeError) as error:
             raise InvalidCheckpoint('Invalid compressed checkpoint') from error
     data = _list(json.loads(payload))
-    if len(data) != 11 or _int(data[0]) != 1:
+    if len(data) != 12 or _int(data[0]) != 2:
         raise InvalidCheckpoint('Unsupported replay checkpoint version')
     engine = engine_type(_str(data[1]), None if data[2] is None else _int(data[2]))
     engine.last_revision = None if data[3] is None else _int(data[3])
@@ -115,4 +118,28 @@ def decode_checkpoint(payload: str, engine_type: type[DocumentContributionEngine
     if any(len(text) != len(ids) or any(index < 0 or index >= engine.next_token_id for index in ids)
            for text, ids in spans):
         raise InvalidCheckpoint('Invalid token references')
+    for item in _list(data[11]):
+        row = _list(item)
+        if len(row) != 4:
+            raise InvalidCheckpoint('Invalid revision snapshot')
+        number, digest, length = _int(row[0]), _str(row[1]), _int(row[2])
+        if (number <= 0 or number > (engine.last_revision or 0) or number in engine.revision_snapshots
+                or len(digest) != 64 or any(character not in '0123456789abcdef' for character in digest)
+                or length < 0 or length > engine.next_token_id):
+            raise InvalidCheckpoint('Invalid revision snapshot metadata')
+        ranges: list[tuple[int, int]] = []
+        for raw_range in _list(row[3]):
+            pair = _list(raw_range)
+            if len(pair) != 2:
+                raise InvalidCheckpoint('Invalid revision snapshot range')
+            start, count = _int(pair[0]), _int(pair[1])
+            if start < 0 or count <= 0 or start + count > engine.next_token_id:
+                raise InvalidCheckpoint('Invalid revision snapshot range')
+            ranges.append((start, count))
+        ordered = sorted(ranges)
+        if (sum(count for _, count in ranges) != length
+                or any(start + count > next_start
+                       for (start, count), (next_start, _) in zip(ordered, ordered[1:]))):
+            raise InvalidCheckpoint('Invalid revision snapshot placements')
+        engine.revision_snapshots[number] = RevisionSnapshot(digest, length, tuple(ranges))
     return engine
