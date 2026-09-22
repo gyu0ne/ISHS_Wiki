@@ -177,6 +177,18 @@ def compute_contribution_scores(
             index, revision = group[next_position]
             heappush(queue, (as_kst(revision.date), index, title, next_position))
 
+    frozen_titles: set[str] = set()
+
+    def freeze_credit(title: str) -> None:
+        if credit_limits is None or title in frozen_titles:
+            return
+        for _, placements in deleted_spans[title]:
+            for token_id in placements:
+                token = tokens[token_id]
+                if token.active_count == 0:
+                    token.author = None
+        frozen_titles.add(title)
+
     uncertain: set[str] = set()
     last_applied_at: dict[str, datetime] = {}
     for revision in ordered:
@@ -184,6 +196,8 @@ def compute_contribution_scores(
         if stored_at > now_kst:
             continue
         number = int(revision.id)
+        if credit_limits is not None and number > credit_limits.get(revision.title, 0):
+            freeze_credit(revision.title)
         previous = last_revision.get(revision.title)
         contiguous = number == 1 if previous is None else number == previous + 1
         last_revision[revision.title] = number
@@ -206,6 +220,7 @@ def compute_contribution_scores(
         last_applied_at[revision.title] = at
 
     for title in documents.keys() | current_documents.keys():
+        freeze_credit(title)
         apply(title, normalize("NFC", current_documents.get(title, "")), now_kst,
               None, None, None, allow_removal_grace=False)
 

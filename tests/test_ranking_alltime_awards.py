@@ -113,3 +113,18 @@ def test_restart_and_duplicate_workers_keep_original_snapshot(tmp_path: Path) ->
         assert get_member_awards(connection, "alice", sql).alltime_best_rank == 1
         assert connection.execute("SELECT COUNT(*) FROM contributor_alltime_results").fetchone() == (1,)
         assert connection.execute("SELECT COUNT(*) FROM contributor_alltime_candidates").fetchone() == (0,)
+
+
+def test_restoring_previously_absent_content_cannot_replace_captured_credit() -> None:
+    # Given: old content was already absent when a different edit reached first place.
+    rows = (
+        revision("alice", "a" * 1000), revision("alice", "", 2, 1),
+        revision("alice", "x" * 100, 3, 2), revision("bob", "b" * 50),
+    )
+    with closing(sqlite3.connect(":memory:")) as connection:
+        setup(connection)
+        refresh(connection, rows, 7200)
+        # When: qualifying text is replaced by a restoration of older deleted text.
+        refresh(connection, (*rows, revision("alice", "a" * 1000, 4, 3)), 26 * 3600)
+        # Then: revision age alone does not make restored content part of the snapshot.
+        assert get_member_awards(connection, "alice", sql).alltime_best_rank is None
