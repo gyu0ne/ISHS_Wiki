@@ -179,7 +179,7 @@ async def trending():
             if len(items) == 10:
                 break
     rows = "".join(f'<li><span>{rank}</span> <a href="{item["url"]}">{html.escape(str(item["title"]))}</a></li>' for rank, item in enumerate(items, 1))
-    return jsonify(
+    return _private(jsonify(
         {
             "response": "ok",
             "items": items,
@@ -187,7 +187,7 @@ async def trending():
             "generated_at": now_epoch,
             "stale": False,
         }
-    )
+    ))
 
 
 @ranking_blueprint.post("/api/ranking/view")

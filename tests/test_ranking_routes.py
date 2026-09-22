@@ -96,6 +96,7 @@ def test_trending_rechecks_current_acl_and_document_existence(tmp_path):
 
     # Then: JSON and legacy HTML expose only the live, authorized document.
     payload = response.get_json()
+    assert response.headers["Cache-Control"] == "private, no-store"
     assert [item["title"] for item in payload["items"]] == ["Second Page"]
     assert "Private Page" not in payload["data"]
     assert "Deleted Later" not in payload["data"]
