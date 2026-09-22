@@ -177,3 +177,51 @@ def test_mysql_index_creation_handles_only_concurrent_duplicate(
         with pytest.raises(MySQLError):
             progress.ensure_challenge_indexes(connection)
     cursor.close.assert_called_once()
+
+
+def test_busy_refresh_logs_each_retry_and_recovers(tmp_path: Path, caplog: pytest.LogCaptureFixture) -> None:
+    store = build_challenge_app(tmp_path)
+    client = store.app.test_client()
+    client.get('/__test/login/20261234')
+    with store.connect() as connection:
+        connection.execute('PRAGMA journal_mode=WAL')
+    first = client.get('/__test/ordinary-page').json
+    with client.session_transaction() as session:
+        previous_success = session['challenge_refresh']
+    with store.connect() as connection:
+        connection.execute("insert into topic values ('20261234')")
+    store.clock.value += 60
+    with store.connect() as writer:
+        writer.execute('BEGIN IMMEDIATE')
+        for _ in range(3):
+            assert client.get('/__test/ordinary-page').json == first
+            with client.session_transaction() as session:
+                assert session['challenge_refresh'] == previous_success
+    skipped = [record for record in caplog.records if 'challenge_refresh_skipped' in record.message]
+    assert len(skipped) == 3
+    assert all('reason=sqlite_busy' in record.message and 'last_success_at=' in record.message
+               and 'attempted_at=' in record.message for record in skipped)
+    assert len(client.get('/__test/ordinary-page').json['notices']) == len(first['notices']) + 1
+    with client.session_transaction() as session:
+        assert session['challenge_refresh'][1] > previous_success[1]
+
+
+def test_explicit_refresh_still_raises_on_busy_writer(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    store = build_challenge_app(tmp_path)
+    store.app.config['TESTING'] = True
+    client = store.app.test_client()
+    client.get('/__test/login/20261234')
+    with store.connect() as connection:
+        connection.execute('PRAGMA journal_mode=WAL')
+    connect = sqlite3.connect
+
+    def short_timeout(*args, **kwargs):
+        kwargs['timeout'] = 0.01
+        return connect(*args, **kwargs)
+
+    monkeypatch.setattr(sqlite3, 'connect', short_timeout)
+    with store.connect() as writer:
+        writer.execute('BEGIN IMMEDIATE')
+        with pytest.raises(sqlite3.OperationalError, match='locked'):
+            client.get('/challenge')
+    assert client.get('/challenge').status_code == 200

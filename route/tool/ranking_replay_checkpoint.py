@@ -1,6 +1,9 @@
 from __future__ import annotations
 
 import json
+import zlib
+from base64 import b64decode, b64encode
+from binascii import Error as Base64Error
 from datetime import date, datetime
 from typing import TYPE_CHECKING, TypeAlias
 
@@ -70,11 +73,17 @@ def encode_checkpoint(engine: DocumentContributionEngine) -> str:
                engine.uncertain, engine.frozen, document.text, list(document.placements),
                [[text, list(placements)] for text, placements in engine.deleted_spans[engine.title]],
                tokens]
-    return json.dumps(payload, ensure_ascii=False, separators=(',', ':'))
+    serialized = json.dumps(payload, ensure_ascii=False, separators=(',', ':')).encode()
+    return 'zlib:' + b64encode(zlib.compress(serialized, level=1)).decode('ascii')
 
 
 def decode_checkpoint(payload: str, engine_type: type[DocumentContributionEngine]) -> DocumentContributionEngine:
     """Parse the versioned JSON checkpoint without executable deserialization."""
+    if payload.startswith('zlib:'):
+        try:
+            payload = zlib.decompress(b64decode(payload[5:], validate=True)).decode()
+        except (zlib.error, Base64Error, UnicodeDecodeError) as error:
+            raise InvalidCheckpoint('Invalid compressed checkpoint') from error
     data = _list(json.loads(payload))
     if len(data) != 11 or _int(data[0]) != 1:
         raise InvalidCheckpoint('Unsupported replay checkpoint version')

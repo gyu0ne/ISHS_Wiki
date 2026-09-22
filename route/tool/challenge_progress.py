@@ -64,7 +64,25 @@ async def refresh_challenges(
         # Read-only refreshes avoid the writer queue; changes are reread after locking.
         for write_locked in (False, True):
             if write_locked:
-                cursor.execute("START TRANSACTION" if mysql else "BEGIN IMMEDIATE")
+                if automatic and not mysql:
+                    cursor.execute("PRAGMA busy_timeout")
+                    busy_timeout = int(cursor.fetchall()[0][0])
+                    try:
+                        cursor.execute("PRAGMA busy_timeout = 0")
+                        cursor.execute("BEGIN IMMEDIATE")
+                    except sqlite3.OperationalError as error:
+                        if error.sqlite_errorcode != sqlite3.SQLITE_BUSY:
+                            raise
+                        flask.current_app.logger.warning(
+                            "challenge_refresh_skipped reason=sqlite_busy attempted_at=%s last_success_at=%s",
+                            time(), last_refresh if last_member == member_id else None,
+                        )
+                        refreshed[member_id] = ()
+                        return ()
+                    finally:
+                        cursor.execute(f"PRAGMA busy_timeout = {busy_timeout}")
+                else:
+                    cursor.execute("START TRANSACTION" if mysql else "BEGIN IMMEDIATE")
                 transaction_started = True
             cursor.execute(db_change("select name, data from user_set where id = ?")
                            + (" FOR UPDATE" if mysql and write_locked else ""), [member_id])
