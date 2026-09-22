@@ -14,6 +14,7 @@ function opennamu_do_autocomplete(search_input_id, result_div_id) {
 
         const fetchResults = function() {
             if (debounce_timer) clearTimeout(debounce_timer);
+            if (abort_controller) abort_controller.abort();
 
             const query = search_input.value;
             if (query === '') {
@@ -27,20 +28,23 @@ function opennamu_do_autocomplete(search_input_id, result_div_id) {
                 return;
             }
 
+            if (result_div.classList.contains('ringo_trending_results')) {
+                result_div.innerHTML = '';
+                result_div.style.display = 'none';
+            }
             clearTrendingMobilePopup();
 
             debounce_timer = setTimeout(function() {
-                if (abort_controller) abort_controller.abort();
-                abort_controller = new AbortController();
+                const controller = new AbortController();
+                abort_controller = controller;
 
-                fetch('/api/search_title/' + encodeURIComponent(query), { signal: abort_controller.signal })
+                fetch('/api/search_title/' + encodeURIComponent(query), { signal: controller.signal })
                     .then(function(res) {
                         if (!res.ok) throw new Error('Network response was not ok');
                         return res.json();
                     })
                     .then(function(data) {
-                        // 결과가 있는 경우에만 갱신하여 깜빡임 방지
-                        // 사용자의 요청대로 결과가 0개여도 기존 리스트를 유지함 (조합 중 상태 고려)
+                        if (controller.signal.aborted || search_input.value !== query) return;
                         if (data.length > 0) {
                             let html = '<ul>';
                             for (let i = 0; i < data.length; i++) {
@@ -49,6 +53,9 @@ function opennamu_do_autocomplete(search_input_id, result_div_id) {
                             html += '</ul>';
                             result_div.innerHTML = html;
                             result_div.style.display = 'block';
+                        } else {
+                            result_div.innerHTML = '';
+                            result_div.style.display = 'none';
                         }
                     })
                     .catch(function(error) {
