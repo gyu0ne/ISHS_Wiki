@@ -68,6 +68,7 @@ def build_challenge_app(tmp_path: Path) -> RankingTestApp:
         number_check=lambda value: value,
         url_pas=quote,
         ip_pas=ip_pas,
+        get_init_set_list=lambda: {"language": {"list": ["ko-KR", "en-US"]}},
         get_next_page_bottom=lambda connection, url, number, data: "",
     )
     spec = importlib.util.spec_from_file_location("route.challenge_test_route", ROOT / "route" / "user_challenge.py")
@@ -78,6 +79,7 @@ def build_challenge_app(tmp_path: Path) -> RankingTestApp:
         assert progress_spec is not None and progress_spec.loader is not None
         progress = importlib.util.module_from_spec(progress_spec)
         progress_spec.loader.exec_module(progress)
+        progress.time = store.clock
         sys.modules[progress_spec.name] = progress
         spec.loader.exec_module(module)
         for filename, url in (("user_alarm", "/alarm"), ("user_alarm_delete", "/alarm/delete/<id>")):
@@ -101,8 +103,15 @@ def build_challenge_app(tmp_path: Path) -> RankingTestApp:
 
     namespace["python_to_golang"] = python_to_golang
     tree = ast.parse((ROOT / "route" / "tool" / "func.py").read_text(encoding="utf-8"))
-    selected = [node for node in tree.body if isinstance(node, ast.AsyncFunctionDef) and node.name == "level_check"]
+    selected = [node for node in tree.body if isinstance(node, ast.AsyncFunctionDef) and node.name in ("level_check", "get_user_title_list")]
     exec(compile(ast.Module(body=selected, type_ignores=[]), "func.py", "exec"), namespace)
+    functions.get_user_title_list = namespace["get_user_title_list"]
+    setting_spec = importlib.util.spec_from_file_location("route.challenge_test_settings", ROOT / "route" / "user_setting.py")
+    assert setting_spec is not None and setting_spec.loader is not None
+    setting_module = importlib.util.module_from_spec(setting_spec)
+    with patch.dict(sys.modules, {"route.tool.func": functions}):
+        setting_spec.loader.exec_module(setting_module)
+    store.app.add_url_rule("/change", view_func=setting_module.user_setting, methods=["POST"])
 
     @store.app.get("/__test/ordinary-page")
     async def ordinary_page():

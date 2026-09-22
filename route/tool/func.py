@@ -975,13 +975,10 @@ async def get_acl_list(type_data = 'normal'):
 ## Func-simple-with_DB
 async def get_user_title_list(conn, ip = ''):
     from .ranking_challenges import earned_ranking_challenges
-    from .challenge_progress import refresh_challenges
 
     curs = conn.cursor()
 
     ip = ip_check() if ip == '' else ip
-
-    await refresh_challenges(conn, ip)
 
     # default
     user_title = {
@@ -1360,7 +1357,7 @@ async def wiki_custom(conn):
     curs = conn.cursor()
 
     ip = ip_check()
-    await refresh_challenges(conn, ip)
+    await refresh_challenges(conn, ip, automatic=True)
     skin_name = '_' + skin_check(conn, 1)
 
     if ip_or_user(ip) == 0:
@@ -1882,7 +1879,7 @@ async def level_check(ip = ''):
 
     if ip == ip_check():
         with get_db_connect() as conn:
-            await refresh_challenges(conn, ip)
+            await refresh_challenges(conn, ip, automatic=True)
 
     other_set = {}
     other_set['ip'] = ip
