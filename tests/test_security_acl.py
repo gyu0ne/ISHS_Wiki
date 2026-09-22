@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import asyncio
 import datetime
 import json
 from pathlib import Path
@@ -24,16 +25,30 @@ class FastSleep:
 
 
 class FastTimeoutAiohttp:
-    ClientSession = aiohttp.ClientSession
+    timeout_errors = 0
+
+    @classmethod
+    def ClientSession(cls, *, timeout: aiohttp.ClientTimeout) -> aiohttp.ClientSession:
+        trace = aiohttp.TraceConfig()
+
+        async def record_timeout(_session, _context, params) -> None:
+            if isinstance(params.exception, asyncio.TimeoutError):
+                cls.timeout_errors += 1
+
+        trace.on_request_exception.append(record_timeout)
+        return aiohttp.ClientSession(timeout=timeout, trace_configs=[trace])
 
     @staticmethod
     def ClientTimeout(*, total: float) -> aiohttp.ClientTimeout:
-        return aiohttp.ClientTimeout(total=0.01)
+        return aiohttp.ClientTimeout(total=0.2)
 
 
 class AclBridgeTest(unittest.IsolatedAsyncioTestCase):
     async def asyncSetUp(self) -> None:
         self.requests: list[str] = []
+        self.handler_errors: list[str] = []
+        self.handler_started = asyncio.Event()
+        self.handler_finished = asyncio.Event()
         self.delay = 0.0
         self.responses: dict[str, tuple[int, str, str]] = {
             "api_func_acl": (200, '{"response":"ok","data":true}', "application/json"),
@@ -72,9 +87,17 @@ class AclBridgeTest(unittest.IsolatedAsyncioTestCase):
         route = payload["url"]
         self.requests.append(route)
         status, body, content_type = self.responses[route]
-        if self.delay:
-            await asyncio.sleep(self.delay)
-        return web.Response(status=status, text=body, content_type=content_type)
+        try:
+            if self.delay:
+                self.handler_started.set()
+                await asyncio.sleep(self.delay)
+            return web.Response(status=status, text=body, content_type=content_type)
+        except Exception as error:
+            self.handler_errors.append(type(error).__name__)
+            raise
+        finally:
+            if self.delay:
+                self.handler_finished.set()
 
     async def test_allows_true_and_records_memo(self) -> None:
         result = await self.acl_check(memo="synthetic permission")
@@ -131,16 +154,24 @@ class AclBridgeTest(unittest.IsolatedAsyncioTestCase):
                     self.assertTrue(self.requests)
 
     async def test_denies_timeout_without_recording_memo(self) -> None:
-        self.delay = 0.05
+        self.delay = 0.5
+        FastTimeoutAiohttp.timeout_errors = 0
         source_globals = self.python_to_golang.__globals__
         original_aiohttp = source_globals["aiohttp"]
         source_globals["aiohttp"] = FastTimeoutAiohttp
         try:
-            result = await self.acl_check(memo="synthetic permission")
+            result_task = asyncio.create_task(self.acl_check(memo="synthetic permission"))
+            await asyncio.wait_for(self.handler_started.wait(), timeout=2)
+            result = await result_task
         finally:
             source_globals["aiohttp"] = original_aiohttp
 
+        await asyncio.wait_for(self.handler_finished.wait(), timeout=2)
+
         self.assertEqual(result, 1)
+        self.assertIs(source_globals["aiohttp"], original_aiohttp)
+        self.assertEqual(self.handler_errors, [])
+        self.assertGreater(FastTimeoutAiohttp.timeout_errors, 0)
         self.assertNotIn("api_func_auth_post", self.requests)
 
     async def test_denies_refused_connection_without_recording_memo(self) -> None:
