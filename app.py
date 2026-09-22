@@ -228,6 +228,7 @@ with get_db_connect(init_mode = True) as conn:
     app.config['JSON_AS_ASCII'] = False
     app.config['JSONIFY_PRETTYPRINT_REGULAR'] = False
     app.config['MAX_CONTENT_LENGTH'] = 16 * 1000 * 1000
+    app.config['MAX_FORM_MEMORY_SIZE'] = app.config['MAX_CONTENT_LENGTH']
     app.config['SEND_FILE_MAX_AGE_DEFAULT'] = 3600
     if run_mode == 'dev':
         app.config['TEMPLATES_AUTO_RELOAD'] = True
