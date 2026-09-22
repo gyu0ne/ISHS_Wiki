@@ -12,7 +12,7 @@ from ranking_package_support import bootstrap_route_tool_package
 
 bootstrap_route_tool_package()
 from route.tool.ranking_contribution_engine import DocumentContributionEngine
-from route.tool.ranking_contribution_scores import HistoryRevision
+from route.tool.ranking_contribution_scores import ContributionScores, HistoryRevision
 from route.tool.ranking_contribution_state import as_kst
 from route.tool.ranking_contributions import compute_contribution_scores
 from route.tool.ranking_monthly_awards import MonthlyHistory, ensure_schema, finalize_months
@@ -98,3 +98,23 @@ def test_incremental_backfill_matches_legacy_cutoffs(edge: str) -> None:
         assert connection.execute(
             "SELECT period, winners FROM contributor_monthly_results ORDER BY period"
         ).fetchall() == expected
+
+
+def test_months_without_revisions_need_no_token_scoring(monkeypatch: pytest.MonkeyPatch) -> None:
+    members = frozenset({'alice'})
+    history = MonthlyHistory((revision(1, 1),), members, members, datetime(2026, 7, 2))
+    scored: list[datetime] = []
+    original = DocumentContributionEngine.scores
+
+    def counted(engine: DocumentContributionEngine, body: str, now: datetime,
+                *, require_mature: bool = False) -> ContributionScores:
+        scored.append(now)
+        return original(engine, body, now, require_mature=require_mature)
+
+    monkeypatch.setattr(DocumentContributionEngine, 'scores', counted)
+    with closing(sqlite3.connect(':memory:')) as connection:
+        ensure_schema(connection, sql)
+        finalize_months(connection, sql, history)
+        results = connection.execute('select winners from contributor_monthly_results order by period').fetchall()
+    assert results == [(json.dumps(['alice']),)] + [('[]',)] * 5
+    assert len(scored) == 1

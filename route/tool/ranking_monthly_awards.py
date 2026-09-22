@@ -142,7 +142,10 @@ def finalize_months(
             engine = DocumentContributionEngine(title)
             rows = list(document_rows)
             position = 0
+            active_periods = {as_kst(row.date).strftime("%Y-%m") for row in rows}
             for period, cutoff in pending:
+                if period not in active_periods:
+                    continue
                 start = position
                 while position < len(rows) and as_kst(rows[position].date) <= cutoff:
                     position += 1
