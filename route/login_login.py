@@ -1,4 +1,5 @@
 from .tool.func import *
+from .tool.auth_state import clear_auth_transients, set_auth_pending
 import hashlib
 import hmac
 
@@ -21,6 +22,7 @@ async def login_login():
             user_name = flask.request.form.get('id', '')
             user_pw = flask.request.form.get('pw', '')
             auto_login = flask.request.form.get('auto_login', '')
+            clear_auth_transients(flask.session)
 
             # user_name으로 student_id 찾기
             curs.execute(db_change("select id from user_set where name = 'user_name' and data = ?"), [user_name])
@@ -53,6 +55,7 @@ async def login_login():
             student_id_data = curs.fetchall()
             if not student_id_data or not student_id_data[0][0]:
                 flask.session['pending_riro_verification_for_user'] = student_id
+                set_auth_pending(flask.session, 'login_riro', student_id)
                 return redirect(conn, '/riro_login')
 
             if pw_check(conn, user_pw, db_user_pw, db_user_encode, student_id) != 1:
@@ -64,6 +67,7 @@ async def login_login():
                 if not curs.fetchall():
                     # 학생 정보가 연동되지 않은 경우, 인증 페이지로 이동
                     flask.session['pending_riro_verification_for_user'] = student_id
+                    set_auth_pending(flask.session, 'login_riro', student_id)
                     return redirect(conn, '/riro_login')
 
             curs.execute(db_change('select data from user_set where name = "2fa" and id = ?'), [student_id])
@@ -71,11 +75,13 @@ async def login_login():
             if fa_data and fa_data[0][0] != '':
                 flask.session['login_id'] = student_id
                 flask.session['user_name'] = user_name   # 추가 저장하면 편리
+                set_auth_pending(flask.session, 'login_2fa', student_id)
 
                 return redirect(conn, '/login/2fa')
             else:
                 flask.session['id'] = student_id
                 flask.session['user_name'] = user_name   # 아이디 세션도 같이 저장
+                clear_auth_transients(flask.session)
 
                 ua_plus(conn, student_id, ip, user_agent, get_time())
 
