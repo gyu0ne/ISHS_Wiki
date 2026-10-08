@@ -1,5 +1,5 @@
 from .tool.func import *
-from .tool.auth_state import clear_auth_transients, set_auth_pending
+from .tool.auth_state import clear_auth_transients, clear_logout_state, set_auth_pending
 import hashlib
 import hmac
 
@@ -73,12 +73,14 @@ async def login_login():
             curs.execute(db_change('select data from user_set where name = "2fa" and id = ?'), [student_id])
             fa_data = curs.fetchall()
             if fa_data and fa_data[0][0] != '':
+                clear_logout_state(flask.session)
                 flask.session['login_id'] = student_id
                 flask.session['user_name'] = user_name   # 추가 저장하면 편리
                 set_auth_pending(flask.session, 'login_2fa', student_id)
 
                 return redirect(conn, '/login/2fa')
             else:
+                clear_logout_state(flask.session)
                 flask.session['id'] = student_id
                 flask.session['user_name'] = user_name   # 아이디 세션도 같이 저장
                 clear_auth_transients(flask.session)
@@ -94,7 +96,7 @@ async def login_login():
                     curs.execute(db_change("DELETE FROM login_token WHERE user_id = ? AND expires < ?"), [student_id, datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")])
                     curs.execute(db_change("INSERT INTO login_token (user_id, token, expires) VALUES (?, ?, ?)"), [student_id, hashed_token, expires.strftime("%Y-%m-%d %H:%M:%S")])
 
-                    resp.set_cookie('auto_login', f'{student_id}:{token}', expires=expires, httponly=True, samesite='Lax')
+                    resp.set_cookie('auto_login', f'{student_id}:{token}', expires=expires, httponly=True, samesite='Lax', secure=flask.request.is_secure)
 
                 return resp
 

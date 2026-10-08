@@ -1,0 +1,17 @@
+{
+  "revision": "12c83d5379ac4ae4c3d9069e407d0b5928359758",
+  "files": {
+    "main.amd64.exe": "4c18911e8f92412a15bf1df6f5b6b507cce7361afb6b2d319d5cb10fa0cc5a1c",
+    "main.amd64.bin": "4ab8f75af9b861ad7870ba88b663107ea5ff55e0cbe26cb35b7a0f53fcd9390d",
+    "main.arm64.bin": "c6f0a11d13f2cd6a19d10e240d901ae46cda8b4207c70ad8914e6ef59a3804c1",
+    "main.arm64.exe": "bf6867cbe5b5eaebe1b1cf73f4831abc3043b3c6934ecdeae4d90371d8dfd297",
+    "main.mac.arm64.bin": "e5991dc89fd4c12f51b436f0176e1b617ba69aa6121bd15eebb618615eb0adb6"
+  },
+  "entrypoint_sha256": "f5780ac0259b8bae89a44a4c01c1f1e28c6ca0a75ae38cbe79b5e234459cffea",
+  "overlay_sha256": {
+    "route/api_func_acl.go": "9bcb7a2c3052911fe7c085f49f2ffbf815dba1caf4dd1752d4d0670dd6010988",
+    "route/api_func_search.go": "7cab5508089ec76bc9cda4cc08a04a32b9ef69976f50a1fc339eb3d21134bcd1",
+    "route/api_w_raw.go": "adcc92cb0b27cf87a472fca96ba1d8e3dc61548c879a14ab9f3f139be6f917db",
+    "route/tool/acl_and_auth.go": "33a138baefdb334ccaf28adede865eb6017648bd277373d301dcc17b4e22abcf"
+  }
+}

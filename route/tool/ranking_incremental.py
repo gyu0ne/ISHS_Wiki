@@ -133,10 +133,10 @@ def _prepare(connection: store.CheckpointConnection, sql: Callable[[str], str],
             rows = read_revisions(connection, sql, ("WHERE title = ?", (title,)))
             previous = None
         else:
-            payload = store.load_checkpoint(connection, sql, title)
-            if payload is None:
-                raise CheckpointConflict(title)
             try:
+                payload = store.load_checkpoint(connection, sql, title, snapshot.checkpoints.get(title))
+                if payload is None:
+                    raise CheckpointConflict(title)
                 engine = DocumentContributionEngine.load_checkpoint(payload)
             except (ValueError, KeyError, TypeError, IndexError):
                 rows = read_revisions(connection, sql, ("WHERE title = ?", (title,)))
@@ -177,10 +177,11 @@ def _advance(item: ReplayInput, members: Set[str], now: datetime) -> tuple[Docum
 
 
 def refresh_scores(connection: store.CheckpointConnection, sql: Callable[[str], str],
-                   documents: Mapping[str, str], members: Set[str], now: datetime) -> RankingCalculation:
+                   documents: Mapping[str, str], members: Set[str], now: datetime,
+                   verification=None) -> RankingCalculation:
     """Read under the caller's snapshot transaction, then publish after replay without a write lock."""
     member_hash = sha256(json.dumps(sorted(members), ensure_ascii=False).encode()).hexdigest()
-    snapshot = store.snapshot(connection, sql)
+    snapshot = store.snapshot(connection, sql, verification)
     checkpoints, pending = _prepare(connection, sql, snapshot, documents, member_hash, as_kst(now))
     connection.commit()
     updates: list[store.CheckpointWrite] = []

@@ -12,10 +12,15 @@ from .ranking_contribution_scores import ContributionBucket, ContributionScores,
 from .ranking_contribution_state import DocumentState, MATURITY, REMOVAL_GRACE, TokenState, as_kst, can_own
 from .ranking_replay_checkpoint import decode_checkpoint, encode_checkpoint
 from .ranking_revision_snapshot import RevisionSnapshot, restore_revision
+from .ranking_resource_limits import MAX_DOCUMENT_CHARS, MAX_TOKENS, MAX_REVISIONS, RankingResourceLimit
 
 
 class DocumentContributionEngine:
     """Mutable historical lineage for one document; current-body scoring uses a copy."""
+
+    __slots__ = ('title', 'credit_limit', 'documents', 'tokens', 'deleted_spans',
+                 'next_token_id', 'last_revision', 'last_applied_at', 'uncertain',
+                 'frozen', 'differ', 'revision_snapshots')
 
     def __init__(self, title: str, credit_limit: int | None = None) -> None:
         self.title = title
@@ -48,6 +53,8 @@ class DocumentContributionEngine:
     def advance(self, revisions: Iterable[HistoryRevision], member_ids: Set[str], now: datetime) -> None:
         now_kst = as_kst(now)
         for revision in sorted(revisions, key=lambda item: int(item.id)):
+            if len(revision.data) > MAX_DOCUMENT_CHARS or len(self.revision_snapshots) >= MAX_REVISIONS:
+                raise RankingResourceLimit('Contribution document or revision limit exceeded')
             stored_at = as_kst(revision.date)
             if stored_at > now_kst:
                 continue
@@ -127,6 +134,8 @@ class DocumentContributionEngine:
         self,
         title: str, text: str, author: str | None, owner_day: date | None, at: datetime
     ) -> tuple[int, ...]:
+        if self.next_token_id + len(text) > MAX_TOKENS:
+            raise RankingResourceLimit('Contribution token limit exceeded')
         placements: list[int] = []
         for character in text:
             token_id = self.next_token_id

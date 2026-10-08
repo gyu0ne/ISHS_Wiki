@@ -1,5 +1,6 @@
 from .tool.func import *
 import secrets
+from .tool.security_key import recovery_key_hash
 
 
 _RECOVERY_ALPHABET = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
@@ -18,15 +19,16 @@ def _new_secret(length):
 
 
 def _recover_with_key(conn, input_key, new_password):
-    if input_key == '':
+    if not isinstance(input_key, str) or not input_key or len(input_key) > 512:
         return None
+    stored_key = recovery_key_hash(input_key)
 
     curs = conn.cursor()
     _begin_transaction(conn)
     try:
         curs.execute(db_change(
             'select id from user_set where name = "random_key" and data = ?'
-        ), [input_key])
+        ), [stored_key])
         key_rows = curs.fetchall()
         if len(key_rows) != 1:
             conn.rollback()
@@ -53,7 +55,7 @@ def _recover_with_key(conn, input_key, new_password):
 
         curs.execute(db_change(
             'delete from user_set where name = "random_key" and id = ? and data = ?'
-        ), [user_id, input_key])
+        ), [user_id, stored_key])
         if curs.rowcount != 1:
             conn.rollback()
             return None

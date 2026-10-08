@@ -57,7 +57,7 @@ class AclBridgeTest(unittest.IsolatedAsyncioTestCase):
         }
         app = web.Application()
         app.router.add_post("/", self.bridge)
-        self.server = TestServer(app, host="localhost")
+        self.server = TestServer(app, host="127.0.0.1")
         await self.server.start_server()
         loaded = load_source_definitions(
             SOURCE,
@@ -80,9 +80,13 @@ class AclBridgeTest(unittest.IsolatedAsyncioTestCase):
         await self.server.close()
 
     def setting(self, name: str) -> str:
-        return str(self.server.port) if name == "golang_port" else ""
+        if name in ('golang_port', 'setup_golang_port'):
+            return str(self.server.port)
+        return 'fixture-internal-token' if name == 'internal_api_token' else ''
 
     async def bridge(self, request: web.Request) -> web.Response:
+        if request.headers.get('X-OpenNAMU-Internal-Token') != 'fixture-internal-token':
+            return web.Response(status=403)
         payload = json.loads(await request.text())
         route = payload["url"]
         self.requests.append(route)

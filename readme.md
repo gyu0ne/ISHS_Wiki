@@ -23,15 +23,20 @@ ISHSWIKI를 위해 개량된 openNAMU 기반 위키 엔진으로, 인천과학�
 ## 직접 설치해서 실행하기
 ```
 pip3 install --upgrade -r requirements.txt
+python3 route_go/security/build_backend.py --target linux-amd64
 python3 app.py
 ```
 * Windows: `run_windows.bat` 실행
 * Linux: `run_ubuntu.sh` 실행
+* 최초 설치/보안 업데이트 시 Go 1.24.1 이상으로 내부 백엔드를 한 번 빌드합니다. Windows는 `--target windows-amd64`, ARM64는 해당 `arm64` 대상을 사용합니다. 실행할 때는 Go가 필요하지 않습니다.
+* 기존 백엔드 바이너리는 사용할 수 없습니다. [빌드 안내](route_go/security/README.md)와 [보안 변경 및 검증](docs/security-review.md)을 확인하세요.
+* DB 외부 키인 `app_session/security.key`를 DB와 함께 안전하게 백업하세요. 여러 프로세스는 같은 파일을 사용해야 합니다. `NAMU_SECURITY_KEY_FILE`로 저장 경로를 지정할 수 있습니다. 첫 업데이트 시 기존 로그인 세션은 만료되며, 기존 집계 캐시는 한 번 재계산됩니다.
 ### Docker로 실행
 ```
 docker build . -t ishs-wiki
-docker run -p 3000:3000 -v data:/app/data --name ishs-wiki ishs-wiki
+docker run -p 3000:3000 -v data:/app/data -v sessions:/app/app_session --name ishs-wiki ishs-wiki
 ```
+Docker 빌드 단계에서 내부 백엔드를 컴파일합니다. 실행 이미지에는 Go 도구체인이 포함되지 않습니다.
 
 ## 테스트 실행
 

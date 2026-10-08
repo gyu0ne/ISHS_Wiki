@@ -8,6 +8,10 @@ from hashlib import sha256
 from typing import Protocol
 
 from .ranking_monthly_awards import Connection
+from .ranking_checkpoint_auth import (CheckpointVerification, _authenticated_metadata,
+                                      sign_checkpoint, verify_checkpoint)
+from .ranking_replay_checkpoint import InvalidCheckpoint
+from .ranking_resource_limits import MAX_ENCODED_CHARS
 
 
 class CheckpointConnection(Connection, Protocol):
@@ -47,7 +51,8 @@ def ensure_schema(connection: CheckpointConnection, sql: Callable[[str], str]) -
     create_schema(connection, sql)
 
 
-def snapshot(connection: CheckpointConnection, sql: Callable[[str], str]) -> Snapshot:
+def snapshot(connection: CheckpointConnection, sql: Callable[[str], str],
+             verification: CheckpointVerification | None = None) -> Snapshot:
     """Read lightweight state inside the caller's source-read transaction."""
     cursor = connection.cursor()
     try:
@@ -56,7 +61,25 @@ def snapshot(connection: CheckpointConnection, sql: Callable[[str], str]) -> Sna
         )
         generation, watermark, processed, members, version = cursor.fetchall()[0]
         cursor.execute("SELECT title, metadata FROM contributor_checkpoints")
-        checkpoints = {title: metadata for title, metadata in cursor.fetchall()}
+        rows = cursor.fetchall()
+        if not isinstance(rows, list):
+            rows = list(rows)
+        fingerprint = verification.fingerprint(rows) if verification is not None else None
+        reused = fingerprint is not None and verification.digest == fingerprint
+        authenticated = True
+        checkpoints = {}
+        for index, (title, metadata) in enumerate(rows):
+            try:
+                checkpoints[title] = (_authenticated_metadata(metadata) if reused
+                                      else verify_checkpoint(title, metadata))
+            except (ValueError, TypeError, RecursionError):
+                checkpoints[title] = ''  # Rebuild unsigned/changed caches from history.
+                authenticated = False
+            # Unwrapped metadata replaces its signed bytes. Release each fetched
+            # row immediately instead of retaining two whole metadata sets.
+            rows[index] = None
+        if verification is not None:
+            verification.digest = fingerprint if authenticated else None
         cursor.execute(
             sql(
                 "SELECT seq, title, revision_id, kind FROM contributor_history_changes WHERE seq > ? AND seq <= ? ORDER BY seq"
@@ -81,17 +104,26 @@ def snapshot(connection: CheckpointConnection, sql: Callable[[str], str]) -> Sna
 
 
 def load_checkpoint(
-    connection: CheckpointConnection, sql: Callable[[str], str], title: str
+    connection: CheckpointConnection, sql: Callable[[str], str], title: str,
+    expected_metadata: str | None = None,
 ) -> str | None:
     """Read heavy replay state only for documents that need work."""
     cursor = connection.cursor()
     try:
         cursor.execute(
-            sql("SELECT payload FROM contributor_checkpoints WHERE title_key = ?"),
+            sql("SELECT title, metadata, payload FROM contributor_checkpoints WHERE title_key = ?"),
             (sha256(title.encode()).hexdigest(),),
         )
         rows = cursor.fetchall()
-        return rows[0][0] if rows else None
+        if not rows:
+            return None
+        stored_title, metadata, payload = rows[0]
+        if stored_title != title or not isinstance(payload, str) or len(payload) > MAX_ENCODED_CHARS:
+            raise InvalidCheckpoint('Invalid checkpoint payload')
+        verified = verify_checkpoint(title, metadata, payload)
+        if expected_metadata is not None and verified != expected_metadata:
+            raise InvalidCheckpoint('Checkpoint metadata changed during source read')
+        return payload
     finally:
         cursor.close()
 
@@ -119,6 +151,13 @@ def publish(
         )
         if int(cursor.fetchall()[0][0]) != captured.generation:
             return False
+        if (not updates and not removals and member_hash == captured.member_hash
+                and captured.watermark == captured.processed_seq):
+            # An unchanged refresh still checks its generation under the lock,
+            # but has no new state to persist or events to acknowledge.
+            cursor.execute('COMMIT')
+            committed = True
+            return True
         for title in removals:
             cursor.execute(
                 sql("DELETE FROM contributor_checkpoints WHERE title_key = ?"),
@@ -138,7 +177,7 @@ def publish(
                 (
                     sha256(item.title.encode()).hexdigest(),
                     item.title,
-                    item.metadata,
+                    sign_checkpoint(item.title, item.metadata, item.payload),
                     item.payload,
                 ),
             )

@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import hmac
 import html
+import json
 import secrets
 import sqlite3
 import time
@@ -28,6 +29,7 @@ from .ranking_period_routes import register_ranking_period_routes
 from .tool.ranking_contributor_cache import ContributorCache
 from .tool.ranking_views import Connection, ensure_schema, get_popular, record_view
 from .tool.ranking_monthly_awards import ensure_schema as ensure_monthly_schema
+from .tool.security_key import derived_key
 
 TICKET_SALT: Final = "ranking-view-v1"
 TICKET_MIN_AGE: Final = 5
@@ -144,9 +146,10 @@ def wait_for_contributor_refresh(app: Flask, timeout: float = 5) -> bool:
     return service.contributors.ready.wait(timeout) if service is not None else False
 
 
-def _member_token(member_id: str) -> str:
-    secret = str(current_app.secret_key).encode()
-    return hmac.new(secret, member_id.encode(), sha256).hexdigest()
+def _member_token(member_id: str, title: str) -> str:
+    # Document-scoped identities preserve reader dedupe without joining trails.
+    identity = json.dumps([title, member_id], ensure_ascii=False, separators=(',', ':')).encode('utf-8')
+    return hmac.new(derived_key(b'opennamu-view-v1'), identity, sha256).hexdigest()
 
 
 @ranking_blueprint.get("/api/trending")
@@ -193,13 +196,15 @@ async def trending():
 
 @ranking_blueprint.post("/api/ranking/view")
 async def qualify_view():
+    request.max_content_length = 32 * 1024
     service = _service()
     if service is None:
         return _error(503)
     if not _same_origin():
         return _error(403)
     payload = request.get_json(silent=True)
-    if not isinstance(payload, dict) or not isinstance(payload.get("ticket"), str):
+    if (not isinstance(payload, dict) or not isinstance(payload.get("ticket"), str)
+            or len(payload['ticket']) > 16 * 1024):
         return _error(400)
     try:
         ticket = _serializer().loads(payload["ticket"])
@@ -232,7 +237,7 @@ async def qualify_view():
             connection,
             title,
             title,
-            _member_token(member_id),
+            _member_token(member_id, title),
             now_epoch,
             dependencies.db_change,
         )
@@ -270,6 +275,12 @@ def init_rankings(
         with connect() as connection:
             ensure_schema(connection, db_change)
             ensure_monthly_schema(connection, db_change)
+            cursor = connection.cursor()
+            try:
+                cursor.execute(db_change('DELETE FROM realtime_popularity_views WHERE viewed_at < ?'),
+                               (int(clock()) - 24 * 60 * 60,))
+            finally:
+                cursor.close()
     except (sqlite3.DatabaseError, MySQLError):
         app.logger.exception("ranking schema initialization failed; rankings disabled")
         return

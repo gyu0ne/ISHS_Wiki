@@ -13,10 +13,12 @@ LOGOUT_STATE_KEYS = (
     "state", "id", "user_name", "login_id", "b_id", "pending_riro_verification_for_user",
     "auto_login_checked", "auth_pending", "riro_verified", "riro_name", "riro_student_number",
     "riro_generation", "c_id", "c_pw", "c_ans", "c_que", "c_key", "c_type", "c_email",
+    "head", "user_generation", "user_riro_reauthed", "_ranking_nonce",
 )
 
 
 class SessionState(Protocol):
+    def keys(self): ...
     def get(self, key: str, default: SessionValue = None) -> SessionValue: ...
     def __setitem__(self, key: str, value: SessionValue) -> None: ...
     def pop(self, key: str, default: SessionValue = None) -> SessionValue: ...
@@ -86,3 +88,7 @@ def clear_auth_transients(session: SessionState) -> None:
 
 def clear_logout_state(session: SessionState) -> None:
     _clear(session, LOGOUT_STATE_KEYS)
+    # Skin-specific cached HTML can contain scripts from the previous account.
+    for key in tuple(session.keys()):
+        if isinstance(key, str) and key.startswith('head'):
+            session.pop(key, None)

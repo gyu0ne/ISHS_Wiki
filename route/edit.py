@@ -288,6 +288,8 @@ async def edit(name = 'Test', section = 0, do_type = ''):
                 elif section != '':
                     load_title = name
                     
+                if load_title != name and await acl_check(str(load_title), 'render') != 0:
+                    return await re_error(conn, 3)
                 curs.execute(db_change("select data from data where title = ?"), [load_title])
                 db_data = curs.fetchall()
                 data = db_data[0][0] if db_data else ''

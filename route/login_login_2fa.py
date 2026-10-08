@@ -1,5 +1,5 @@
 from .tool.func import *
-from .tool.auth_state import auth_pending_matches, clear_login_state
+from .tool.auth_state import auth_pending_matches, clear_login_state, clear_logout_state
 
 async def login_login_2fa():
     with get_db_connect() as conn:
@@ -43,6 +43,7 @@ async def login_login_2fa():
             if pw_check(conn, user_pw, user_1[0][0], user_2[0][0], user_id) != 1:
                 return await re_error(conn, 10)
 
+            clear_logout_state(flask.session)
             flask.session['id'] = user_id
 
             ua_plus(conn, 
