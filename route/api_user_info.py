@@ -1,6 +1,17 @@
 from .tool.func import *
 
 async def api_user_info(user_name = ''):
+    def private_json(data, status = 200):
+        response = flask.jsonify(data)
+        response.status_code = status
+        response.headers['Cache-Control'] = 'private, no-store'
+        response.headers['Vary'] = 'Cookie'
+        return response
+
+    viewer_id = flask.session.get('id')
+    if not isinstance(viewer_id, str) or viewer_id == '':
+        return private_json({'error': 'login_required'}, 401)
+
     with get_db_connect() as conn:
         curs = conn.cursor()
 
@@ -97,4 +108,4 @@ async def api_user_info(user_name = ''):
         ]
         lang_data = { for_a : get_lang(conn, for_a) for for_a in lang_data_list }
                 
-        return flask.jsonify({ 'data' : data_result, 'language' : lang_data })
+        return private_json({ 'data' : data_result, 'language' : lang_data })

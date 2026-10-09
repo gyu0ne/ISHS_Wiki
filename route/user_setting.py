@@ -47,10 +47,6 @@ async def user_setting():
                 data = curs.fetchall()
                 email = data[0][0] if data and data[0][0] != '' else '-'
 
-                curs.execute(db_change('select data from user_set where name = "random_key" and id = ?'), [ip])
-                data = curs.fetchall()
-                ramdom_key = data[0][0] if data and data[0][0] != '' else '-'
-
                 curs.execute(db_change('select data from user_set where name = "skin" and id = ?'), [ip])
                 data = curs.fetchall()
                 div2 = load_skin(conn, data[0][0] if data else '', 0, 1)
