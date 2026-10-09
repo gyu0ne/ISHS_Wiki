@@ -8,6 +8,10 @@ import json
 import datetime
 import ipaddress
 import subprocess
+import secrets
+
+from .security import reset_auth_session, is_person_document
+from .include_security import cache_view_context, ensure_include_acl_index
 
 import email.mime.text
 import email.utils
@@ -190,9 +194,14 @@ async def python_to_golang(func_name, other_set = {}):
         other_set["cookie"] = ""
         other_set["ip"] = "127.0.0.1"
 
-    port_data = global_some_set_do("golang_port")
+    port_data = global_some_set_do("setup_golang_port")
     if not port_data:
         port_data = '3001'
+    if not str(port_data).isascii() or not str(port_data).isdigit() or not 1 <= int(port_data) <= 65535:
+        return {'response': 'error', 'data': 'Invalid Go backend port.'}
+    internal_token = global_some_set_do('internal_api_token')
+    if not internal_token:
+        return {'response': 'error', 'data': 'Go backend authentication unavailable.'}
 
     # 고백엔드(Go) 연결 타임아웃 및 재시도 설정
     timeout = aiohttp.ClientTimeout(total=10) # 전체 타임아웃 10초
@@ -202,7 +211,7 @@ async def python_to_golang(func_name, other_set = {}):
     async with aiohttp.ClientSession(timeout=timeout) as session:
         while retry_count < max_retry:
             try:
-                async with session.post('http://localhost:' + port_data + '/', data = json_dumps(other_set)) as res:
+                async with session.post('http://127.0.0.1:' + str(int(port_data)) + '/', data = json_dumps(other_set), headers={'X-OpenNAMU-Internal-Token': internal_token}, allow_redirects=False) as res:
                     if func_name == 'api_func_acl' and not 200 <= res.status < 300:
                         return {"response": "error", "data": "Go backend HTTP error."}
 
@@ -795,6 +804,7 @@ async def update(conn, ver_num, set_data):
 
 def set_init_always(conn, ver_num, run_mode):
     curs = conn.cursor()
+    ensure_include_acl_index(conn)
 
     # 버전 기입
     curs.execute(db_change('delete from other where name = "ver"'))
@@ -917,7 +927,7 @@ def get_default_robots_txt(conn):
     return data
 
 def load_random_key(long = 128):
-    return ''.join(random.choice("0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ") for _ in range(long))
+    return ''.join(secrets.choice("0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ") for _ in range(long))
 
 def http_warning(conn):
     return '''
@@ -1902,7 +1912,9 @@ async def acl_check(name = '', tool = '', topic_num = '', ip = '', memo = ''):
 
     data = await python_to_golang('api_func_acl', other_set)
 
-    result = 0 if isinstance(data, dict) and data.get("response") == "ok" and data.get("data") is True else 1
+    result = 0 if isinstance(data, dict) and data.get('response') == 'ok' and data.get('data') is True else 1
+    if tool == 'render' and flask.has_request_context() and ip == ip_check():
+        cache_view_context(data, ip)
 
     if memo != '' and result == 0:
         other_set = {}

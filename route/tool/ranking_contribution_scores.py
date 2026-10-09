@@ -118,13 +118,13 @@ class ContributionScores:
         if period == "all":
             return self._aggregate(self.buckets)
         return self._aggregate(
-            bucket for bucket in self.buckets if bucket.day.strftime("%Y-%m") == period
+            bucket for bucket in self.buckets if bucket.day.isoformat()[:7] == period
         )
 
     def periods(self) -> tuple[NamedPeriodScores, ...]:
         month_buckets: dict[str, list[ContributionBucket]] = defaultdict(list)
         for bucket in self.buckets:
-            month_buckets[bucket.day.strftime("%Y-%m")].append(bucket)
+            month_buckets[bucket.day.isoformat()[:7]].append(bucket)
         return (
             NamedPeriodScores("all", self._aggregate(self.buckets)),
             *(

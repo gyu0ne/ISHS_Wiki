@@ -13,6 +13,9 @@ from route import *
 from route.riro_login_page import riro_login_page
 from route.tool.request_rate_limit import check_request_rate_limit
 from route.tool.challenge_progress import ensure_challenge_indexes
+from route.tool.security import check_request_origin, add_security_headers
+from route.tool.backend_security import verify_backend
+from route.tool.security_key import session_key, migrate_recovery_keys
 from hypercorn.asyncio import serve
 from hypercorn.config import Config
 from flask import g
@@ -62,6 +65,8 @@ if len(args) > 1:
 with open('version.json', encoding = 'utf8') as file_data:
     version_list = json_loads(file_data.read())
 
+verify_backend(os.path.join('route_go', 'bin', linux_exe_chmod()))
+
 # Init-DB
 data_db_set = class_check_json()
 do_db_set(data_db_set)
@@ -85,27 +90,7 @@ with get_db_connect(init_mode = True) as conn:
         else:
             setup_tool = 'init'
 
-    if run_mode != 'dev':
-        file_name = linux_exe_chmod()
-        local_file_path = os.path.join("route_go", "bin", file_name)
-
-        if not (setup_tool == "normal" and os.path.exists(local_file_path)):
-            if os.path.exists(local_file_path):
-                print('Remove Old Binary')
-                os.remove(local_file_path)
-
-            download_url = version_list["bin_link"] + file_name
-
-            print('Download New Binary File')
-            response = requests.get(download_url, stream = True)
-            if response.status_code == 200:
-                with open(local_file_path, 'wb') as file:
-                    for chunk in response.iter_content(chunk_size = 8192):
-                        file.write(chunk)
-
-                print('Complete Download')
-
-        # login_token table check
+    # login_token table check
     try:
         curs.execute(db_change("select user_id from login_token limit 1"))
     except:
@@ -248,7 +233,10 @@ with get_db_connect(init_mode = True) as conn:
 
     curs.execute(db_change('select data from other where name = "key"'))
     sql_data = curs.fetchall()
-    app.secret_key = sql_data[0][0]
+    app.secret_key = session_key(sql_data[0][0])
+    migrate_recovery_keys(conn, db_change)
+    app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'
+    app.config['SESSION_COOKIE_SECURE'] = os.getenv('NAMU_COOKIE_SECURE', '0') == '1'
 
     # Init-DB_Data
     server_set = {}
@@ -292,6 +280,12 @@ with get_db_connect(init_mode = True) as conn:
 for for_a in server_set:
     global_some_set_do('setup_' + for_a, server_set[for_a])
 
+backend_port = str(server_set['golang_port'])
+if not backend_port.isascii() or not backend_port.isdigit() or not 1 <= int(backend_port) <= 65535:
+    raise RuntimeError('Invalid Go backend port')
+server_set['golang_port'] = str(int(backend_port))
+global_some_set_do('setup_golang_port', server_set['golang_port'])
+
 ###
 
 if platform.system() == 'Linux':
@@ -311,8 +305,16 @@ cmd += [server_set["golang_port"]]
 if run_mode != '':
     cmd += [run_mode]
 
+internal_api_token = secrets.token_hex(32)
+global_some_set_do('internal_api_token', internal_api_token)
+golang_env = os.environ.copy()
+golang_env['NAMU_INTERNAL_TOKEN'] = internal_api_token
+
 async def golang_process_check():
-    while True:
+    deadline = time.monotonic() + 30
+    while time.monotonic() < deadline:
+        if golang_process.poll() is not None:
+            raise RuntimeError('Secured Go backend exited during startup')
         try:
             other_set_temp = {}
             for k in data_db_set:
@@ -326,15 +328,18 @@ async def golang_process_check():
                 "ip" : "127.0.0.1"
             }
 
-            response = requests.post('http://localhost:' + server_set["golang_port"] + '/', data = json_dumps(other_set))
-            if response.status_code == 200:
+            response = requests.post('http://127.0.0.1:' + server_set["golang_port"] + '/', data = json_dumps(other_set), headers={'X-OpenNAMU-Internal-Token': internal_api_token}, timeout=5, allow_redirects=False)
+            if response.status_code == 200 and response.text == 'ok':
                 print('Golang turn on')
-                break
-        except requests.ConnectionError:
-            print('Wait golang...')
-            time.sleep(1)
+                return
+        except requests.RequestException:
+            pass
+        await asyncio.sleep(0.2)
+    golang_process.terminate()
+    golang_process.wait(timeout=5)
+    raise RuntimeError('Secured Go backend did not initialize within 30 seconds')
 
-golang_process = subprocess.Popen(cmd)
+golang_process = subprocess.Popen(cmd, env=golang_env)
 
 try:
     loop = asyncio.get_running_loop()
@@ -483,6 +488,11 @@ async def do_every_day():
         time_calc = datetime.date.today() - datetime.timedelta(days = 14)
         time_calc = time_calc.strftime('%Y-%m-%d')
         curs.execute(db_change("delete from pageview_daily where view_date < ?"), [time_calc])
+        if 'rankings' in app.extensions:
+            # Reuse daily maintenance so expired viewer links also disappear
+            # when no new page-view event arrives.
+            curs.execute(db_change('DELETE FROM realtime_popularity_views WHERE viewed_at < ?'),
+                         (int(time.time()) - 24 * 60 * 60,))
         conn.commit()
 
         threading.Timer(60 * 60 * 24, do_every_day).start()
@@ -507,6 +517,7 @@ _RATE_LIMIT_EXEMPT_PREFIXES = ('/views/', '/image/', '/file/', '/robots.txt', '/
 
 @app.before_request
 def _general_flood_guard():
+    check_request_origin()
     # 새로고침 도배/봇 트래픽으로 인한 과부하를 막기 위한 요청 단위 제한.
     # 정적 자산(views/image/file)은 한 페이지 로드에서 여러 개를 한꺼번에 불러오므로 제외한다.
     path = flask.request.path
@@ -647,11 +658,11 @@ def _redirect_login_to_last_doc(response):
                     response.headers['Location'] = target
     except Exception:
         pass
-    return response
+    return add_security_headers(response)
 
 
 @app.before_request
-async def check_auto_login():
+def check_auto_login():
     if 'id' in flask.session or flask.session.get('auto_login_checked'):
         return
     
@@ -676,6 +687,7 @@ async def check_auto_login():
                             break
 
                 if valid_token_found:
+                    reset_auth_session()
                     flask.session['id'] = user_id
                     flask.session['auto_login_checked'] = True
                     curs.execute(db_change("select data from user_set where id = ? and name = 'user_name'"), [user_id])

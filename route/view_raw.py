@@ -46,7 +46,7 @@ async def view_raw(name = '', topic_num = '', num = '', doc_acl = 0, bbs_num = '
             curs.execute(db_change("select data from history where title = ? and id = ?"), [name, num])
 
             history_data = curs.fetchall()
-            if history_data and ('[include(틀:인곽위키/인물)]' in history_data[0][0] or '[include(틀:사건사고)]' in history_data[0][0]):
+            if history_data and is_person_document(name, history_data[0][0]):
                 if ip_or_user(ip) == 1:
                     return await re_error(conn, 1)
                 
@@ -90,6 +90,9 @@ async def view_raw(name = '', topic_num = '', num = '', doc_acl = 0, bbs_num = '
             data = curs.fetchall()
             
         if data:
+            if (bbs_num == '' and post_num == '' and topic_num == ''
+                    and ip_or_user(ip) == 1 and is_person_document(name, data[0][0])):
+                return await re_error(conn, 1)
             doc_preview = ''
             if bbs_num == '' and post_num == '' and topic_num == '':
                 doc_preview = '''

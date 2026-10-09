@@ -9,6 +9,8 @@ from typing import TYPE_CHECKING, TypeAlias
 
 from .ranking_contribution_state import DocumentState, TokenState
 from .ranking_revision_snapshot import RevisionSnapshot
+from .ranking_resource_limits import (MAX_CHECKPOINT_BYTES, MAX_ENCODED_CHARS,
+    MAX_DOCUMENT_CHARS, MAX_TOKENS, MAX_COLLECTION_ITEMS, MAX_REVISIONS)
 
 if TYPE_CHECKING:
     from .ranking_contribution_engine import DocumentContributionEngine
@@ -18,6 +20,28 @@ Json: TypeAlias = str | int | bool | None | list['Json'] | dict[str, 'Json']
 
 class InvalidCheckpoint(ValueError):
     """A persisted replay checkpoint has an unsupported or malformed shape."""
+
+
+def _check_shape(data):
+    if len(data) != 12:
+        raise InvalidCheckpoint('Unsupported replay checkpoint shape')
+    text, placements, spans, tokens, snapshots = _str(data[7]), _list(data[8]), _list(data[9]), _list(data[10]), _list(data[11])
+    if (len(text) > MAX_DOCUMENT_CHARS or len(tokens) > MAX_TOKENS
+            or len(spans) > MAX_REVISIONS or len(snapshots) > MAX_REVISIONS):
+        raise InvalidCheckpoint('Checkpoint collection size exceeded')
+    total = len(placements)
+    for span in spans:
+        if not isinstance(span, list) or len(span) != 2:
+            raise InvalidCheckpoint('Invalid deleted span')
+        if len(_str(span[0])) > MAX_DOCUMENT_CHARS:
+            raise InvalidCheckpoint('Deleted span size exceeded')
+        total += len(_list(span[1]))
+    for snapshot in snapshots:
+        if not isinstance(snapshot, list) or len(snapshot) != 4:
+            raise InvalidCheckpoint('Invalid revision snapshot')
+        total += len(_list(snapshot[3]))
+    if total > MAX_COLLECTION_ITEMS:
+        raise InvalidCheckpoint('Checkpoint placements size exceeded')
 
 
 def _list(value: Json) -> list[Json]:
@@ -74,20 +98,39 @@ def encode_checkpoint(engine: DocumentContributionEngine) -> str:
                engine.uncertain, engine.frozen, document.text, list(document.placements),
                [[text, list(placements)] for text, placements in engine.deleted_spans[engine.title]],
                tokens,
-               [[number, snapshot.digest, snapshot.length, snapshot.ranges]
+               [[number, snapshot.digest, snapshot.length, list(snapshot.ranges)]
                 for number, snapshot in engine.revision_snapshots.items()]]
+    _check_shape(payload)
     serialized = json.dumps(payload, ensure_ascii=False, separators=(',', ':')).encode()
-    return 'zlib:' + b64encode(zlib.compress(serialized, level=1)).decode('ascii')
+    if len(serialized) > MAX_CHECKPOINT_BYTES:
+        raise InvalidCheckpoint('Expanded checkpoint size exceeded')
+    encoded = 'zlib:' + b64encode(zlib.compress(serialized, level=1)).decode('ascii')
+    if len(encoded) > MAX_ENCODED_CHARS:
+        raise InvalidCheckpoint('Encoded checkpoint size exceeded')
+    return encoded
 
 
 def decode_checkpoint(payload: str, engine_type: type[DocumentContributionEngine]) -> DocumentContributionEngine:
     """Parse the versioned JSON checkpoint without executable deserialization."""
+    if not isinstance(payload, str) or len(payload) > MAX_ENCODED_CHARS:
+        raise InvalidCheckpoint('Encoded checkpoint size exceeded')
     if payload.startswith('zlib:'):
         try:
-            payload = zlib.decompress(b64decode(payload[5:], validate=True)).decode()
+            decoder = zlib.decompressobj()
+            expanded = decoder.decompress(b64decode(payload[5:], validate=True), MAX_CHECKPOINT_BYTES + 1)
+            if (len(expanded) > MAX_CHECKPOINT_BYTES or not decoder.eof
+                    or decoder.unconsumed_tail or decoder.unused_data):
+                raise InvalidCheckpoint('Expanded checkpoint size or stream invalid')
+            payload = expanded.decode('utf-8')
         except (zlib.error, Base64Error, UnicodeDecodeError) as error:
             raise InvalidCheckpoint('Invalid compressed checkpoint') from error
-    data = _list(json.loads(payload))
+    elif len(payload.encode('utf-8')) > MAX_CHECKPOINT_BYTES:
+        raise InvalidCheckpoint('Expanded checkpoint size exceeded')
+    try:
+        data = _list(json.loads(payload))
+    except (ValueError, RecursionError) as error:
+        raise InvalidCheckpoint('Invalid checkpoint JSON') from error
+    _check_shape(data)
     if len(data) != 12 or _int(data[0]) != 2:
         raise InvalidCheckpoint('Unsupported replay checkpoint version')
     engine = engine_type(_str(data[1]), None if data[2] is None else _int(data[2]))

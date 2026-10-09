@@ -11,6 +11,8 @@ from .ranking_incremental import CheckpointConflict, read_revisions, refresh_sco
 from .ranking_checkpoint_store import ensure_schema as ensure_checkpoint_schema
 from .ranking_monthly_awards import MonthlyHistory, ensure_schema, finalize_months
 from .ranking_alltime_awards import ensure_alltime_schema, confirm_alltime_candidates
+from .ranking_resource_limits import ranking_work_budget
+from .ranking_checkpoint_auth import CheckpointVerification
 
 
 class ContributorCache:
@@ -48,6 +50,7 @@ class ContributorCache:
         self.generated_at = 0
         self.state = "loading"
         self.ready = threading.Event()
+        self.checkpoint_verification = CheckpointVerification()
 
     def start(self) -> None:
         threading.Thread(target=self._run, daemon=True).start()
@@ -114,7 +117,8 @@ class ContributorCache:
                     ensure_checkpoint_schema(connection, self.db_change)
                     with source_snapshot(connection, self.db_change):
                         documents = self._documents(connection)
-                        calculated = self._compute(connection, documents, now_epoch)
+                        with ranking_work_budget():
+                            calculated = self._compute(connection, documents, now_epoch)
                 break
             except CheckpointConflict:
                 if attempt:
@@ -155,7 +159,8 @@ class ContributorCache:
         members = {row[0] for row in cursor.fetchall()}
         cursor.close()
         now = datetime.fromtimestamp(now_epoch, tz=timezone.utc)
-        calculation = refresh_scores(connection, self.db_change, documents, members, now)
+        calculation = refresh_scores(connection, self.db_change, documents, members, now,
+                                     self.checkpoint_verification)
         scores = calculation.scores
         revisions = None
 

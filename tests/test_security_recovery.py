@@ -18,6 +18,10 @@ from flask import make_response, request
 from werkzeug.serving import make_server
 
 from security_fixture_server import ROOT, load_source_definitions, security_fixture
+from ranking_package_support import bootstrap_route_tool_package
+
+bootstrap_route_tool_package()
+from route.tool.security_key import recovery_key_hash, migrate_recovery_keys
 
 
 RECOVERY_NAMES = (
@@ -52,6 +56,7 @@ def _load_recovery(db_type: str = "sqlite"):
             "global_some_set_do": lambda name: db_type if name == "db_type" else None,
             "pw_encode": _load_password_functions(db_type)["pw_encode"],
             "secrets": secrets,
+            "recovery_key_hash": recovery_key_hash,
         },
     )
 
@@ -63,6 +68,7 @@ def _load_key_setting(db_type: str = "sqlite"):
             "db_change": lambda sql: sql,
             "global_some_set_do": lambda name: db_type if name == "db_type" else None,
             "secrets": secrets,
+            "recovery_key_hash": recovery_key_hash,
         },
     )
 
@@ -90,7 +96,7 @@ def _insert_account(
             "insert into user_set values ('pw', ?, ?)",
             (user_id, password(conn, "old-password", hash_encoding)),
         )
-    conn.execute("insert into user_set values ('random_key', ?, ?)", (user_id, recovery_key))
+    conn.execute("insert into user_set values ('random_key', ?, ?)", (user_id, recovery_key_hash(recovery_key)))
     conn.execute("insert into user_set values ('2fa', ?, ?)", (user_id, two_factor))
     conn.execute("insert into user_set values ('2fa_pw', ?, 'factor-secret')", (user_id,))
     conn.execute("insert into user_set values ('2fa_pw_encode', ?, 'sha3')", (user_id,))
@@ -122,6 +128,7 @@ def register_recovery_surface(fixture) -> None:
             "global_some_set_do": lambda name: "sqlite" if name == "db_type" else None,
             "pw_encode": _load_password_functions()["pw_encode"],
             "secrets": secrets,
+            "recovery_key_hash": recovery_key_hash,
             "easy_minify": lambda _conn, data: data,
             "skin_check": lambda _conn: "unused",
             "get_lang": lambda _conn, key: key,
@@ -183,6 +190,25 @@ class _FaultConnection:
 
 
 class RecoveryTest(unittest.TestCase):
+    def test_legacy_key_migration_keeps_original_key_and_rejects_database_verifier(self):
+        with security_fixture() as fixture:
+            with fixture.connect() as conn:
+                _create_schema(conn)
+                _insert_account(conn)
+                conn.execute("update user_set set data = ? where name = 'random_key'", ('R' * 128,))
+                migrate_recovery_keys(conn, lambda sql: sql)
+                conn.commit()
+                stored = conn.execute("select data from user_set where name = 'random_key'").fetchone()[0]
+                self.assertEqual(stored, recovery_key_hash('R' * 128))
+                changes = conn.total_changes
+                migrate_recovery_keys(conn, lambda sql: sql)
+                self.assertEqual(conn.total_changes, changes)
+                recover = _load_recovery().definitions['_recover_with_key']
+                self.assertIsNone(recover(conn, stored, 'replacement-password'))
+                self.assertEqual(conn.execute("select data from user_set where name = '2fa'").fetchone()[0], 'on')
+                self.assertEqual(recover(conn, 'R' * 128, 'replacement-password'), 'alice')
+                self.assertIsNone(recover(conn, 'R' * 128, 'another-password'))
+
     def test_valid_key_preserves_supported_encoding_and_duplicate_rows(self) -> None:
         password = _load_password_functions()
         for encoding in ("sha256", "sha3", "sha3-512", "sha3-salt", "sha3-512-salt"):
@@ -272,7 +298,7 @@ class RecoveryTest(unittest.TestCase):
                     self.assertEqual(result == "alice", succeeds)
                     self.assertEqual(conn.execute(
                         "select count(*) from user_set where data = ? and name = 'random_key'",
-                        ("R" * 128,),
+                        (recovery_key_hash("R" * 128),),
                     ).fetchone(), (0 if succeeds else 1,))
 
     def test_duplicate_random_key_is_rejected_without_consumption(self) -> None:
@@ -287,7 +313,7 @@ class RecoveryTest(unittest.TestCase):
                 self.assertIsNone(result)
                 self.assertEqual(conn.execute(
                     "select count(*) from user_set where data = ? and name = 'random_key'",
-                    ("R" * 128,),
+                    (recovery_key_hash("R" * 128),),
                 ).fetchone(), (2,))
 
     def test_empty_input_is_rejected_before_transaction(self) -> None:
@@ -372,7 +398,7 @@ class MySQLRecoveryTest(unittest.TestCase):
                     ("reset_user_text", ""),
                 ))
                 curs.executemany("insert into user_set values (%s, %s, %s)", (
-                    ("random_key", "mysql-user", "M" * 128),
+                    ("random_key", "mysql-user", recovery_key_hash("M" * 128)),
                     ("pw", "mysql-user", "old-hash"),
                     ("pw", "mysql-user", "different-old-hash"),
                     ("encode", "mysql-user", "sha3"),
@@ -385,7 +411,7 @@ class MySQLRecoveryTest(unittest.TestCase):
             self.assertIsNone(recover(conn, "M" * 128, "second-password"))
 
             with conn.cursor() as curs:
-                curs.execute("insert into user_set values (%s, %s, %s)", ("random_key", "mysql-user", "C" * 128))
+                curs.execute("insert into user_set values (%s, %s, %s)", ("random_key", "mysql-user", recovery_key_hash("C" * 128)))
 
             def attempt(password: str):
                 attempt_conn = connect()
@@ -402,7 +428,7 @@ class MySQLRecoveryTest(unittest.TestCase):
             for fail_after in ("delete", "password", "2fa"):
                 with self.subTest(fail_after=fail_after), conn.cursor() as curs:
                     curs.execute("delete from user_set where name = 'random_key' and id = 'mysql-user'")
-                    curs.execute("insert into user_set values (%s, %s, %s)", ("random_key", "mysql-user", "F" * 128))
+                    curs.execute("insert into user_set values (%s, %s, %s)", ("random_key", "mysql-user", recovery_key_hash("F" * 128)))
                     curs.execute("update user_set set data = 'on' where name = '2fa' and id = 'mysql-user'")
                     curs.execute("select name, data from user_set where id = 'mysql-user' order by name, data")
                     before = curs.fetchall()
