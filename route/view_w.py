@@ -8,6 +8,7 @@ import re
 from .go_api_w_raw import api_w_raw
 from .go_api_w_render import api_w_render
 from .go_api_w_page_view import api_w_page_view
+from .tool.security import is_person_document as _private_document
 
 PERSON_TEMPLATE_RE = re.compile(r'\[include\(\s*틀:인곽위키/인물\s*\)\]', re.I)
 INCIDENT_TEMPLATE_RE = re.compile(r'\[include\(\s*틀:사건사고\s*\)\]', re.I)
@@ -22,7 +23,8 @@ def _is_person_document(name, doc_data_raw):
         return False
 
     doc_data = doc_data_raw.get("data", "")
-    return bool(PERSON_TEMPLATE_RE.search(doc_data) or INCIDENT_TEMPLATE_RE.search(doc_data) or PERSON_CATEGORY_RE.search(doc_data))
+    return _private_document(name, doc_data)
+
 
 def _has_guest_restricted_view_acl(conn, name):
     curs = conn.cursor()
@@ -284,6 +286,11 @@ async def view_w(name = '대문', do_type = ''):
 
         # 특정 틀 포함 시 비로그인 사용자 접근 제한
         doc_data_raw = await api_w_raw(name)
+        if not isinstance(doc_data_raw, dict) or doc_data_raw.get('response') not in ('ok', 'not exist'):
+            return await re_error(conn, 1, adsense_enabled=False)
+        if doc_data_raw['response'] == 'ok' and (
+                doc_data_raw.get('title') != name or not isinstance(doc_data_raw.get('data'), str)):
+            return await re_error(conn, 1, adsense_enabled=False)
         is_person_document = _is_person_document(name, doc_data_raw)
         has_person_template = (
             doc_data_raw.get("response") == "ok"
@@ -471,7 +478,9 @@ async def view_w(name = '대문', do_type = ''):
 
             name_view = name
 
-        doc_data = await api_w_raw(name)
+        # The secured raw endpoint already checked the canonical view ACL.
+        # Reuse that same authorized body throughout this request.
+        doc_data = doc_data_raw
         if doc_data["response"] == "ok":
             render_data = await api_w_render(name, request_method = 'POST', request_data = {
                 'name' : name,
@@ -491,20 +500,8 @@ async def view_w(name = '대문', do_type = ''):
 
         asyncio.create_task(api_w_page_view(name))
 
-        curs.execute(db_change("select data from data where title = ?"), [name])
-        data = curs.fetchall()
-
         description = ''
-        if await acl_check(name, 'render') == 1:
-            response_data = 401
-
-            curs.execute(db_change('select data from other where name = "error_401"'))
-            sql_d = curs.fetchall()
-            if sql_d and sql_d[0][0] != '':
-                end_data = '<h2>' + get_lang(conn, 'error') + '</h2><ul><li>' + sql_d[0][0] + '</li></ul>'
-            else:
-                end_data = '<h2>' + get_lang(conn, 'error') + '</h2><ul><li>' + get_lang(conn, 'authority_error') + '</li></ul>'
-        elif not data:
+        if doc_data['response'] == 'not exist':
             response_data = 404
 
             curs.execute(db_change('select data from other where name = "error_404"'))
@@ -519,7 +516,7 @@ async def view_w(name = '대문', do_type = ''):
             history_color = 1 if db_data else 0
         else:
             response_data = 200
-            description = data[0][0].replace('\r', '').replace('\n', ' ')[0:200]
+            description = doc_data['data'].replace('\r', '').replace('\n', ' ')[0:200]
 
         monetization_enabled = (
             response_data == 200

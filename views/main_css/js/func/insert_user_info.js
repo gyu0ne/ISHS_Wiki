@@ -2,9 +2,14 @@
 
 function do_insert_user_info() {
     if(document.getElementById('opennamu_get_user_info')) {
-        let name = document.getElementById('opennamu_get_user_info').innerHTML;
+        let user_info = document.getElementById('opennamu_get_user_info');
+        let name = user_info.innerHTML;
 
         fetch("/api/user_info/" + opennamu_do_url_encode(name)).then(function(res) {
+            if(!res.ok) {
+                throw res;
+            }
+
             return res.json();
         }).then(function(data) {
             let lang_data = data["language"];
@@ -89,7 +94,9 @@ function do_insert_user_info() {
 
             end_data += '</table>';
             
-            document.getElementById('opennamu_get_user_info').innerHTML = end_data;
+            user_info.innerHTML = end_data;
+        }).catch(function(error) {
+            user_info.textContent = error.status === 401 ? '로그인이 필요합니다.' : '';
         });
     }
 }

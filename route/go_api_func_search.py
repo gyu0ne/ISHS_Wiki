@@ -1,6 +1,10 @@
 from .tool.func import *
 
 async def api_func_search(name = 'Test', search_type = 'title', num = 1):
+    # Matching hidden document contents is itself an information oracle.
+    # The Go search endpoint enforces its canonical ACL in the same IPC call.
+    if search_type != 'title' and ip_or_user(ip_check()) == 1:
+        return []
     other_set = {}
     other_set["name"] = name
     other_set["search_type"] = search_type

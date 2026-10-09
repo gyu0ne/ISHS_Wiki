@@ -13,7 +13,11 @@ async def main_view_image(name = ''):
                 if mime_type == 'svg':
                     mime_type = 'svg+xml'
 
-                return flask.send_from_directory('./' + load_image_url(conn), name, mimetype = 'image/' + mime_type)
+                response = flask.send_from_directory('./' + load_image_url(conn), name, mimetype = 'image/' + mime_type)
+                # SVG remains displayable as an image, but cannot run same-origin scripts.
+                response.headers['Content-Security-Policy'] = "sandbox; default-src 'none'; style-src 'unsafe-inline'"
+                response.headers['X-Content-Type-Options'] = 'nosniff'
+                return response
             else:
                 return ''
         else:

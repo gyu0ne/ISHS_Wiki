@@ -19,11 +19,14 @@ async def admin_edit_user_info(user_name=''):
         
         # 권한 확인 (api_user_info.py와 동일한 조건: owner_auth 또는 ban_auth)
         if await acl_check(tool='owner_auth') != 0 and await acl_check(tool='ban_auth') != 0:
-            return re_error(conn, '/error/3')
+            return await re_error(conn, 3)
 
         field = flask.request.args.get('field', '')
         if not field:
             return redirect(conn, '/w/user:' + url_pas(user_name))
+
+        if field not in ('student_id', 'real_name', 'birth', 'gender', 'generation'):
+            return await re_error(conn, 3)
 
         # 현재 값 읽어오기 헬퍼
         def get_field(name):

@@ -1,4 +1,6 @@
 from .func_tool import *
+from .security import is_person_document
+from .include_security import check_include_acl
 
 from typing import Any
 
@@ -1716,8 +1718,14 @@ class class_do_render_namumark:
                     self.data_backlink[include_name]['include'] = ''
 
                     # load include db data
-                    self.curs.execute(db_change("select data from data where title = ?"), [include_name])
+                    self.curs.execute(db_change("select d.data, (select data from acl where title = d.title and type = 'view' limit 1) from data d where d.title = ?"), [include_name])
                     db_data = self.curs.fetchall()
+                    if db_data:
+                        rules = [row[1] for row in db_data if row[1] is not None]
+                        if not check_include_acl(include_name, rules, self.ip):
+                            db_data = []
+                    if db_data and ip_or_user(self.ip) == 1 and is_person_document(include_name, db_data[0][0]):
+                        db_data = []
                     if db_data:
                         # include link func
                         include_link = ''

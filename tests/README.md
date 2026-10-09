@@ -35,3 +35,7 @@ uv run --no-project --python 3.12 --with-requirements requirements-test.txt pyth
 - 폼 제한 테스트는 실제 `app.py`의 설정·요청 훅·라우팅을 불러오고, 저장 핸들러는 폼 파싱을 확인하는 테스트 핸들러로 대체합니다. 운영 DB 저장과 실제 인증 서버까지 검증하는 테스트는 아닙니다.
 
 검증 기준: Windows에서 Python 3.11.15 / 3.12.13 각각 전체 23개 테스트. Linux 실행 결과는 아직 확인하지 않았습니다.
+
+## 보안 회귀 테스트
+
+기존 표준 unittest 실행 방식을 사용합니다. 최종 main 보안 수정은 Windows Python 3.13.12와 Linux Python 3.12.3에서 각각 103개 실행, 102개 통과, 실제 MySQL 서버가 필요한 검사 1개 제외를 확인했습니다. Node 수식 및 프로필 UI 검사도 통과했습니다. 실제 Flask/Go/SQLite 연결 및 성능 비교는 `docs/security-review.md`를 참고하세요.

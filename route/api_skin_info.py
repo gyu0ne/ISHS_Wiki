@@ -3,6 +3,8 @@ import urllib.request
 from .tool.func import *
 
 async def api_skin_info(name = ''):
+    if name and (name in ('.', '..') or any(c in name for c in ('/', '\\', ':', '\x00'))):
+        return flask.jsonify({}), 404
     with get_db_connect() as conn:
         name = skin_check(conn) if name == '' else './views/' + name + '/index.html'
 
