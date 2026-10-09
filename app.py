@@ -286,19 +286,8 @@ global_some_set_do('setup_golang_port', server_set['golang_port'])
 
 ###
 
-if platform.system() == 'Linux':
-    if platform.machine() in ["AMD64", "x86_64"]:
-        cmd = [os.path.join(".", "route_go", "bin", "main.amd64.bin")]
-    else:
-        cmd = [os.path.join(".", "route_go", "bin", "main.arm64.bin")]
-elif platform.system() == 'Darwin':
-    cmd = [os.path.join(".", "route_go", "bin", "main.mac.arm64.bin")]
-else:
-    if platform.machine() in ["AMD64", "x86_64"]:
-        cmd = [os.path.join(".", "route_go", "bin", "main.amd64.exe")]
-    else:
-        cmd = [os.path.join(".", "route_go", "bin", "main.arm64.exe")]
-        
+cmd = [os.path.join(".", "route_go", "bin", linux_exe_chmod())]
+
 cmd += [server_set["golang_port"]]
 if run_mode != '':
     cmd += [run_mode]

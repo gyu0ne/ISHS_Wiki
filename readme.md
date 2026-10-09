@@ -22,14 +22,26 @@ ISHSWIKI를 위해 개량된 openNAMU 기반 위키 엔진으로, 인천과학�
 * 로그인 시 자신의 열람 기록을 확인할 수 있습니다.
 
 ## 직접 설치해서 실행하기
+
+Windows 서버는 `main`에 포함된 검증된 x64/ARM64 실행 파일을 사용합니다. Go 설치나 별도 백엔드 ZIP 다운로드 없이 기존처럼 `python app.py`로 실행할 수 있습니다. 처음 설치할 때만 Python 의존성을 설치합니다.
+
+```powershell
+python -m pip install -r requirements.txt
+python app.py
+```
+
+기존 서버 업데이트는 서버를 종료한 뒤 DB·설정·`app_session/security.key`를 백업하고 `main`을 업데이트한 다음 같은 Python 환경에서 재시작합니다. 소스 ZIP으로 업데이트할 때도 `route_go/bin`의 Windows 실행 파일과 `route_go/security/manifest.json`을 함께 덮어씁니다. 체크섬 검증은 그대로 유지됩니다.
+
+Linux/macOS에서 소스로 설치하는 경우:
+
 ```
 pip3 install --upgrade -r requirements.txt
 python3 route_go/security/build_backend.py
 python3 app.py
 ```
-* Windows: `run_windows.bat` 실행
+* Windows: `run_windows.bat` 실행. 저장소 폴더에서 `.venv`, `venv` 순으로 Python 환경을 찾고, 없으면 현재 PATH의 `python`을 사용합니다. 재시작할 때 의존성을 자동 업그레이드하지 않습니다.
 * Linux: `run_ubuntu.sh` 실행
-* 소스에서 설치할 때는 먼저 Go 1.24.1 이상으로 내부 백엔드를 빌드합니다. 제공된 보안 수정 ZIP에는 실행 파일이 포함되어 있어 Go를 설치할 필요가 없습니다. 빌드 옵션은 [백엔드 안내](route_go/security/README.md)를 참고하세요.
+* Windows 실행 파일은 저장소에 포함됩니다. Linux/macOS 소스 설치는 Go 1.24.1 이상으로 내부 백엔드를 빌드하거나 제공된 플랫폼 실행 파일을 사용합니다. Go는 빌드 컴퓨터에만 필요합니다. 빌드 옵션은 [백엔드 안내](route_go/security/README.md)를 참고하세요.
 * 내부 백엔드는 `127.0.0.1`에서만 수신하고 프로세스별 인증 토큰을 요구합니다. 기존 upstream 실행 파일로 덮어쓰면 시작 시 검증에서 차단됩니다.
 * HTTPS 운영에서는 `NAMU_COOKIE_SECURE=1`을 설정하고, 신뢰하는 역방향 프록시만 앱에 접근하게 구성합니다.
 * 변경 요청은 같은 출처의 브라우저 요청만 받습니다. 쿠키를 사용하는 API 클라이언트는 실제 위키 URL을 `Origin` 헤더에 넣어야 합니다. 기존 GET 방식 변경 링크도 같은 출처에서 사용해야 합니다.

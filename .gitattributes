@@ -1,0 +1,3 @@
+/route_go/bin/main.amd64.exe -text
+/route_go/bin/main.arm64.exe -text
+/run_windows.bat text eol=crlf
