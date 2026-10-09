@@ -34,3 +34,6 @@ views/jsonnamu
 
 sitemap.xml
 sitemap_0.xml
+
+route_go/bin/main.amd64.exe
+route_go/bin/main.arm64.exe

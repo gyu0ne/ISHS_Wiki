@@ -11,8 +11,15 @@ the canonical document ACL, once per distinct title within a request.
 The existing ACL policy and Go dependencies are retained. Its BSD
 license is included in `LICENSE`.
 
-Use the supplied source archive and the backend archive for your platform, or
-build from source with Python 3.11+ and Go 1.24.1+:
+Windows x64 and ARM64 executables are included in `main`, together with their
+checksum manifest. A checkout or GitHub source ZIP can run `python app.py`
+without installing Go or downloading another archive. `run_windows.bat` starts
+from the project directory and uses an existing `.venv`, `venv`, or PATH Python.
+Stop the existing server before replacing these files, and preserve the DB,
+configuration and `app_session/security.key`.
+
+For Linux/macOS, use the supplied backend archive for your platform, or build
+from source with Python 3.11+ and Go 1.24.1+:
 
 ```sh
 python route_go/security/build_backend.py

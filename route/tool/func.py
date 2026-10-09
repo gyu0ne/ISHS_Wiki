@@ -11,6 +11,7 @@ import subprocess
 import secrets
 
 from .security import reset_auth_session, is_person_document
+from .backend_security import backend_executable_name
 from .include_security import cache_view_context, ensure_include_acl_index
 
 import email.mime.text
@@ -874,21 +875,7 @@ def set_init_always(conn, ver_num, run_mode):
         os.system('chmod +x ./route_go/bin/' + exe_type)
 
 def linux_exe_chmod():
-    exe_type = ''
-    if platform.system() == 'Linux':
-        if platform.machine() in ["AMD64", "x86_64"]:
-            exe_type = 'main.amd64.bin'
-        else:
-            exe_type = 'main.arm64.bin'
-    elif platform.system() == 'Darwin':
-        exe_type = 'main.mac.arm64.bin'
-    else:
-        if platform.machine() in ["AMD64", "x86_64"]:
-            exe_type = 'main.amd64.exe'
-        else:
-            exe_type = 'main.arm64.exe'
-
-    return exe_type
+    return backend_executable_name()
 
 def set_init(conn):
     curs = conn.cursor()
